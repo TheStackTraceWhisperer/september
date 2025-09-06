@@ -26,10 +26,27 @@ jobs:
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
     
-    - name: Install Xvfb and X11 libraries
+    - name: Install Xvfb and OpenGL 4.6 support
       run: |
         sudo apt-get update
-        sudo apt-get install -y xvfb libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl1-mesa-dev
+        sudo apt-get install -y \
+          xvfb \
+          libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev \
+          mesa-vulkan-drivers \
+          mesa-utils \
+          vulkan-tools \
+          libegl1-mesa-dev \
+          libgl1-mesa-dev \
+          libgles2-mesa-dev
     
     - name: Build and test with Maven
-      run: xvfb-run -a mvn -B clean verify
+      run: xvfb-run -s "-screen 0 1920x1080x24" mvn -B clean verify
+      env:
+        # Enable software Vulkan driver for Mesa Zink (OpenGL 4.6 via Vulkan)
+        VK_DRIVER_FILES: /usr/share/vulkan/icd.d/lvp_icd.x86_64.json
+        # Try to force better OpenGL support - Zink provides GL 4.6 via Vulkan
+        MESA_LOADER_DRIVER_OVERRIDE: zink
+        # Enable EGL platform for better context creation
+        EGL_PLATFORM: x11
+        # Ensure lavapipe (software Vulkan) is used
+        VK_ICD_FILENAMES: /usr/share/vulkan/icd.d/lvp_icd.x86_64.json
