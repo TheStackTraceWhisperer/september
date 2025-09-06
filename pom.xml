@@ -195,6 +195,7 @@
           <!--
             Unit tests: Run all tests that do not follow integration test naming conventions.
           -->
+          <!--suppress MavenModelInspection -->
           <argLine>${argLine} -XX:+EnableDynamicAgentLoading</argLine>
           <excludes>
             <exclude>**/*IT.java</exclude>
@@ -213,6 +214,7 @@
           <!--
             Integration tests: Run all tests that follow standard integration test naming conventions.
           -->
+          <!--suppress MavenModelInspection -->
           <argLine>${failsafeArgLine} -XX:+EnableDynamicAgentLoading</argLine>
           <includes>
             <include>**/*IT.java</include>

@@ -1,78 +1,67 @@
-# Testing Policy
+# ✓ Testing Policy
 
-This project separates unit tests and integration tests cleanly and runs both locally and in headless CI environments that provide a virtual display via Xvfb.
+This document outlines the testing standards for the project, covering common principles, unit testing, and integration testing.
 
-## Test Types
+## Common Standards
 
-- Unit tests (Surefire)
-  - Location/patterns: `**/*Test.java` (excluding IT variants by name or path as configured in surefire excludes)
-  - Use Mockito (including static mocking) to isolate code under test.
-  - It’s acceptable to statically mock GLFW in unit tests only.
-  - No native or display dependencies should be required for unit tests beyond what’s already brought in by LWJGL.
+- **No Test-Specific Production Code**: Production code must not contain conditional logic to skip or alter behavior for tests.
+- **LWJGL & Natives**:
+  - The project includes LWJGL bindings for `core` and `GLFW`.
+  - OS-specific Maven profiles (`windows`/`linux`/`mac`) automatically include the correct native classifiers.
+- **Local Execution**:
+  - To run unit tests only: `mvn test`
+  - To run all tests (unit + integration): `mvn verify`
 
-- Integration tests (Failsafe)
-  - Location/patterns: `**/*IT.java`, `**/*ITCase.java`, `**/*IntegrationTest.java`, and `**/it/**/*Test.java`
-  - Must execute the true application path (no test-specific branches/flags). `MainIntegrationTest` invokes the same code paths as production.
-  - Do not mock platform APIs in integration tests.
-  - Require a working display. In CI this is provided via Xvfb.
+## Unit Test Standards
 
-## Headless CI Strategy (Xvfb Required)
+- **Framework**: Maven Surefire Plugin
+- **Location/Patterns**: `**/*Test.java` (excluding integration test patterns).
+- **Goal**: Isolate and test a single unit of code.
+- **Dependencies**: No native or display dependencies are required.
+- **Mocking**:
+  - Use Mockito to isolate the code under test.
+  - Unit tests must mock all LWJGL API classes to remain platform-agnostic. This includes, but is not limited to, static mocking for the following classes:
+    - `org.lwjgl.glfw.GLFW`
+    - `org.lwjgl.opengl.GL`
+    - `org.lwjgl.opengl.GL11`
 
-- We do not change application behavior based on headless vs non-headless. Integration tests must run as if a real display is present.
-- In headless CI, wrap Maven in Xvfb:
+## Integration Test Standards
 
-```bash
-xvfb-run -a mvn -B clean verify
-```
+- **Framework**: Maven Failsafe Plugin
+- **Location/Patterns**: `**/*IT.java`, `**/*ITCase.java`, `**/*IntegrationTest.java`, and `**/it/**/*Test.java`.
+- **Goal**: Test the application's mainline path with real dependencies.
+- **Execution**:
+  - Must execute the true application path (e.g., `MainIntegrationTest` invokes production code paths).
+  - No test-specific branches or feature flags in production code.
+- **Mocking**: Do not mock platform APIs (like GLFW).
+- **Display Requirement**: A working display is required.
 
-- Never set `GLFW_PLATFORM=null`. Tests must reflect real-platform operation. If a virtual display is needed, use Xvfb.
+### Headless CI for Integration Tests
 
-## Dockerfile: Headless CI Simulation
+Integration tests must run as if a real display is present, even in headless environments.
 
-The provided `Dockerfile`:
-- Uses a Maven + JDK 21 base image.
-- Installs Xvfb and required X11 libraries for GLFW.
-- Copies the project and runs `xvfb-run -a mvn -B -e -l build.log clean verify` during build.
-- Default command prints the captured `build.log` when the container runs.
+- **Strategy**: Use a virtual framebuffer like **Xvfb**. Never use environment overrides like `GLFW_PLATFORM=null`.
+- **Local Headless Execution**:
+  ```bash
+  xvfb-run -a mvn -B verify
+  ```
+- **OpenGL Context**: The window wrapper (`WindowContext`) creates an OpenGL 4.6 core profile context. The CI environment must provide this.
 
-Common Docker workflow:
+### Docker CI Simulation
 
-```bash
-docker build -t september-ci .
-docker run --rm september-ci
-```
+The provided `Dockerfile` simulates a CI run with a virtual display.
 
-## LWJGL and Natives
+- **Environment**: Ubuntu 24.04, JDK 21, Maven, Xvfb, and Mesa.
+- **Mechanism**: A custom `entrypoint.sh` starts `Xvfb` and then executes the Maven build. This is more robust than `xvfb-run` inside a container.
+- **OpenGL Version**: The environment variable `MESA_GL_VERSION_OVERRIDE=4.6` is set to ensure the headless environment provides the exact OpenGL version required by the application.
+- **Workflow**:
+  ```bash
+  # Build the CI image
+  docker build -t september-ci .
 
-- LWJGL Java bindings included: core and GLFW.
-- OS-specific profiles (windows/linux/mac) bring in the corresponding native classifiers for LWJGL core and GLFW so unit tests and integration tests can initialize GLFW when needed.
-- The window wrapper (`WindowContext`) uses `GLFW_NO_API` (no OpenGL context creation) to maximize compatibility in headless CI.
+  # Run the tests inside the container
+  docker run --rm september-ci
 
-## Mocking Guidance
-
-- Unit tests may statically mock:
-  - `org.lwjgl.glfw.GLFW`
-- Keep static mocking in unit tests only. Integration tests must use the real APIs under Xvfb.
-
-## How to Run Locally
-
-- Unit tests only:
-
-```bash
-mvn test
-```
-
-- Unit + integration tests (needs a display; use Xvfb if headless):
-
-```bash
-mvn verify
-# or
-xvfb-run -a mvn -B verify
-```
-
-## Expectations Summary
-
-- No conditional logic to skip or alter behavior for tests in production code.
-- Integration tests must exercise the mainline application path without mocks or test-only code paths.
-- Headless builds must use Xvfb, not environment overrides like `GLFW_PLATFORM`.
-- The Dockerfile exists to simulate a CI run with a virtual display and to persist the build log for review.
+  # View logs if needed
+  docker logs <container_id>
+  ```
