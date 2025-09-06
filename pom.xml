@@ -13,8 +13,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-    <maven.compiler.source>21</maven.compiler.source>
-    <maven.compiler.target>21</maven.compiler.target>
+    <maven.compiler.release>21</maven.compiler.release>
 
     <!-- LWJGL version -->
     <lwjgl.version>3.3.3</lwjgl.version>
@@ -27,32 +26,33 @@
 
     <!-- SLF4J version -->
     <slf4j.version>2.0.13</slf4j.version>
+
+    <!-- JaCoCo version -->
+    <jacoco.version>0.8.11</jacoco.version>
   </properties>
 
+  <!-- Dependency Management for consistent versions -->
   <dependencies>
-    <!-- JUnit -->
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter</artifactId>
-      <version>${junit.jupiter.version}</version>
-      <scope>test</scope>
-    </dependency>
 
-    <!-- LWJGL core (Java bindings) -->
+    <!-- Core & runtime -->
     <dependency>
       <groupId>org.lwjgl</groupId>
       <artifactId>lwjgl</artifactId>
       <version>${lwjgl.version}</version>
     </dependency>
 
-    <!-- LWJGL GLFW (Java bindings) -->
     <dependency>
       <groupId>org.lwjgl</groupId>
       <artifactId>lwjgl-glfw</artifactId>
       <version>${lwjgl.version}</version>
     </dependency>
 
-    <!-- SLF4J API and simple binding for runtime -->
+    <dependency>
+      <groupId>org.lwjgl</groupId>
+      <artifactId>lwjgl-opengl</artifactId>
+      <version>${lwjgl.version}</version>
+    </dependency>
+
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
@@ -60,13 +60,19 @@
     </dependency>
 
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-simple</artifactId>
-      <version>${slf4j.version}</version>
-      <scope>runtime</scope>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>1.5.18</version>
     </dependency>
 
-    <!-- Mockito for testing -->
+    <!-- Test -->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>${junit.jupiter.version}</version>
+      <scope>test</scope>
+    </dependency>
+
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
@@ -74,7 +80,6 @@
       <scope>test</scope>
     </dependency>
 
-    <!-- Mockito JUnit Jupiter extension -->
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-junit-jupiter</artifactId>
@@ -82,16 +87,197 @@
       <scope>test</scope>
     </dependency>
 
-    <!-- LWJGL OpenGL binding (needed to query GL version) -->
-    <dependency>
-      <groupId>org.lwjgl</groupId>
-      <artifactId>lwjgl-opengl</artifactId>
-      <version>${lwjgl.version}</version>
-    </dependency>
-
   </dependencies>
 
-  <!-- OS-specific profiles to pull the correct native libraries -->
+  <build>
+    <plugins>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.13.0</version>
+        <configuration>
+          <release>21</release>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>${jacoco.version}</version>
+        <executions>
+          <execution>
+            <id>prepare-agent</id>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+            <configuration>
+              <destFile>${project.build.directory}/jacoco-ut.exec</destFile>
+              <!--
+                The 'argLine' property is used by the surefire plugin.
+                This is the default property name and does not need to be specified
+                if you are using the default.
+              -->
+              <propertyName>argLine</propertyName>
+            </configuration>
+          </execution>
+          <execution>
+            <id>report</id>
+            <phase>test</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+            <configuration>
+              <dataFile>${project.build.directory}/jacoco-ut.exec</dataFile>
+              <outputDirectory>${project.reporting.outputDirectory}/jacoco-ut</outputDirectory>
+            </configuration>
+          </execution>
+          <execution>
+            <id>prepare-agent-it</id>
+            <phase>pre-integration-test</phase>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+            <configuration>
+              <destFile>${project.build.directory}/jacoco-it.exec</destFile>
+              <propertyName>failsafeArgLine</propertyName>
+            </configuration>
+          </execution>
+          <execution>
+            <id>report-it</id>
+            <phase>post-integration-test</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+            <configuration>
+              <dataFile>${project.build.directory}/jacoco-it.exec</dataFile>
+              <outputDirectory>${project.reporting.outputDirectory}/jacoco-it</outputDirectory>
+            </configuration>
+          </execution>
+          <execution>
+            <id>merge-reports</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>merge</goal>
+            </goals>
+            <configuration>
+              <destFile>${project.build.directory}/jacoco.exec</destFile>
+              <fileSets>
+                <fileSet>
+                  <directory>${project.build.directory}</directory>
+                  <includes>
+                    <include>jacoco-ut.exec</include>
+                    <include>jacoco-it.exec</include>
+                  </includes>
+                </fileSet>
+              </fileSets>
+            </configuration>
+          </execution>
+          <execution>
+            <id>report-merged</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+            <configuration>
+              <dataFile>${project.build.directory}/jacoco.exec</dataFile>
+              <outputDirectory>${project.reporting.outputDirectory}/jacoco</outputDirectory>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.2.5</version>
+        <configuration>
+          <!--
+            Unit tests: Run all tests that do not follow integration test naming conventions.
+          -->
+          <argLine>${argLine} -XX:+EnableDynamicAgentLoading</argLine>
+          <excludes>
+            <exclude>**/*IT.java</exclude>
+            <exclude>**/*ITCase.java</exclude>
+            <exclude>**/*IntegrationTest.java</exclude>
+            <exclude>**/it/**/*Test.java</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>3.2.5</version>
+        <configuration>
+          <!--
+            Integration tests: Run all tests that follow standard integration test naming conventions.
+          -->
+          <argLine>${failsafeArgLine} -XX:+EnableDynamicAgentLoading</argLine>
+          <includes>
+            <include>**/*IT.java</include>
+            <include>**/*ITCase.java</include>
+            <include>**/*IntegrationTest.java</include>
+            <include>**/it/**/*Test.java</include>
+          </includes>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>3.4.1</version>
+        <executions>
+          <execution>
+            <!--
+              Enforce Java version: Ensure the build environment uses Java 21 or newer.
+            -->
+            <id>enforce-java</id>
+            <goals><goal>enforce</goal></goals>
+            <configuration>
+              <rules>
+                <requireJavaVersion>
+                  <version>[21,)</version>
+                </requireJavaVersion>
+              </rules>
+              <fail>true</fail>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.3.0</version>
+        <configuration>
+          <!--
+            Jar manifest enrichment: Add implementation and specification details to the generated JAR's manifest file.
+          -->
+          <archive>
+            <manifest>
+              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+              <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+            </manifest>
+            <manifestEntries>
+              <Implementation-Version>${project.version}</Implementation-Version>
+              <Implementation-Title>${project.artifactId}</Implementation-Title>
+            </manifestEntries>
+          </archive>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <!-- Profiles moved to bottom as requested -->
   <profiles>
     <profile>
       <id>windows</id>
@@ -192,59 +378,5 @@
       </dependencies>
     </profile>
   </profiles>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <version>3.1.0</version>
-        <configuration>
-          <mainClass>io.thestacktracewhisperer.september.Main</mainClass>
-        </configuration>
-      </plugin>
-
-      <!-- Unit tests only -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <version>3.2.5</version>
-        <configuration>
-          <argLine>-XX:+EnableDynamicAgentLoading</argLine>
-          <excludes>
-            <!-- Exclude ITs from unit test phase -->
-            <exclude>**/*IT.java</exclude>
-            <exclude>**/*ITCase.java</exclude>
-            <exclude>**/*IntegrationTest.java</exclude>
-            <exclude>**/it/**/*Test.java</exclude>
-          </excludes>
-        </configuration>
-      </plugin>
-
-      <!-- Integration tests -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-failsafe-plugin</artifactId>
-        <version>3.2.5</version>
-        <configuration>
-          <argLine>-XX:+EnableDynamicAgentLoading</argLine>
-          <includes>
-            <include>**/*IT.java</include>
-            <include>**/*ITCase.java</include>
-            <include>**/*IntegrationTest.java</include>
-            <include>**/it/**/*Test.java</include>
-          </includes>
-        </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>integration-test</goal>
-              <goal>verify</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
 
 </project>

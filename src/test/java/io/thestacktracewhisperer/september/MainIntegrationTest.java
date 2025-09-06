@@ -8,9 +8,8 @@ class MainIntegrationTest {
 
   @Test
   void main_runs_without_mocking_when_glfw_is_available() {
-
     assertDoesNotThrow(() -> new Main().run());
-
   }
+
 }
 
