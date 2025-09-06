@@ -7,8 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * GLFW window wrapper that creates an OpenGL context. Attempts OSMesa → EGL → default (GLX)
- * and falls back from OpenGL 4.6 to 4.5 to maximize portability in CI.
+ * GLFW window wrapper that creates an OpenGL 4.6 CORE context. Attempts EGL → OSMesa → default (GLX).
  */
 public final class WindowContext implements AutoCloseable {
   private static final Logger log = LoggerFactory.getLogger(WindowContext.class);
@@ -31,8 +30,8 @@ public final class WindowContext implements AutoCloseable {
 
     long window = 0L;
 
-    int[][] versions = new int[][] { {4, 6}, {4, 5} };
-    // Prefer EGL first so zink (OpenGL-on-Vulkan) can provide GL 4.6 when available, then fall back to OSMesa and default
+    int[][] versions = new int[][] { {4, 6} };
+    // Prefer EGL first so zink (OpenGL-on-Vulkan) can provide GL 4.6 when available, then try OSMesa and default
     int[] apis = new int[] { GLFW.GLFW_EGL_CONTEXT_API, GLFW.GLFW_OSMESA_CONTEXT_API, 0 /* default */ };
 
     outer:
@@ -74,9 +73,6 @@ public final class WindowContext implements AutoCloseable {
         log.info("OpenGL reported version: {}", glVersion);
         log.info("OpenGL renderer: {}", glRenderer);
         log.info("OpenGL vendor: {}", glVendor);
-        if (glVersion != null && glVersion.startsWith("4.5")) {
-          log.warn("Requested 4.6 first; runtime provided {} (likely Mesa llvmpipe).", glVersion);
-        }
       } catch (Throwable t) {
         log.warn("Failed to query OpenGL version information", t);
       }

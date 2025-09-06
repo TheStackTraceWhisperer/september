@@ -26,7 +26,7 @@ jobs:
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
     
-    - name: Install Xvfb and OpenGL 4.6 support
+    - name: Install Xvfb and OpenGL 4.6 CORE support
       run: |
         sudo apt-get update
         sudo apt-get install -y \
@@ -42,11 +42,11 @@ jobs:
     - name: Build and test with Maven
       run: xvfb-run -s "-screen 0 1920x1080x24" mvn -B clean verify
       env:
-        # Enable software Vulkan driver for Mesa Zink (OpenGL 4.6 via Vulkan)
+        # Enable software Vulkan driver for Mesa Zink (OpenGL 4.6 CORE via Vulkan)
         VK_DRIVER_FILES: /usr/share/vulkan/icd.d/lvp_icd.x86_64.json
-        # Try to force better OpenGL support - Zink provides GL 4.6 via Vulkan
+        # Force Mesa Zink for OpenGL 4.6 CORE support via Vulkan
         MESA_LOADER_DRIVER_OVERRIDE: zink
-        # Enable EGL platform for better context creation
+        # Enable EGL platform for OpenGL 4.6 CORE context creation
         EGL_PLATFORM: x11
-        # Ensure lavapipe (software Vulkan) is used
+        # Ensure lavapipe (software Vulkan) is used for OpenGL 4.6 CORE support
         VK_ICD_FILENAMES: /usr/share/vulkan/icd.d/lvp_icd.x86_64.json
