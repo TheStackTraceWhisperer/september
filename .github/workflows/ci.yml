@@ -38,6 +38,3 @@ jobs:
     
     - name: Build and test with Maven
       run: xvfb-run -s "-screen 0 1920x1080x24" mvn -B clean verify
-      env:
-        # Explicitly set the OpenGL version to 4.6
-        MESA_GL_VERSION_OVERRIDE: 4.6
