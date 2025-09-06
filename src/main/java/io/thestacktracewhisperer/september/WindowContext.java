@@ -7,7 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * GLFW window wrapper that creates an OpenGL 4.6 CORE context.
+ * GLFW window wrapper that creates an OpenGL context. Attempts OSMesa → EGL → default (GLX)
+ * and falls back from OpenGL 4.6 to 4.5 to maximize portability in CI.
  */
 public final class WindowContext implements AutoCloseable {
   private static final Logger log = LoggerFactory.getLogger(WindowContext.class);
@@ -17,19 +18,46 @@ public final class WindowContext implements AutoCloseable {
 
   private WindowContext() {}
 
+  private static String name(int i) {
+    return switch(i) {
+      case GLFW.GLFW_OSMESA_CONTEXT_API -> "GLFW_OSMESA_CONTEXT_API";
+      case GLFW.GLFW_EGL_CONTEXT_API -> "GLFW_EGL_CONTEXT_API";
+      case 0 -> "GLFW";
+      default -> "";
+    };
+  }
   public static WindowContext open(int width, int height, String title) {
     WindowContext ctx = new WindowContext();
 
-    // Configure OpenGL 4.6 CORE context
-    GLFW.glfwDefaultWindowHints();
-    GLFW.glfwWindowHint(GLFW.GLFW_CLIENT_API, GLFW.GLFW_OPENGL_API);
-    GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 4);
-    GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 6);
-    GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_CORE_PROFILE);
+    long window = 0L;
 
-    long window = GLFW.glfwCreateWindow(width, height, title, 0L, 0L);
+    int[][] versions = new int[][] { {4, 6}, {4, 5} };
+    // Prefer EGL first so zink (OpenGL-on-Vulkan) can provide GL 4.6 when available, then fall back to OSMesa and default
+    int[] apis = new int[] { GLFW.GLFW_EGL_CONTEXT_API, GLFW.GLFW_OSMESA_CONTEXT_API, 0 /* default */ };
+
+    outer:
+    for (int api : apis) {
+      for (int[] ver : versions) {
+        log.info("attempting {} with version {}", name(api), ver);
+
+        GLFW.glfwDefaultWindowHints();
+        if (api != 0) {
+          GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_CREATION_API, api);
+        }
+        GLFW.glfwWindowHint(GLFW.GLFW_CLIENT_API, GLFW.GLFW_OPENGL_API);
+        GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, ver[0]);
+        GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, ver[1]);
+        GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_CORE_PROFILE);
+
+        window = GLFW.glfwCreateWindow(width, height, title, 0L, 0L);
+        if (window != 0L) {
+          break outer;
+        }
+      }
+    }
+
     if (window == 0L) {
-      throw new IllegalStateException("Unable to create GLFW window with OpenGL 4.6 CORE context");
+      throw new IllegalStateException("Unable to create GLFW window");
     }
 
     ctx.handle = window;
@@ -46,6 +74,9 @@ public final class WindowContext implements AutoCloseable {
         log.info("OpenGL reported version: {}", glVersion);
         log.info("OpenGL renderer: {}", glRenderer);
         log.info("OpenGL vendor: {}", glVendor);
+        if (glVersion != null && glVersion.startsWith("4.5")) {
+          log.warn("Requested 4.6 first; runtime provided {} (likely Mesa llvmpipe).", glVersion);
+        }
       } catch (Throwable t) {
         log.warn("Failed to query OpenGL version information", t);
       }
