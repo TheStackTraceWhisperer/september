@@ -1,4 +1,4 @@
-package september.it;
+package io.thestacktracewhisperer.september;
 
 import org.junit.jupiter.api.Test;
 

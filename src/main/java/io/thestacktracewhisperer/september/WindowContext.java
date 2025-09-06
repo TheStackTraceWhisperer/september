@@ -1,12 +1,14 @@
 package io.thestacktracewhisperer.september;
 
 import org.lwjgl.glfw.GLFW;
+import org.lwjgl.opengl.GL;
+import org.lwjgl.opengl.GL11;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Manages the lifecycle of a GLFW window without creating an OpenGL context.
- * Requires GLFW to be initialized (e.g., via GlfwContext.open()).
+ * GLFW window wrapper that creates an OpenGL context. Attempts OSMesa → EGL → default (GLX)
+ * and falls back from OpenGL 4.6 to 4.5 to maximize portability in CI.
  */
 public final class WindowContext implements AutoCloseable {
   private static final Logger log = LoggerFactory.getLogger(WindowContext.class);
@@ -16,25 +18,44 @@ public final class WindowContext implements AutoCloseable {
 
   private WindowContext() {}
 
-  /**
-   * Creates a window using GLFW without an OpenGL context (GLFW_NO_API).
-   * Expects GLFW to be initialized already.
-   *
-   * @param width  window width in pixels
-   * @param height window height in pixels
-   * @param title  window title
-   * @return an initialized WindowContext wrapping the created window
-   * @throws IllegalStateException if the window cannot be created
-   */
+  private static String name(int i) {
+    return switch(i) {
+      case GLFW.GLFW_OSMESA_CONTEXT_API -> "GLFW_OSMESA_CONTEXT_API";
+      case GLFW.GLFW_EGL_CONTEXT_API -> "GLFW_EGL_CONTEXT_API";
+      case 0 -> "GLFW";
+      default -> "";
+    };
+  }
   public static WindowContext open(int width, int height, String title) {
     WindowContext ctx = new WindowContext();
 
-    // Ensure hints are in a known state
-    GLFW.glfwDefaultWindowHints();
-    // Do not create an OpenGL context
-    GLFW.glfwWindowHint(GLFW.GLFW_CLIENT_API, GLFW.GLFW_NO_API);
+    long window = 0L;
 
-    long window = GLFW.glfwCreateWindow(width, height, title, 0L, 0L);
+    int[][] versions = new int[][] { {4, 6}, {4, 5} };
+    // Prefer EGL first so zink (OpenGL-on-Vulkan) can provide GL 4.6 when available, then fall back to OSMesa and default
+    int[] apis = new int[] { GLFW.GLFW_EGL_CONTEXT_API, GLFW.GLFW_OSMESA_CONTEXT_API, 0 /* default */ };
+
+    outer:
+    for (int api : apis) {
+      for (int[] ver : versions) {
+        log.info("attempting {} with version {}", name(api), ver);
+
+        GLFW.glfwDefaultWindowHints();
+        if (api != 0) {
+          GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_CREATION_API, api);
+        }
+        GLFW.glfwWindowHint(GLFW.GLFW_CLIENT_API, GLFW.GLFW_OPENGL_API);
+        GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, ver[0]);
+        GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, ver[1]);
+        GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_CORE_PROFILE);
+
+        window = GLFW.glfwCreateWindow(width, height, title, 0L, 0L);
+        if (window != 0L) {
+          break outer;
+        }
+      }
+    }
+
     if (window == 0L) {
       throw new IllegalStateException("Unable to create GLFW window");
     }
@@ -42,27 +63,39 @@ public final class WindowContext implements AutoCloseable {
     ctx.handle = window;
     ctx.created = true;
 
-    // Log created window handle for visual verification
-    log.info("Created GLFW window: handle={}", window);
+    // Make context current (may fail in mocked tests)
+    GLFW.glfwMakeContextCurrent(window);
+    if (GLFW.glfwGetCurrentContext() == window) {
+      GL.createCapabilities();
+      try {
+        String glVersion = GL11.glGetString(GL11.GL_VERSION);
+        String glRenderer = GL11.glGetString(GL11.GL_RENDERER);
+        String glVendor = GL11.glGetString(GL11.GL_VENDOR);
+        log.info("OpenGL reported version: {}", glVersion);
+        log.info("OpenGL renderer: {}", glRenderer);
+        log.info("OpenGL vendor: {}", glVendor);
+        if (glVersion != null && glVersion.startsWith("4.5")) {
+          log.warn("Requested 4.6 first; runtime provided {} (likely Mesa llvmpipe).", glVersion);
+        }
+      } catch (Throwable t) {
+        log.warn("Failed to query OpenGL version information", t);
+      }
+    } else {
+      log.debug("Skipping GL capability creation (no current context) – likely running under mocked GLFW in tests.");
+    }
 
+    log.info("Created GLFW window: handle={}", window);
     return ctx;
   }
 
-  /**
-   * @return the raw GLFW window handle
-   */
   public long handle() {
     return handle;
   }
 
-  /**
-   * Destroys the GLFW window. Safe to call multiple times.
-   */
   @Override
   public void close() {
     if (!created) return;
     if (handle != 0L) {
-      // Log handle before destroying for visibility
       log.info("Destroying GLFW window: handle={}", handle);
       GLFW.glfwDestroyWindow(handle);
       handle = 0L;

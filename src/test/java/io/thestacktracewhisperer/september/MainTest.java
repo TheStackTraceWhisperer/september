@@ -52,6 +52,7 @@ class MainTest {
       main.run();
 
       // Assert logging
+      Mockito.verify(log).info("Window handle: {}", handle);
       Mockito.verify(log).info("GLFW initialized.");
       Mockito.verify(log).info("GLFW version: {}.{}.{}", 3, 7, 1);
       Mockito.verify(log).info("GLFW version string: {}", "GLFW 9.9.9 Testing");

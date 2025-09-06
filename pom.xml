@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>io.thestacktracewhisperer</groupId>
@@ -9,15 +11,20 @@
   <version>1.0-SNAPSHOT</version>
 
   <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
     <maven.compiler.source>21</maven.compiler.source>
     <maven.compiler.target>21</maven.compiler.target>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
     <!-- LWJGL version -->
     <lwjgl.version>3.3.3</lwjgl.version>
+
     <!-- Mockito version (inline requires this artifact) -->
     <mockito.version>5.19.0</mockito.version>
+
     <!-- JUnit Jupiter BOM version -->
     <junit.jupiter.version>5.10.2</junit.jupiter.version>
+
     <!-- SLF4J version -->
     <slf4j.version>2.0.13</slf4j.version>
   </properties>
@@ -51,6 +58,7 @@
       <artifactId>slf4j-api</artifactId>
       <version>${slf4j.version}</version>
     </dependency>
+
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-simple</artifactId>
@@ -73,6 +81,14 @@
       <version>${mockito.version}</version>
       <scope>test</scope>
     </dependency>
+
+    <!-- LWJGL OpenGL binding (needed to query GL version) -->
+    <dependency>
+      <groupId>org.lwjgl</groupId>
+      <artifactId>lwjgl-opengl</artifactId>
+      <version>${lwjgl.version}</version>
+    </dependency>
+
   </dependencies>
 
   <!-- OS-specific profiles to pull the correct native libraries -->
@@ -85,18 +101,28 @@
         </os>
       </activation>
       <dependencies>
+
         <dependency>
           <groupId>org.lwjgl</groupId>
           <artifactId>lwjgl</artifactId>
           <version>${lwjgl.version}</version>
           <classifier>natives-windows</classifier>
         </dependency>
+
         <dependency>
           <groupId>org.lwjgl</groupId>
           <artifactId>lwjgl-glfw</artifactId>
           <version>${lwjgl.version}</version>
           <classifier>natives-windows</classifier>
         </dependency>
+
+        <dependency>
+          <groupId>org.lwjgl</groupId>
+          <artifactId>lwjgl-opengl</artifactId>
+          <version>${lwjgl.version}</version>
+          <classifier>natives-windows</classifier>
+        </dependency>
+
       </dependencies>
     </profile>
 
@@ -108,18 +134,28 @@
         </os>
       </activation>
       <dependencies>
+
         <dependency>
           <groupId>org.lwjgl</groupId>
           <artifactId>lwjgl</artifactId>
           <version>${lwjgl.version}</version>
           <classifier>natives-linux</classifier>
         </dependency>
+
         <dependency>
           <groupId>org.lwjgl</groupId>
           <artifactId>lwjgl-glfw</artifactId>
           <version>${lwjgl.version}</version>
           <classifier>natives-linux</classifier>
         </dependency>
+
+        <dependency>
+          <groupId>org.lwjgl</groupId>
+          <artifactId>lwjgl-opengl</artifactId>
+          <version>${lwjgl.version}</version>
+          <classifier>natives-linux</classifier>
+        </dependency>
+
       </dependencies>
     </profile>
 
@@ -131,18 +167,28 @@
         </os>
       </activation>
       <dependencies>
+
         <dependency>
           <groupId>org.lwjgl</groupId>
           <artifactId>lwjgl</artifactId>
           <version>${lwjgl.version}</version>
           <classifier>natives-macos</classifier>
         </dependency>
+
         <dependency>
           <groupId>org.lwjgl</groupId>
           <artifactId>lwjgl-glfw</artifactId>
           <version>${lwjgl.version}</version>
           <classifier>natives-macos</classifier>
         </dependency>
+
+        <dependency>
+          <groupId>org.lwjgl</groupId>
+          <artifactId>lwjgl-opengl</artifactId>
+          <version>${lwjgl.version}</version>
+          <classifier>natives-macos</classifier>
+        </dependency>
+
       </dependencies>
     </profile>
   </profiles>
