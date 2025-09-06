@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     
     steps:
     - uses: actions/checkout@v4
@@ -26,27 +26,18 @@ jobs:
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
     
-    - name: Install Xvfb and OpenGL 4.6 CORE support
+    - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y \
+        sudo apt-get install -y --no-install-recommends \
           xvfb \
-          libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev \
-          mesa-vulkan-drivers \
           mesa-utils \
-          vulkan-tools \
-          libegl1-mesa-dev \
-          libgl1-mesa-dev \
-          libgles2-mesa-dev
+          maven \
+          x11proto-core-dev
+        sudo rm -rf /var/lib/apt/lists/*
     
     - name: Build and test with Maven
       run: xvfb-run -s "-screen 0 1920x1080x24" mvn -B clean verify
       env:
-        # Enable software Vulkan driver for Mesa Zink (OpenGL 4.6 CORE via Vulkan)
-        VK_DRIVER_FILES: /usr/share/vulkan/icd.d/lvp_icd.x86_64.json
-        # Force Mesa Zink for OpenGL 4.6 CORE support via Vulkan
-        MESA_LOADER_DRIVER_OVERRIDE: zink
-        # Enable EGL platform for OpenGL 4.6 CORE context creation
-        EGL_PLATFORM: x11
-        # Ensure lavapipe (software Vulkan) is used for OpenGL 4.6 CORE support
-        VK_ICD_FILENAMES: /usr/share/vulkan/icd.d/lvp_icd.x86_64.json
+        # Explicitly set the OpenGL version to 4.6
+        MESA_GL_VERSION_OVERRIDE: 4.6
