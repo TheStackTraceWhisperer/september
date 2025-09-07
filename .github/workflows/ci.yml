@@ -3,12 +3,16 @@ name: CI
 on:
   push:
     branches: [ main ]
+    tags: [ 'v*' ]
   pull_request:
     branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        profile: [linux, windows, mac]
     
     steps:
     - uses: actions/checkout@v4
@@ -23,8 +27,10 @@ jobs:
       uses: actions/cache@v3
       with:
         path: ~/.m2
-        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-        restore-keys: ${{ runner.os }}-m2
+        key: ${{ runner.os }}-m2-${{ matrix.profile }}-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-m2-${{ matrix.profile }}
+          ${{ runner.os }}-m2
     
     - name: Install dependencies
       run: |
@@ -37,6 +43,124 @@ jobs:
         sudo rm -rf /var/lib/apt/lists/*
     
     - name: Build and test with Maven
-      run: xvfb-run -s "-screen 0 1920x1080x24" mvn -B clean verify
+      run: |
+        if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+          # For PRs, run full test suite to generate coverage
+          xvfb-run -s "-screen 0 1920x1080x24" mvn -B clean verify -P${{ matrix.profile }}
+        else
+          # For pushes, run tests only on linux profile to avoid redundancy
+          if [[ "${{ matrix.profile }}" == "linux" ]]; then
+            xvfb-run -s "-screen 0 1920x1080x24" mvn -B clean verify -P${{ matrix.profile }}
+          else
+            mvn -B clean package -P${{ matrix.profile }} -DskipTests
+          fi
+        fi
       env:
         MESA_GL_VERSION_OVERRIDE: 4.6
+    
+    - name: Add coverage to PR
+      id: jacoco
+      uses: madrapps/jacoco-report@v1.6.1
+      if: github.event_name == 'pull_request' && always()
+      with:
+        paths: |
+          ${{ github.workspace }}/target/site/jacoco/jacoco.xml
+        token: ${{ secrets.GITHUB_TOKEN }}
+        min-coverage-overall: 40
+        min-coverage-changed-files: 60
+        title: 'JaCoCo Coverage Report (${{ matrix.profile }})'
+        update-comment: true
+    
+    - name: Publish Test Report
+      uses: mikepenz/action-junit-report@v4
+      if: always() && hashFiles('**/target/surefire-reports/TEST-*.xml') != ''
+      with:
+        report_paths: '**/target/surefire-reports/TEST-*.xml,**/target/failsafe-reports/TEST-*.xml'
+        check_name: 'Test Results (${{ matrix.profile }})'
+        fail_on_failure: false
+    
+    - name: Upload JaCoCo coverage reports
+      uses: actions/upload-artifact@v4
+      if: always() && hashFiles('target/site/jacoco/jacoco.xml') != ''
+      with:
+        name: jacoco-report-${{ matrix.profile }}
+        path: |
+          target/site/jacoco/
+          target/site/jacoco-ut/
+          target/site/jacoco-it/
+        retention-days: 30
+    
+    - name: Build profile-specific artifacts
+      run: |
+        if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+          # For PRs, artifacts are already built during verify step
+          echo "Artifacts already built during verify step"
+        else
+          if [[ "${{ matrix.profile }}" != "linux" ]]; then
+            # For pushes, build artifacts only for profiles that didn't run tests
+            mvn -B package -P${{ matrix.profile }} -DskipTests
+          fi
+        fi
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: september-${{ matrix.profile }}-artifacts
+        path: |
+          target/september-*.jar
+        retention-days: 30
+
+  publish:
+    needs: build
+    runs-on: ubuntu-24.04
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        server-id: github
+        server-username: MAVEN_USERNAME
+        server-password: MAVEN_TOKEN
+    
+    - name: Cache Maven packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-publish-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+    
+    - name: Publish to GitHub Packages
+      run: mvn -B deploy -DskipTests
+      env:
+        MAVEN_USERNAME: ${{ github.actor }}
+        MAVEN_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-24.04
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          artifacts/september-linux-artifacts/*.jar
+          artifacts/september-windows-artifacts/*.jar
+          artifacts/september-mac-artifacts/*.jar
+        generate_release_notes: true
+        fail_on_unmatched_files: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
