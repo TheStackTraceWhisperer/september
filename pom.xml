@@ -316,6 +316,11 @@
       <name>GitHub Packages</name>
       <url>https://maven.pkg.github.com/TheStackTraceWhisperer/september</url>
     </repository>
+    <snapshotRepository>
+      <id>github</id>
+      <name>GitHub Packages</name>
+      <url>https://maven.pkg.github.com/TheStackTraceWhisperer/september</url>
+    </snapshotRepository>
   </distributionManagement>
 
   <!-- Profiles moved to bottom as requested -->
