@@ -14,6 +14,7 @@ public final class Main implements Runnable {
 
   @Override
   public void run() {
+
     try (GlfwContext ignored = GlfwContext.open();
          MemoryStack stack = MemoryStack.stackPush();
          WindowContext window = WindowContext.open(640, 480, "LWJGL Window")) {
