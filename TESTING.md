@@ -18,12 +18,21 @@ This document outlines the testing standards for the project, covering common pr
 - **Location/Patterns**: `**/*Test.java` (excluding integration test patterns).
 - **Goal**: Isolate and test a single unit of code.
 - **Dependencies**: No native or display dependencies are required.
-- **Mocking**:
-  - Use Mockito to isolate the code under test.
-  - Unit tests must mock all LWJGL API classes to remain platform-agnostic. This includes, but is not limited to, static mocking for the following classes:
-    - `org.lwjgl.glfw.GLFW`
-    - `org.lwjgl.opengl.GL`
-    - `org.lwjgl.opengl.GL11`
+
+- **Mocking**: The project uses Mockito for mocking. The strategy depends on the type of class being tested.
+
+  - **Philosophy**: The goal of mocking is to isolate the unit under test from its external dependencies. This makes tests faster, more reliable, and more focused by replacing real dependencies with predictable, lightweight fakes.
+
+  - **Static API Mocking (for Native Calls)**:
+    - **When**: Use this for classes that make direct, static calls to LWJGL APIs.
+    - **How**: Use Mockito's `mockStatic` feature.
+    - **Why**: To remain platform-agnostic and avoid needing a real display or native libraries.
+    - **Examples**: `org.lwjgl.glfw.GLFW`, `org.lwjgl.opengl.GL`, `org.lwjgl.opengl.GL11`.
+
+  - **Dependency Injection Mocking (for All Other Classes)**:
+    - **When**: Use this for classes that do *not* make direct native calls, but instead rely on other objects.
+    - **How**: Pass mocked instances of its dependencies into the class's constructor or methods.
+    - **Example**: The `Engine` class does not call `GLFW` directly. It relies on other services (like a `WindowContext`). To test `Engine`, you would pass a *mocked* `WindowContext` to it.
 
 ## Integration Test Standards
 
@@ -65,3 +74,57 @@ The provided `Dockerfile` simulates a CI run with a virtual display.
   # View logs if needed
   docker logs <container_id>
   ```
+
+---
+
+## Test Data Management
+
+When tests require external data (e.g., configuration files, shaders, textures), follow these guidelines:
+
+- **Location**: Place all test-specific resources in `/src/test/resources`.
+- **Access**: Load resources using standard classpath lookups (e.g., `getClass().getResourceAsStream(...)`). This ensures tests run correctly both in the IDE and in Maven builds.
+- **Separation**: Keep test resources separate from production resources in `/src/main/resources` to prevent them from being bundled with the final application.
+- **Cleanup**: Because tests read from the classpath, file-based cleanup is not typically required. Each test should be independent and not rely on state left by previous tests.
+
+---
+
+## Loop Policy Usage (MainLoopPolicy)
+
+The application loop behavior is controlled via the functional `MainLoopPolicy` API. This is intentionally lightweight, side-effect free, and safe to use directly in tests without mocking.
+
+### Available Policies
+- `MainLoopPolicy.standard()` — Runs until the native window is closed (unbounded for automated tests).
+- `MainLoopPolicy.frames(n)` — Runs a fixed number of frames (0 skips the loop entirely). Ideal for deterministic unit tests.
+- `MainLoopPolicy.initializeOnly()` — Alias for `frames(0)`; performs initialization only.
+- `MainLoopPolicy.timed(duration)` — Runs until the duration elapses AND (if using the standard policy in composition) the window remains open.
+- `MainLoopPolicy.all(p1, p2, ...)` — Logical AND composition; stops when any member stops.
+- `MainLoopPolicy.any(p1, p2, ...)` — Logical OR composition; continues while any member continues.
+
+### Testing Guidance
+- **Unit Tests**: Prefer `frames(0)` or `frames(1)` to avoid long-running loops. Example: `new Main(MainLoopPolicy.frames(0)).run();`
+- **Integration Tests**: Use a small bounded policy like `frames(1)` or a short `timed(Duration.ofMillis(50))` to keep builds fast while exercising real paths.
+- **Do Not Mock the Policy**: It's pure and already deterministic; mocking adds no value.
+- **No Branches in Production**: Policy selection happens in test construction only—never gate production logic on test conditions.
+
+### Example
+```java
+// Unit test style: initialize only (no frames)
+new Main(MainLoopPolicy.initializeOnly()).run();
+
+// Short integration run: one frame
+new Main(MainLoopPolicy.frames(1)).run();
+
+// Composite: run up to 100 frames OR 150 ms, whichever stops first
+new Main(MainLoopPolicy.any(
+    MainLoopPolicy.frames(100),
+    MainLoopPolicy.timed(Duration.ofMillis(150))
+)).run();
+```
+
+### Rationale
+Using policies instead of ad-hoc sleeps or flags ensures:
+- Deterministic test duration
+- No reliance on `Thread.sleep` hacks
+- Clear separation between control logic (tests) and application behavior (production)
+
+---

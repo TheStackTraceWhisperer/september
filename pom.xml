@@ -29,12 +29,29 @@
 
     <!-- JaCoCo version -->
     <jacoco.version>0.8.11</jacoco.version>
+
+    <!-- Added explicit Lombok version property -->
+    <lombok.version>1.18.38</lombok.version>
   </properties>
 
   <!-- Dependency Management for consistent versions -->
   <dependencies>
 
+    <!-- Lombok (annotation processor & provided at compile time) -->
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>${lombok.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
     <!-- Core & runtime -->
+    <dependency>
+      <groupId>org.joml</groupId>
+      <artifactId>joml</artifactId>
+      <version>1.10.5</version>
+    </dependency>
+
     <dependency>
       <groupId>org.lwjgl</groupId>
       <artifactId>lwjgl</artifactId>
@@ -98,6 +115,14 @@
         <version>3.13.0</version>
         <configuration>
           <release>21</release>
+          <!-- Explicit annotation processor path configuration -->
+          <annotationProcessorPaths>
+            <path>
+              <groupId>org.projectlombok</groupId>
+              <artifactId>lombok</artifactId>
+              <version>${lombok.version}</version>
+            </path>
+          </annotationProcessorPaths>
         </configuration>
       </plugin>
 
@@ -192,10 +217,8 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>3.2.5</version>
         <configuration>
-          <!--
-            Unit tests: Run all tests that do not follow integration test naming conventions.
-          -->
-          <argLine>${argLine} -XX:+EnableDynamicAgentLoading</argLine>
+          <!--suppress MavenModelInspection -->
+          <argLine>${argLine} -XX:+EnableDynamicAgentLoading -Xshare:off</argLine>
           <excludes>
             <exclude>**/*IT.java</exclude>
             <exclude>**/*ITCase.java</exclude>
@@ -210,10 +233,8 @@
         <artifactId>maven-failsafe-plugin</artifactId>
         <version>3.2.5</version>
         <configuration>
-          <!--
-            Integration tests: Run all tests that follow standard integration test naming conventions.
-          -->
-          <argLine>${failsafeArgLine} -XX:+EnableDynamicAgentLoading</argLine>
+          <!--suppress MavenModelInspection -->
+          <argLine>${failsafeArgLine} -XX:+EnableDynamicAgentLoading -Xshare:off</argLine>
           <includes>
             <include>**/*IT.java</include>
             <include>**/*ITCase.java</include>

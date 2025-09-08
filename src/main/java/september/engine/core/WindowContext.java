@@ -1,4 +1,4 @@
-package io.thestacktracewhisperer.september;
+package september.engine.core;
 
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL;
@@ -15,12 +15,8 @@ public final class WindowContext implements AutoCloseable {
   private boolean created = false;
   private long handle = 0L;
 
-  private WindowContext() {}
-
-  public static WindowContext open(int width, int height, String title) {
-    WindowContext ctx = new WindowContext();
-
-    // Single attempt: request OpenGL 4.6 core profile (no fallback logic anymore)
+  public WindowContext(int width, int height, String title) {
+    // Single attempt: request OpenGL 4.6 core profile
     GLFW.glfwDefaultWindowHints();
     GLFW.glfwWindowHint(GLFW.GLFW_CLIENT_API, GLFW.GLFW_OPENGL_API);
     GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -29,24 +25,22 @@ public final class WindowContext implements AutoCloseable {
 
     log.info("Creating GLFW window with OpenGL 4.6 core profile");
     long window = GLFW.glfwCreateWindow(width, height, title, 0L, 0L);
-
     if (window == 0L) {
       throw new IllegalStateException("Unable to create GLFW window (requested OpenGL 4.6 core profile)");
     }
 
-    ctx.handle = window;
-    ctx.created = true;
+    this.handle = window;
+    this.created = true;
 
     // Make context current
     GLFW.glfwMakeContextCurrent(window);
     if (GLFW.glfwGetCurrentContext() != window) {
       GLFW.glfwDestroyWindow(window);
-      ctx.handle = 0L;
-      ctx.created = false;
+      this.handle = 0L;
+      this.created = false;
       throw new IllegalStateException("Failed to make OpenGL context current");
     }
 
-    // Create GL capabilities & query info
     try {
       GL.createCapabilities();
       try {
@@ -61,20 +55,27 @@ public final class WindowContext implements AutoCloseable {
       }
     } catch (IllegalStateException ise) {
       GLFW.glfwDestroyWindow(window);
-      ctx.handle = 0L;
-      ctx.created = false;
+      this.handle = 0L;
+      this.created = false;
       throw ise;
     }
 
     log.info("Created GLFW window: handle={}", window);
-    return ctx;
   }
 
-  public long handle() { return handle; }
+  public long handle() {
+    return handle;
+  }
+
+  public void swapBuffers() {
+    GLFW.glfwSwapBuffers(handle);
+  }
 
   @Override
   public void close() {
-    if (!created) return;
+    if (!created) {
+      return;
+    }
     if (handle != 0L) {
       log.info("Destroying GLFW window: handle={}", handle);
       GLFW.glfwDestroyWindow(handle);
