@@ -34,6 +34,9 @@ public class MovementSystem implements ISystem {
       TransformComponent transform = world.getComponent(entityId, TransformComponent.class);
       MovementStatsComponent stats = world.getComponent(entityId, MovementStatsComponent.class);
 
+      // Snapshot the position before we move it. This is crucial for collision response.
+      transform.updatePreviousPosition();
+
       // Reset velocity for this frame
       velocity.zero();
 

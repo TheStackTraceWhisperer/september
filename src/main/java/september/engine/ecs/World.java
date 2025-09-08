@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
  * This class orchestrates the various managers (Entity, Component, System)
  * to provide a coherent ECS framework.
  */
-public final class World implements IWorld {
+public class World implements IWorld {
 
   private final EntityManager entityManager;
   private final ComponentManager componentManager;

@@ -12,6 +12,7 @@ import september.engine.ecs.Component;
 public class TransformComponent implements Component {
 
   public final Vector3f position;
+  public final Vector3f previousPosition; // Stores the position from the previous frame for collision response
   public final Quaternionf rotation; // Using quaternions is more robust than Euler angles for rotation
   public final Vector3f scale;
 
@@ -19,9 +20,26 @@ public class TransformComponent implements Component {
 
   public TransformComponent() {
     this.position = new Vector3f(0.0f, 0.0f, 0.0f);
+    this.previousPosition = new Vector3f(0.0f, 0.0f, 0.0f);
     this.rotation = new Quaternionf().identity();
     this.scale = new Vector3f(1.0f, 1.0f, 1.0f);
     this.transformMatrix = new Matrix4f().identity();
+  }
+
+  /**
+   * Stores the current position as the previous position.
+   * This should be called once per frame before any movement logic.
+   */
+  public void updatePreviousPosition() {
+    this.previousPosition.set(this.position);
+  }
+
+  /**
+   * Reverts the current position to the stored previous position.
+   * This is the core of our collision response.
+   */
+  public void revertPosition() {
+    this.position.set(this.previousPosition);
   }
 
   /**
