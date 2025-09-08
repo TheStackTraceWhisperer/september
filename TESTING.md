@@ -18,13 +18,21 @@ This document outlines the testing standards for the project, covering common pr
 - **Location/Patterns**: `**/*Test.java` (excluding integration test patterns).
 - **Goal**: Isolate and test a single unit of code.
 - **Dependencies**: No native or display dependencies are required.
-- **Mocking**:
-  - Use Mockito to isolate the code under test.
-  - Unit tests must mock all LWJGL API classes to remain platform-agnostic. This includes, but is not limited to, static mocking for the following classes:
-    - `org.lwjgl.glfw.GLFW`
-    - `org.lwjgl.opengl.GL`
-    - `org.lwjgl.opengl.GL11`
-    - This only applies to classes that actually make glfw/gl calls, Engine for example would just use mocked dependencies
+
+- **Mocking**: The project uses Mockito for mocking. The strategy depends on the type of class being tested.
+
+  - **Philosophy**: The goal of mocking is to isolate the unit under test from its external dependencies. This makes tests faster, more reliable, and more focused by replacing real dependencies with predictable, lightweight fakes.
+
+  - **Static API Mocking (for Native Calls)**:
+    - **When**: Use this for classes that make direct, static calls to LWJGL APIs.
+    - **How**: Use Mockito's `mockStatic` feature.
+    - **Why**: To remain platform-agnostic and avoid needing a real display or native libraries.
+    - **Examples**: `org.lwjgl.glfw.GLFW`, `org.lwjgl.opengl.GL`, `org.lwjgl.opengl.GL11`.
+
+  - **Dependency Injection Mocking (for All Other Classes)**:
+    - **When**: Use this for classes that do *not* make direct native calls, but instead rely on other objects.
+    - **How**: Pass mocked instances of its dependencies into the class's constructor or methods.
+    - **Example**: The `Engine` class does not call `GLFW` directly. It relies on other services (like a `WindowContext`). To test `Engine`, you would pass a *mocked* `WindowContext` to it.
 
 ## Integration Test Standards
 
@@ -69,6 +77,17 @@ The provided `Dockerfile` simulates a CI run with a virtual display.
 
 ---
 
+## Test Data Management
+
+When tests require external data (e.g., configuration files, shaders, textures), follow these guidelines:
+
+- **Location**: Place all test-specific resources in `/src/test/resources`.
+- **Access**: Load resources using standard classpath lookups (e.g., `getClass().getResourceAsStream(...)`). This ensures tests run correctly both in the IDE and in Maven builds.
+- **Separation**: Keep test resources separate from production resources in `/src/main/resources` to prevent them from being bundled with the final application.
+- **Cleanup**: Because tests read from the classpath, file-based cleanup is not typically required. Each test should be independent and not rely on state left by previous tests.
+
+---
+
 ## Loop Policy Usage (MainLoopPolicy)
 
 The application loop behavior is controlled via the functional `MainLoopPolicy` API. This is intentionally lightweight, side-effect free, and safe to use directly in tests without mocking.
@@ -109,4 +128,3 @@ Using policies instead of ad-hoc sleeps or flags ensures:
 - Clear separation between control logic (tests) and application behavior (production)
 
 ---
-
