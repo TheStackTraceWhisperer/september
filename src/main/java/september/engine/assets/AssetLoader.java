@@ -1,11 +1,14 @@
 package september.engine.assets;
 
+import org.lwjgl.BufferUtils;
 import september.engine.rendering.Texture;
 import september.engine.rendering.gl.Shader;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -24,23 +27,23 @@ public final class AssetLoader {
    * @return A new, compiled Shader object.
    */
   public static Shader loadShader(String vertexPath, String fragmentPath) {
-    String vertexSource = loadResourceAsString(vertexPath);
+    String vertexSource = loadResourceAsString(fragmentPath);
     String fragmentSource = loadResourceAsString(fragmentPath);
     return new Shader(vertexSource, fragmentSource);
   }
 
   /**
-   * Loads a texture from an image file.
+   * Loads a texture from an image file on the classpath.
    * @param filePath The classpath resource path to the image file.
    * @return A new Texture object.
    */
   public static Texture loadTexture(String filePath) {
-    // The Texture constructor needs an absolute path, so we resolve it from the classpath.
-    URL resourceUrl = AssetLoader.class.getClassLoader().getResource(filePath);
-    if (resourceUrl == null) {
-      throw new RuntimeException("Asset not found in classpath: " + filePath);
+    try {
+      ByteBuffer imageBuffer = loadResourceAsByteBuffer(filePath);
+      return new Texture(imageBuffer);
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to load texture resource: " + filePath, e);
     }
-    return new Texture(resourceUrl.getPath());
   }
 
   /**
@@ -57,5 +60,44 @@ public final class AssetLoader {
     } catch (IOException e) {
       throw new RuntimeException("Failed to read resource: " + filePath, e);
     }
+  }
+
+  private static ByteBuffer resizeBuffer(ByteBuffer buffer, int newCapacity) {
+    ByteBuffer newBuffer = BufferUtils.createByteBuffer(newCapacity);
+    buffer.flip();
+    newBuffer.put(buffer);
+    return newBuffer;
+  }
+
+  /**
+   * Reads a resource file from the classpath into a direct ByteBuffer.
+   * This method reads the resource in chunks and is robust for use inside JARs.
+   * @param filePath The classpath resource path.
+   * @return A ByteBuffer containing the file data.
+   */
+  private static ByteBuffer loadResourceAsByteBuffer(String filePath) throws IOException {
+    int bufferSize = 8192;
+    ByteBuffer buffer = BufferUtils.createByteBuffer(bufferSize);
+
+    try (InputStream source = AssetLoader.class.getClassLoader().getResourceAsStream(filePath);
+         ReadableByteChannel rbc = Channels.newChannel(source)) {
+
+      if (source == null) {
+        throw new IOException("Resource not found: " + filePath);
+      }
+
+      while (true) {
+        int bytes = rbc.read(buffer);
+        if (bytes == -1) {
+          break;
+        }
+        if (buffer.remaining() == 0) {
+          buffer = resizeBuffer(buffer, buffer.capacity() * 2);
+        }
+      }
+    }
+
+    buffer.flip();
+    return buffer;
   }
 }

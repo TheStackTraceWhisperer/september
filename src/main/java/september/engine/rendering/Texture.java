@@ -9,10 +9,7 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
 import static org.lwjgl.opengl.GL30.glGenerateMipmap;
-import static org.lwjgl.stb.STBImage.stbi_failure_reason;
-import static org.lwjgl.stb.STBImage.stbi_image_free;
-import static org.lwjgl.stb.STBImage.stbi_load;
-import static org.lwjgl.stb.STBImage.stbi_set_flip_vertically_on_load;
+import static org.lwjgl.stb.STBImage.*;
 
 /**
  * Represents a 2D texture stored on the GPU.
@@ -27,12 +24,12 @@ public class Texture implements AutoCloseable {
   private final int height;
 
   /**
-   * Loads a texture from the given file path.
+   * Loads a texture from an in-memory image buffer.
    *
-   * @param filePath The path to the image file (e.g., "assets/textures/player.png").
+   * @param imageBuffer A ByteBuffer containing the raw image file data (e.g., a PNG or JPG).
    */
-  public Texture(String filePath) {
-    ByteBuffer imageBuffer;
+  public Texture(ByteBuffer imageBuffer) {
+    ByteBuffer decodedImage;
     try (MemoryStack stack = MemoryStack.stackPush()) {
       IntBuffer w = stack.mallocInt(1);
       IntBuffer h = stack.mallocInt(1);
@@ -40,9 +37,9 @@ public class Texture implements AutoCloseable {
 
       // Tell STB to flip the image vertically on load, which is necessary for OpenGL's coordinate system.
       stbi_set_flip_vertically_on_load(true);
-      imageBuffer = stbi_load(filePath, w, h, channels, 4); // Request 4 channels (RGBA)
-      if (imageBuffer == null) {
-        throw new RuntimeException("Failed to load a texture file! Path: " + filePath + ", Reason: " + stbi_failure_reason());
+      decodedImage = stbi_load_from_memory(imageBuffer, w, h, channels, 4); // Request 4 channels (RGBA)
+      if (decodedImage == null) {
+        throw new RuntimeException("Failed to load a texture from memory! Reason: " + stbi_failure_reason());
       }
       this.width = w.get(0);
       this.height = h.get(0);
@@ -61,13 +58,13 @@ public class Texture implements AutoCloseable {
 
     // Upload the image data to the texture
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, this.width, this.height, 0,
-      GL_RGBA, GL_UNSIGNED_BYTE, imageBuffer);
+      GL_RGBA, GL_UNSIGNED_BYTE, decodedImage);
 
     // Generate mipmaps for better quality at smaller scales (optional but good practice)
     glGenerateMipmap(GL_TEXTURE_2D);
 
     // Free the image memory now that it's on the GPU
-    stbi_image_free(imageBuffer);
+    stbi_image_free(decodedImage);
 
     // Unbind the texture
     glBindTexture(GL_TEXTURE_2D, 0);

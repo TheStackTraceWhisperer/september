@@ -10,8 +10,6 @@ import september.engine.rendering.Renderer;
 import september.engine.rendering.gl.OpenGLRenderer;
 import september.engine.systems.RenderSystem;
 
-import java.util.List;
-
 /**
  * The runtime core of the application.
  * Manages the main loop, orchestrates service lifecycles, and drives the ECS updates.
@@ -22,18 +20,18 @@ public final class Engine implements Runnable {
   private final ResourceManager resourceManager;
   private final Camera camera;
   private final InputService inputService;
-  private final List<ISystem> systemsToRegister;
+  private final ISystem[] systemsToRegister;
   private final MainLoopPolicy loopPolicy;
 
   public Engine(IWorld world, TimeService timeService, ResourceManager resourceManager, Camera camera,
-                InputService inputService, List<ISystem> systemsToRegister, MainLoopPolicy loopPolicy) {
+                InputService inputService, MainLoopPolicy loopPolicy, ISystem... systemsToRegister) {
     this.world = world;
     this.timeService = timeService;
     this.resourceManager = resourceManager;
     this.camera = camera;
     this.inputService = inputService;
-    this.systemsToRegister = systemsToRegister;
     this.loopPolicy = loopPolicy;
+    this.systemsToRegister = systemsToRegister;
   }
 
   @Override
@@ -56,8 +54,10 @@ public final class Engine implements Runnable {
       loadGpuAssets(); // Load meshes and textures that require an active GL context.
 
       // --- REGISTER SYSTEMS ---
-      for (ISystem system : systemsToRegister) {
-        world.registerSystem(system);
+      if (systemsToRegister != null) {
+        for (ISystem system : systemsToRegister) {
+          world.registerSystem(system);
+        }
       }
       // The RenderSystem is a core engine system that depends on the locally created renderer.
       world.registerSystem(new RenderSystem(world, renderer, resources, camera));
@@ -77,7 +77,6 @@ public final class Engine implements Runnable {
       }
 
     } catch (Exception e) {
-      e.printStackTrace();
       throw new RuntimeException(e);
     }
   }
@@ -102,4 +101,3 @@ public final class Engine implements Runnable {
     resourceManager.loadTexture("player_texture", "textures/player.png");
   }
 }
-

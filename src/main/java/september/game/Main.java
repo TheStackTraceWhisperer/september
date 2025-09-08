@@ -22,8 +22,6 @@ import september.game.input.KeyboardMappingService;
 import september.game.systems.MovementSystem;
 import september.game.systems.PlayerInputSystem;
 
-import java.util.List;
-
 /**
  * The entry point for the game application.
  *
@@ -84,10 +82,9 @@ public final class Main implements Runnable {
     // The order is important: input should be processed before movement.
     ISystem playerInputSystem = new PlayerInputSystem(world, mappingService);
     ISystem movementSystem = new MovementSystem(world);
-    List<ISystem> gameSystems = List.of(playerInputSystem, movementSystem);
 
     // --- 5. Create and Run the Engine ---
-    Engine gameEngine = new Engine(world, timeService, resourceManager, camera, inputService, gameSystems, loopPolicy);
+    Engine gameEngine = new Engine(world, timeService, resourceManager, camera, inputService, loopPolicy, playerInputSystem, movementSystem);
 
     try {
       gameEngine.run();
@@ -101,4 +98,3 @@ public final class Main implements Runnable {
     new Main().run();
   }
 }
-
