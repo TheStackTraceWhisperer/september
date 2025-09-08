@@ -1,28 +1,27 @@
-package io.thestacktracewhisperer.september;
+package september;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWErrorCallbackI;
+import september.engine.core.GlfwContext;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 class GlfwContextTest {
 
   @Test
-  void open_and_close_succeeds_when_glfw_init_returns_true() {
+  void construct_and_close_succeeds_when_glfw_init_returns_true() {
     try (MockedStatic<GLFW> glfw = Mockito.mockStatic(GLFW.class)) {
       // Arrange GLFW static methods
       glfw.when(GLFW::glfwInit).thenReturn(true);
       glfw.when(() -> GLFW.glfwSetErrorCallback(Mockito.any(GLFWErrorCallbackI.class))).thenReturn(null);
       glfw.when(() -> GLFW.glfwSetErrorCallback(null)).thenReturn(null);
-      // glfwTerminate is void; no stubbing required
 
       // Act & Assert
       assertDoesNotThrow(() -> {
-        try (GlfwContext ignored = GlfwContext.open()) {
+        try (GlfwContext ignored = new GlfwContext()) {
           // no-op: just ensure open() works under mocked GLFW
         }
       });
@@ -34,14 +33,14 @@ class GlfwContextTest {
   }
 
   @Test
-  void open_throws_when_glfw_init_returns_false() {
+  void constructor_throws_when_glfw_init_returns_false() {
     try (MockedStatic<GLFW> glfw = Mockito.mockStatic(GLFW.class)) {
       // Arrange GLFW static methods
       glfw.when(GLFW::glfwInit).thenReturn(false);
       glfw.when(() -> GLFW.glfwSetErrorCallback(Mockito.any(GLFWErrorCallbackI.class))).thenReturn(null);
 
       // Act & Assert
-      assertThrows(IllegalStateException.class, GlfwContext::open);
+      assertThrows(IllegalStateException.class, GlfwContext::new);
 
       // Verify init was attempted, and terminate was not called
       glfw.verify(GLFW::glfwInit);

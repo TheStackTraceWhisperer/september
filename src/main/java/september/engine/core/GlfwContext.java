@@ -1,4 +1,4 @@
-package io.thestacktracewhisperer.september;
+package september.engine.core;
 
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWErrorCallback;
@@ -10,30 +10,24 @@ public final class GlfwContext implements AutoCloseable {
   private boolean initialized = false;
   private GLFWErrorCallback errorCallback;
 
-  private GlfwContext() {}
-
   /**
-   * Creates and initializes a GLFW context, ready for use in try-with-resources.
-   * @return an initialized GlfwContext
+   * Constructs and initializes a GLFW context.
+   *
    * @throws IllegalStateException if GLFW fails to initialize
    */
-  public static GlfwContext open() {
-    GlfwContext ctx = new GlfwContext();
-
+  public GlfwContext() {
     // Install error callback (prints to stderr)
-    ctx.errorCallback = GLFWErrorCallback.createPrint(System.err);
-    ctx.errorCallback.set();
+    this.errorCallback = GLFWErrorCallback.createPrint(System.err);
+    this.errorCallback.set();
 
     if (!GLFW.glfwInit()) {
-      if (ctx.errorCallback != null) {
-        ctx.errorCallback.free();
-        ctx.errorCallback = null;
+      if (this.errorCallback != null) {
+        this.errorCallback.free();
+        this.errorCallback = null;
       }
       throw new IllegalStateException("Unable to initialize GLFW");
     }
-
-    ctx.initialized = true;
-    return ctx;
+    this.initialized = true;
   }
 
   /**

@@ -24,6 +24,7 @@ This document outlines the testing standards for the project, covering common pr
     - `org.lwjgl.glfw.GLFW`
     - `org.lwjgl.opengl.GL`
     - `org.lwjgl.opengl.GL11`
+    - This only applies to classes that actually make glfw/gl calls, Engine for example would just use mocked dependencies
 
 ## Integration Test Standards
 
@@ -65,3 +66,47 @@ The provided `Dockerfile` simulates a CI run with a virtual display.
   # View logs if needed
   docker logs <container_id>
   ```
+
+---
+
+## Loop Policy Usage (MainLoopPolicy)
+
+The application loop behavior is controlled via the functional `MainLoopPolicy` API. This is intentionally lightweight, side-effect free, and safe to use directly in tests without mocking.
+
+### Available Policies
+- `MainLoopPolicy.standard()` — Runs until the native window is closed (unbounded for automated tests).
+- `MainLoopPolicy.frames(n)` — Runs a fixed number of frames (0 skips the loop entirely). Ideal for deterministic unit tests.
+- `MainLoopPolicy.initializeOnly()` — Alias for `frames(0)`; performs initialization only.
+- `MainLoopPolicy.timed(duration)` — Runs until the duration elapses AND (if using the standard policy in composition) the window remains open.
+- `MainLoopPolicy.all(p1, p2, ...)` — Logical AND composition; stops when any member stops.
+- `MainLoopPolicy.any(p1, p2, ...)` — Logical OR composition; continues while any member continues.
+
+### Testing Guidance
+- **Unit Tests**: Prefer `frames(0)` or `frames(1)` to avoid long-running loops. Example: `new Main(MainLoopPolicy.frames(0)).run();`
+- **Integration Tests**: Use a small bounded policy like `frames(1)` or a short `timed(Duration.ofMillis(50))` to keep builds fast while exercising real paths.
+- **Do Not Mock the Policy**: It's pure and already deterministic; mocking adds no value.
+- **No Branches in Production**: Policy selection happens in test construction only—never gate production logic on test conditions.
+
+### Example
+```java
+// Unit test style: initialize only (no frames)
+new Main(MainLoopPolicy.initializeOnly()).run();
+
+// Short integration run: one frame
+new Main(MainLoopPolicy.frames(1)).run();
+
+// Composite: run up to 100 frames OR 150 ms, whichever stops first
+new Main(MainLoopPolicy.any(
+    MainLoopPolicy.frames(100),
+    MainLoopPolicy.timed(Duration.ofMillis(150))
+)).run();
+```
+
+### Rationale
+Using policies instead of ad-hoc sleeps or flags ensures:
+- Deterministic test duration
+- No reliance on `Thread.sleep` hacks
+- Clear separation between control logic (tests) and application behavior (production)
+
+---
+

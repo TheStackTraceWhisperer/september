@@ -1,0 +1,9 @@
+# Disable all logging during unit tests
+configuration:
+  status: OFF        # Disable internal logback status messages
+  scan: false        # Do not scan for changes
+  debug: false       # No debug output
+  root:
+    level: OFF       # Turn off all logging
+    appenderRefs: [] # No appenders
+
