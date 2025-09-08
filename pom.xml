@@ -217,9 +217,6 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>3.2.5</version>
         <configuration>
-          <!--
-            Unit tests: Run all tests that do not follow integration test naming conventions.
-          -->
           <!--suppress MavenModelInspection -->
           <argLine>${argLine} -XX:+EnableDynamicAgentLoading -Xshare:off</argLine>
           <excludes>
@@ -236,9 +233,6 @@
         <artifactId>maven-failsafe-plugin</artifactId>
         <version>3.2.5</version>
         <configuration>
-          <!--
-            Integration tests: Run all tests that follow standard integration test naming conventions.
-          -->
           <!--suppress MavenModelInspection -->
           <argLine>${failsafeArgLine} -XX:+EnableDynamicAgentLoading -Xshare:off</argLine>
           <includes>
@@ -301,8 +295,54 @@
           </archive>
         </configuration>
       </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>3.3.0</version>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>3.6.3</version>
+        <executions>
+          <execution>
+            <id>attach-javadocs</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <source>21</source>
+          <failOnError>false</failOnError>
+          <quiet>true</quiet>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
+
+  <distributionManagement>
+    <repository>
+      <id>github</id>
+      <name>GitHub Packages</name>
+      <url>https://maven.pkg.github.com/TheStackTraceWhisperer/september</url>
+    </repository>
+    <snapshotRepository>
+      <id>github</id>
+      <name>GitHub Packages</name>
+      <url>https://maven.pkg.github.com/TheStackTraceWhisperer/september</url>
+    </snapshotRepository>
+  </distributionManagement>
 
   <!-- Profiles moved to bottom as requested -->
   <profiles>
