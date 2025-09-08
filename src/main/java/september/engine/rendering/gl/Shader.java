@@ -14,14 +14,12 @@ import static org.lwjgl.opengl.GL20.*;
  */
 public class Shader implements AutoCloseable {
   private final int programId;
-  private final int vertexShaderId;
-  private final int fragmentShaderId;
-
+  // Individual shader IDs are no longer needed as fields after linking
   private final Map<String, Integer> uniforms = new HashMap<>();
 
   public Shader(String vertexSource, String fragmentSource) {
-    vertexShaderId = createShader(vertexSource, GL_VERTEX_SHADER);
-    fragmentShaderId = createShader(fragmentSource, GL_FRAGMENT_SHADER);
+    int vertexShaderId = createShader(vertexSource, GL_VERTEX_SHADER);
+    int fragmentShaderId = createShader(fragmentSource, GL_FRAGMENT_SHADER);
 
     programId = glCreateProgram();
     glAttachShader(programId, vertexShaderId);
@@ -32,7 +30,8 @@ public class Shader implements AutoCloseable {
       throw new RuntimeException("Error linking shader code: " + glGetProgramInfoLog(programId, 1024));
     }
 
-    // Detach shaders after a successful link
+    // Best Practice: Detach and delete the individual shaders after a successful link
+    // as they are no longer needed.
     glDetachShader(programId, vertexShaderId);
     glDetachShader(programId, fragmentShaderId);
     glDeleteShader(vertexShaderId);
@@ -47,19 +46,40 @@ public class Shader implements AutoCloseable {
     glUseProgram(0);
   }
 
+  /**
+   * Caches and sets a Matrix4f uniform.
+   * @param name The name of the uniform in the shader code.
+   * @param value The Matrix4f value to set.
+   */
   public void setUniform(String name, Matrix4f value) {
-    if (!uniforms.containsKey(name)) {
-      uniforms.put(name, glGetUniformLocation(programId, name));
-    }
+    int location = getUniformLocation(name);
     try (MemoryStack stack = MemoryStack.stackPush()) {
       FloatBuffer fb = stack.mallocFloat(16);
       value.get(fb);
-      glUniformMatrix4fv(uniforms.get(name), false, fb);
+      glUniformMatrix4fv(location, false, fb);
     }
+  }
+
+  /**
+   * Caches and sets an integer uniform. This is essential for setting texture samplers.
+   * @param name The name of the uniform in the shader code (e.g., "uTextureSampler").
+   * @param value The integer value to set (e.g., 0 for texture unit GL_TEXTURE0).
+   */
+  public void setUniform(String name, int value) {
+    int location = getUniformLocation(name);
+    glUniform1i(location, value);
+  }
+
+  private int getUniformLocation(String name) {
+    // Memoization: Look up the location once and cache it for future frames.
+    return uniforms.computeIfAbsent(name, n -> glGetUniformLocation(programId, n));
   }
 
   private int createShader(String shaderSource, int shaderType) {
     int shaderId = glCreateShader(shaderType);
+    if (shaderId == 0) {
+      throw new RuntimeException("Error creating shader of type " + shaderType);
+    }
     glShaderSource(shaderId, shaderSource);
     glCompileShader(shaderId);
 

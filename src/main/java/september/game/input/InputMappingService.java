@@ -1,4 +1,5 @@
 package september.game.input;
 
-public class InputMappingService {
+public interface InputMappingService {
+  boolean isActionActive(int playerId, GameAction action);
 }

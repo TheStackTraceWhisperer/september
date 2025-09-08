@@ -1,9 +1,12 @@
 package september.engine.assets;
 
 import september.engine.rendering.Mesh;
+import september.engine.rendering.Texture;
+import september.engine.rendering.gl.Shader;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Manages the loading, caching, and lifecycle of engine assets.
@@ -15,44 +18,66 @@ import java.util.Map;
  */
 public final class ResourceManager implements AutoCloseable {
 
-  private final Map<String, Mesh> meshCache;
-  // In the future, you would add more caches:
-  // private final Map<String, Texture> textureCache;
-  // private final Map<String, Shader> shaderCache;
+  private final Map<String, Mesh> meshCache = new HashMap<>();
+  private final Map<String, Texture> textureCache = new HashMap<>();
+  private final Map<String, Shader> shaderCache = new HashMap<>();
 
-  public ResourceManager() {
-    this.meshCache = new HashMap<>();
+  /**
+   * Loads a texture from a file, stores it in the cache, and returns it.
+   * If the texture is already cached, returns the existing instance.
+   *
+   * @param handle   The unique handle for this texture.
+   * @param filePath The classpath path to the image file.
+   * @return The cached or newly loaded Texture.
+   */
+  public Texture loadTexture(String handle, String filePath) {
+    return textureCache.computeIfAbsent(handle, h -> AssetLoader.loadTexture(filePath));
+  }
+
+  /**
+   * Loads a shader program from two files, stores it, and returns it.
+   * If the shader is already cached, returns the existing instance.
+   *
+   * @param handle       The unique handle for this shader.
+   * @param vertexPath   The classpath path to the vertex shader file.
+   * @param fragmentPath The classpath path to the fragment shader file.
+   * @return The cached or newly loaded Shader.
+   */
+  public Shader loadShader(String handle, String vertexPath, String fragmentPath) {
+    return shaderCache.computeIfAbsent(handle, h -> AssetLoader.loadShader(vertexPath, fragmentPath));
   }
 
   /**
    * Creates a new Mesh from raw vertex data and stores it under a given handle.
-   * If a mesh with the same handle already exists, it will be overwritten.
+   * If a mesh with the same handle already exists, it will be closed and replaced.
    *
    * @param handle   The unique string identifier for this mesh.
-   * @param vertices The vertex data (e.g., positions).
+   * @param vertices The vertex data (e.g., positions, UVs).
    * @param indices  The index data defining the triangles.
-   * @return The newly created Mesh object.
    */
-  public Mesh loadProceduralMesh(String handle, float[] vertices, int[] indices) {
-    // In a real engine, you'd check if the handle exists and decide on a policy
-    // (e.g., throw exception, log warning, or replace). For now, we'll replace.
+  public void loadProceduralMesh(String handle, float[] vertices, int[] indices) {
     if (meshCache.containsKey(handle)) {
-      meshCache.get(handle).close(); // Clean up the old mesh
+      meshCache.get(handle).close(); // Clean up the old mesh if it exists
     }
+    meshCache.put(handle, new Mesh(vertices, indices));
+  }
 
-    Mesh mesh = new Mesh(vertices, indices);
-    meshCache.put(handle, mesh);
+  public Mesh resolveMeshHandle(String handle) {
+    Mesh mesh = meshCache.get(handle);
+    Objects.requireNonNull(mesh, "Mesh not found: " + handle);
     return mesh;
   }
 
-  /**
-   * Retrieves a previously loaded Mesh by its handle.
-   *
-   * @param handle The string identifier of the mesh to retrieve.
-   * @return The Mesh object, or null if no mesh with that handle is found.
-   */
-  public Mesh resolveMeshHandle(String handle) {
-    return meshCache.get(handle);
+  public Texture resolveTextureHandle(String handle) {
+    Texture texture = textureCache.get(handle);
+    Objects.requireNonNull(texture, "Texture not found: " + handle);
+    return texture;
+  }
+
+  public Shader resolveShaderHandle(String handle) {
+    Shader shader = shaderCache.get(handle);
+    Objects.requireNonNull(shader, "Shader not found: " + handle);
+    return shader;
   }
 
   /**
@@ -61,11 +86,14 @@ public final class ResourceManager implements AutoCloseable {
    */
   @Override
   public void close() {
-    // Use removeIf to iterate and clear the map safely
     meshCache.values().forEach(Mesh::close);
     meshCache.clear();
 
-    // textureCache.values().forEach(Texture::close);
-    // textureCache.clear();
+    textureCache.values().forEach(Texture::close);
+    textureCache.clear();
+
+    shaderCache.values().forEach(Shader::close);
+    shaderCache.clear();
   }
 }
+

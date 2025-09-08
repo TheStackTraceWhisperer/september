@@ -71,6 +71,12 @@
     </dependency>
 
     <dependency>
+      <groupId>org.lwjgl</groupId>
+      <artifactId>lwjgl-stb</artifactId>
+      <version>${lwjgl.version}</version>
+    </dependency>
+
+    <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
       <version>${slf4j.version}</version>
@@ -376,6 +382,14 @@
           <classifier>natives-windows</classifier>
         </dependency>
 
+        <dependency>
+          <groupId>org.lwjgl</groupId>
+          <artifactId>lwjgl-stb</artifactId>
+          <version>${lwjgl.version}</version>
+          <classifier>natives-windows</classifier>
+        </dependency>
+
+
       </dependencies>
     </profile>
 
@@ -409,6 +423,13 @@
           <classifier>natives-linux</classifier>
         </dependency>
 
+        <dependency>
+          <groupId>org.lwjgl</groupId>
+          <artifactId>lwjgl-stb</artifactId>
+          <version>${lwjgl.version}</version>
+          <classifier>natives-linux</classifier>
+        </dependency>
+
       </dependencies>
     </profile>
 
@@ -438,6 +459,13 @@
         <dependency>
           <groupId>org.lwjgl</groupId>
           <artifactId>lwjgl-opengl</artifactId>
+          <version>${lwjgl.version}</version>
+          <classifier>natives-macos</classifier>
+        </dependency>
+
+        <dependency>
+          <groupId>org.lwjgl</groupId>
+          <artifactId>lwjgl-stb</artifactId>
           <version>${lwjgl.version}</version>
           <classifier>natives-macos</classifier>
         </dependency>
