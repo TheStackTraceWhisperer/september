@@ -31,6 +31,7 @@ public final class Main implements Runnable {
 
   /**
    * Creates a new Main instance with a specific loop continuation policy.
+   *
    * @param loopPolicy The policy that determines when the main loop should terminate.
    */
   public Main(MainLoopPolicy loopPolicy) {
@@ -68,6 +69,7 @@ public final class Main implements Runnable {
   /**
    * The application's main entry point.
    * Creates an instance of Main and executes its run method.
+   *
    * @param args command line arguments (unused).
    */
   public static void main(String[] args) {

@@ -11,7 +11,7 @@ import september.engine.rendering.Renderer;
 
 /**
  * The system responsible for rendering all visible entities.
- *
+ * <p>
  * This system acts as the bridge between the ECS and the rendering engine.
  * It queries the world for entities that have both a Transform and a Mesh,
  * resolves their mesh handles, and submits them to the Renderer to be drawn.
@@ -42,7 +42,7 @@ public class RenderSystem implements ISystem {
       MeshComponent meshComp = world.getComponent(entityId, MeshComponent.class);
 
       // Use the handle to get the actual Mesh resource
-      Mesh mesh = resourceManager.resolveMeshHandle(meshComp.meshHandle);
+      Mesh mesh = resourceManager.resolveMeshHandle(meshComp.meshHandle());
 
       if (mesh != null) {
         // Submit the resolved mesh and transform to the renderer

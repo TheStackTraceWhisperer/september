@@ -5,7 +5,13 @@ import september.engine.rendering.Camera;
 import september.engine.rendering.Mesh;
 import september.engine.rendering.Renderer;
 
-import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
+import static org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT;
+import static org.lwjgl.opengl.GL11.GL_TRIANGLES;
+import static org.lwjgl.opengl.GL11.GL_UNSIGNED_INT;
+import static org.lwjgl.opengl.GL11.glClear;
+import static org.lwjgl.opengl.GL11.glClearColor;
+import static org.lwjgl.opengl.GL11.glDrawElements;
 import static org.lwjgl.opengl.GL30.glBindVertexArray;
 
 /**
@@ -13,7 +19,7 @@ import static org.lwjgl.opengl.GL30.glBindVertexArray;
  */
 public class OpenGLRenderer implements Renderer {
 
-  private Shader basicShader; // In a real engine, you'd have a material/shader system
+  private final Shader basicShader; // In a real engine, you'd have a material/shader system
   private Camera currentCamera;
 
   public OpenGLRenderer() {

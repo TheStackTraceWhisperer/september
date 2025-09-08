@@ -63,13 +63,19 @@ public final class WindowContext implements AutoCloseable {
     log.info("Created GLFW window: handle={}", window);
   }
 
-  public long handle() { return handle; }
+  public long handle() {
+    return handle;
+  }
 
-  public void swapBuffers() { GLFW.glfwSwapBuffers(handle); }
+  public void swapBuffers() {
+    GLFW.glfwSwapBuffers(handle);
+  }
 
   @Override
   public void close() {
-    if (!created) return;
+    if (!created) {
+      return;
+    }
     if (handle != 0L) {
       log.info("Destroying GLFW window: handle={}", handle);
       GLFW.glfwDestroyWindow(handle);

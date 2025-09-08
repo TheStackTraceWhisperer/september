@@ -27,6 +27,7 @@ public class TransformComponent implements Component {
   /**
    * Calculates and returns the model-to-world transformation matrix for this transform.
    * This matrix is what will be passed to the shader to render the object in the correct location.
+   *
    * @return A Matrix4f representing the combined transformation.
    */
   public Matrix4f getTransformMatrix() {

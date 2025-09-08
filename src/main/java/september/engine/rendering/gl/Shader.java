@@ -14,8 +14,8 @@ import static org.lwjgl.opengl.GL20.*;
  */
 public class Shader implements AutoCloseable {
   private final int programId;
-  private int vertexShaderId;
-  private int fragmentShaderId;
+  private final int vertexShaderId;
+  private final int fragmentShaderId;
 
   private final Map<String, Integer> uniforms = new HashMap<>();
 

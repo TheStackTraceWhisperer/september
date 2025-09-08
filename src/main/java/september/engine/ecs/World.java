@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 
 /**
  * A concrete implementation of the IWorld interface.
- *
+ * <p>
  * This class orchestrates the various managers (Entity, Component, System)
  * to provide a coherent ECS framework.
  */

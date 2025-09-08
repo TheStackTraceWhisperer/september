@@ -35,13 +35,17 @@ public final class GlfwContext implements AutoCloseable {
    */
   @Override
   public void close() {
-    if (!initialized) return;
+    if (!initialized) {
+      return;
+    }
 
     GLFW.glfwTerminate();
 
     // Clear the GLFW error callback and free it
     GLFWErrorCallback prev = GLFW.glfwSetErrorCallback(null);
-    if (prev != null) prev.free();
+    if (prev != null) {
+      prev.free();
+    }
 
     errorCallback = null;
     initialized = false;

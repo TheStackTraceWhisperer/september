@@ -2,6 +2,7 @@ package september.engine.core;
 
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SystemTimerTest {
@@ -11,8 +12,8 @@ class SystemTimerTest {
     SystemTimer timer = new SystemTimer();
 
     // Before first update
-    assertTrue(timer.getDeltaTime() == 0f, "Initial delta should be 0");
-    assertTrue(timer.getTotalTime() == 0d, "Initial total should be 0");
+    assertEquals(0f, timer.getDeltaTime(), "Initial delta should be 0");
+    assertEquals(0d, timer.getTotalTime(), "Initial total should be 0");
 
     timer.update();
     float firstDelta = timer.getDeltaTime();

@@ -3,15 +3,12 @@ package september.engine.core;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.lwjgl.glfw.GLFW;
-import org.lwjgl.system.MemoryStack;
 import september.engine.assets.ResourceManager;
 import september.engine.ecs.IWorld;
 import september.engine.rendering.Camera;
 import september.engine.rendering.Renderer;
 import september.engine.rendering.gl.OpenGLRenderer;
 import september.engine.systems.RenderSystem;
-
-import java.nio.IntBuffer;
 
 /**
  * The runtime core of the application.

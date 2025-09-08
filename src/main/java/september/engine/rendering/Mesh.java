@@ -2,11 +2,23 @@ package september.engine.rendering;
 
 import lombok.Getter;
 
-import static org.lwjgl.opengl.GL30.*;
+import static org.lwjgl.opengl.GL30.GL_ARRAY_BUFFER;
+import static org.lwjgl.opengl.GL30.GL_ELEMENT_ARRAY_BUFFER;
+import static org.lwjgl.opengl.GL30.GL_FLOAT;
+import static org.lwjgl.opengl.GL30.GL_STATIC_DRAW;
+import static org.lwjgl.opengl.GL30.glBindBuffer;
+import static org.lwjgl.opengl.GL30.glBindVertexArray;
+import static org.lwjgl.opengl.GL30.glBufferData;
+import static org.lwjgl.opengl.GL30.glDeleteBuffers;
+import static org.lwjgl.opengl.GL30.glDeleteVertexArrays;
+import static org.lwjgl.opengl.GL30.glEnableVertexAttribArray;
+import static org.lwjgl.opengl.GL30.glGenBuffers;
+import static org.lwjgl.opengl.GL30.glGenVertexArrays;
+import static org.lwjgl.opengl.GL30.glVertexAttribPointer;
 
 /**
  * Represents a 3D model stored on the GPU.
- *
+ * <p>
  * This class is a low-level container for the handles to the Vertex Array Object (VAO),
  * Vertex Buffer Object (VBO), and Element Buffer Object (EBO). It encapsulates the
  * setup and cleanup of these OpenGL resources.

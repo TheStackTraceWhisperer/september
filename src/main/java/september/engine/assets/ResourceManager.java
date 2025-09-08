@@ -2,13 +2,12 @@ package september.engine.assets;
 
 import september.engine.rendering.Mesh;
 
-import java.io.Closeable;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Manages the loading, caching, and lifecycle of engine assets.
- *
+ * <p>
  * This class ensures that resources like meshes and textures are loaded only once
  * and provides a central point of access for retrieving them via a string handle.
  * It implements AutoCloseable to guarantee that all native resources it manages
