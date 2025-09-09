@@ -27,7 +27,7 @@ public final class AssetLoader {
    * @return A new, compiled Shader object.
    */
   public static Shader loadShader(String vertexPath, String fragmentPath) {
-    String vertexSource = loadResourceAsString(fragmentPath);
+    String vertexSource = loadResourceAsString(vertexPath);
     String fragmentSource = loadResourceAsString(fragmentPath);
     return new Shader(vertexSource, fragmentSource);
   }
@@ -76,16 +76,15 @@ public final class AssetLoader {
    * @return A ByteBuffer containing the file data.
    */
   private static ByteBuffer loadResourceAsByteBuffer(String filePath) throws IOException {
+    InputStream source = AssetLoader.class.getClassLoader().getResourceAsStream(filePath);
+    if (source == null) {
+        throw new IOException("Resource not found: " + filePath);
+    }
+
     int bufferSize = 8192;
     ByteBuffer buffer = BufferUtils.createByteBuffer(bufferSize);
 
-    try (InputStream source = AssetLoader.class.getClassLoader().getResourceAsStream(filePath);
-         ReadableByteChannel rbc = Channels.newChannel(source)) {
-
-      if (source == null) {
-        throw new IOException("Resource not found: " + filePath);
-      }
-
+    try (ReadableByteChannel rbc = Channels.newChannel(source)) {
       while (true) {
         int bytes = rbc.read(buffer);
         if (bytes == -1) {

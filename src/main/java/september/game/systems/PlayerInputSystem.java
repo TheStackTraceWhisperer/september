@@ -31,8 +31,7 @@ public class PlayerInputSystem implements ISystem {
       control.wantsToMoveDown = mappingService.isActionActive(playerId, GameAction.MOVE_DOWN);
       control.wantsToMoveLeft = mappingService.isActionActive(playerId, GameAction.MOVE_LEFT);
       control.wantsToMoveRight = mappingService.isActionActive(playerId, GameAction.MOVE_RIGHT);
+      control.wantsToAttack = mappingService.isActionActive(playerId, GameAction.ATTACK);
     }
   }
 }
-
-

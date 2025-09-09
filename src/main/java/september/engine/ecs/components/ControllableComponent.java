@@ -15,5 +15,7 @@ public class ControllableComponent implements Component {
   public boolean wantsToMoveDown = false;
   public boolean wantsToMoveLeft = false;
   public boolean wantsToMoveRight = false;
-}
 
+  // State field for attacking
+  public boolean wantsToAttack = false;
+}

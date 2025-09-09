@@ -1,6 +1,7 @@
 package september.engine.rendering.gl;
 
 import org.joml.Matrix4f;
+import org.joml.Vector3f; // added
 import org.lwjgl.system.MemoryStack;
 
 import java.nio.FloatBuffer;
@@ -29,6 +30,8 @@ public class Shader implements AutoCloseable {
     if (glGetProgrami(programId, GL_LINK_STATUS) == 0) {
       throw new RuntimeException("Error linking shader code: " + glGetProgramInfoLog(programId, 1024));
     }
+    // Validate program (useful during development)
+    glValidateProgram(programId); // added for test expectations
 
     // Best Practice: Detach and delete the individual shaders after a successful link
     // as they are no longer needed.
@@ -58,6 +61,12 @@ public class Shader implements AutoCloseable {
       value.get(fb);
       glUniformMatrix4fv(location, false, fb);
     }
+  }
+
+  // Added overload for Vector3f to satisfy tests and future use
+  public void setUniform(String name, Vector3f value) {
+    int location = getUniformLocation(name);
+    glUniform3f(location, value.x, value.y, value.z);
   }
 
   /**
