@@ -34,6 +34,96 @@ This document outlines the testing standards for the project, covering common pr
     - **How**: Pass mocked instances of its dependencies into the class's constructor or methods.
     - **Example**: The `Engine` class does not call `GLFW` directly. It relies on other services (like a `WindowContext`). To test `Engine`, you would pass a *mocked* `WindowContext` to it.
 
+## Advanced Mocking & Common Pitfalls
+
+While the principles above cover the basics, testing code that interacts with native libraries like LWJGL can lead to several common, subtle issues. This section documents these pitfalls and their solutions to ensure tests remain clean and robust.
+
+<br>
+
+> **Warning: `mockStatic` is Mandatory for Native Calls**
+> 
+> To be perfectly clear: any class that directly or indirectly makes a call to an LWJGL (`org.lwjgl.*`) method **must** be tested using `mockStatic`. Features like `mockConstruction` are not a substitute and will lead to unpredictable failures. When in doubt, mock the static native class.
+
+<br>
+
+### Pitfall 1: `TooManyActualInvocations` Error
+
+-   **Symptom**: A test fails with `org.mockito.exceptions.verification.TooManyActualInvocations`. The message shows a method was called more times than the test `verify()` expected (e.g., "Wanted 1 time... but was 2 times").
+-   **Cause**: This often happens when a class's **constructor** calls a native method (e.g., `glBindTexture`) and the **test method** also calls a method that invokes the *same* native function. The call from the constructor "leaks" into the test's verification phase.
+-   **Solution**: Isolate the test's verification by clearing the mock's invocation history immediately after the object is constructed.
+
+-   **Example**:
+    ```java
+    @Test
+    void bind_activatesAndBindsTexture() {
+        // --- Arrange ---
+        // The constructor for Texture() calls glBindTexture(..., 1) and glBindTexture(..., 0)
+        Texture texture = new Texture(ByteBuffer.allocate(1));
+
+        // CRITICAL: Clear the mock's history to ignore calls made by the constructor.
+        gl11.clearInvocations();
+
+        // --- Act ---
+        texture.bind(5);
+
+        // --- Assert ---
+        // Now, this verification will only count the single call made inside the bind() method.
+        gl11.verify(() -> GL11.glBindTexture(GL_TEXTURE_2D, 1));
+    }
+    ```
+
+### Pitfall 2: `UnnecessaryStubbingException` Error
+
+-   **Symptom**: A test fails with `org.mockito.exceptions.misusing.UnnecessaryStubbingException`.
+-   **Cause**: Mockito's strict stubbing rules detect that a stubbing configured in a `@BeforeEach` method was not used by a specific test case. This indicates a poorly scoped mock setup.
+-   **Solution**: Move stubs from the general `@BeforeEach` method into the specific `@Test` methods that actually require them. This makes each test more self-contained and easier to understand.
+
+-   **Example**:
+    ```java
+    // BAD: Stubs are too broad. The endScene_unbindsProgram test doesn't use the camera.
+    @BeforeEach
+    void setUp() {
+        renderer = new OpenGLRenderer();
+        // This will cause an error in tests that don't involve the camera.
+        when(camera.getProjectionMatrix()).thenReturn(new Matrix4f());
+        when(camera.getViewMatrix()).thenReturn(new Matrix4f());
+    }
+
+    // GOOD: Stubs are scoped to the test that needs them.
+    @Test
+    void beginScene_clearsAndUsesProgram() {
+        // Arrange: Stub camera matrices specifically for this test.
+        when(camera.getProjectionMatrix()).thenReturn(new Matrix4f());
+        when(camera.getViewMatrix()).thenReturn(new Matrix4f());
+
+        // Act & Assert...
+    }
+
+    @Test
+    void endScene_unbindsProgram() {
+        // This test no longer inherits unnecessary stubs.
+        // Act & Assert...
+    }
+    ```
+
+### Pitfall 3: Incorrect `InOrder` Verification Syntax
+
+-   **Symptom**: A test fails to compile with an "incompatible types" error when using `inOrder.verify()`.
+-   **Cause**: The syntax for verifying static mocks with `InOrder` is different from verifying regular mocks. It requires passing the `MockedStatic` object as the first argument.
+-   **Solution**: Use the two-argument `inOrder.verify(mock, lambda)` method.
+
+-   **Example**:
+    ```java
+    // BAD: Compilation Error
+    InOrder inOrder = inOrder(gl);
+    inOrder.verify(() -> glUseProgram(0));
+
+    // GOOD: Correct Syntax
+    InOrder inOrder = inOrder(gl);
+    inOrder.verify(gl, () -> glUseProgram(0));
+    inOrder.verify(gl, () -> glDeleteProgram(PROGRAM_ID));
+    ```
+
 ## Integration Test Standards
 
 - **Framework**: Maven Failsafe Plugin

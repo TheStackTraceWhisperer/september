@@ -14,11 +14,13 @@ import september.engine.ecs.World;
 import september.engine.ecs.components.ControllableComponent;
 import september.engine.ecs.components.TransformComponent;
 import september.engine.rendering.Camera;
+import september.game.components.EnemyComponent;
 import september.game.components.MovementStatsComponent;
 import september.game.components.PlayerComponent;
 import september.game.components.SpriteComponent;
 import september.game.input.InputMappingService;
 import september.game.input.KeyboardMappingService;
+import september.game.systems.EnemyAISystem;
 import september.game.systems.MovementSystem;
 import september.game.systems.PlayerInputSystem;
 
@@ -78,13 +80,20 @@ public final class Main implements Runnable {
     world.addComponent(playerEntity, new MovementStatsComponent(2.5f));
     world.addComponent(playerEntity, new PlayerComponent()); // Tag the entity as the player
 
+    int enemyEntity = world.createEntity();
+    world.addComponent(enemyEntity, new TransformComponent());
+    world.addComponent(enemyEntity, new SpriteComponent("enemy_texture"));
+    world.addComponent(enemyEntity, new MovementStatsComponent(2.5f));
+    world.addComponent(enemyEntity, new EnemyComponent());
+
     // --- 4. Create Systems ---
     // The order is important: input should be processed before movement.
     ISystem playerInputSystem = new PlayerInputSystem(world, mappingService);
     ISystem movementSystem = new MovementSystem(world);
+    ISystem enemyAISystem = new EnemyAISystem(world, timeService);
 
     // --- 5. Create and Run the Engine ---
-    Engine gameEngine = new Engine(world, timeService, resourceManager, camera, inputService, loopPolicy, playerInputSystem, movementSystem);
+    Engine gameEngine = new Engine(world, timeService, resourceManager, camera, inputService, loopPolicy, playerInputSystem, movementSystem, enemyAISystem);
 
     try {
       gameEngine.run();

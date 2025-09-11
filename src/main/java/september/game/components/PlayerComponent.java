@@ -1,4 +1,6 @@
 package september.game.components;
 
-public class PlayerComponent {
+import september.engine.ecs.Component;
+
+public class PlayerComponent implements Component {
 }

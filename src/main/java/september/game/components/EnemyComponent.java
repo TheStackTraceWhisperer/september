@@ -1,4 +1,6 @@
 package september.game.components;
 
-public interface EnemyComponent {
+import september.engine.ecs.Component;
+
+public class EnemyComponent implements Component {
 }

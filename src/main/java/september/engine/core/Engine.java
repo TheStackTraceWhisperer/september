@@ -99,5 +99,6 @@ public final class Engine implements Runnable {
 
     // Load the game's texture assets
     resourceManager.loadTexture("player_texture", "textures/player.png");
+    resourceManager.loadTexture("enemy_texture", "textures/enemy.png");
   }
 }
