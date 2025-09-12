@@ -1,12 +1,12 @@
-package september.game.systems;
+package september.engine.systems;
 
 import org.joml.Vector3f;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import september.engine.EngineTestHarness;
 import september.engine.ecs.components.ControllableComponent;
+import september.engine.ecs.components.MovementStatsComponent;
 import september.engine.ecs.components.TransformComponent;
-import september.game.components.MovementStatsComponent;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

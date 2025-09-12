@@ -3,12 +3,12 @@ package september.engine.systems;
 import september.engine.assets.ResourceManager;
 import september.engine.ecs.ISystem;
 import september.engine.ecs.IWorld;
+import september.engine.ecs.components.SpriteComponent;
 import september.engine.ecs.components.TransformComponent;
 import september.engine.rendering.Camera;
 import september.engine.rendering.Mesh;
 import september.engine.rendering.Renderer;
 import september.engine.rendering.Texture;
-import september.game.components.SpriteComponent;
 
 /**
  * The system responsible for rendering all sprite entities.

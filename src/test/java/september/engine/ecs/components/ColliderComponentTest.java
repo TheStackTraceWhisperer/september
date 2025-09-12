@@ -1,4 +1,4 @@
-package september.game.components;
+package september.engine.ecs.components;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

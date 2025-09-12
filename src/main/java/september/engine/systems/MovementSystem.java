@@ -1,11 +1,11 @@
-package september.game.systems;
+package september.engine.systems;
 
 import org.joml.Vector3f;
 import september.engine.ecs.ISystem;
 import september.engine.ecs.IWorld;
 import september.engine.ecs.components.ControllableComponent;
+import september.engine.ecs.components.MovementStatsComponent;
 import september.engine.ecs.components.TransformComponent;
-import september.game.components.MovementStatsComponent;
 
 /**
  * This system is responsible for moving entities based on their ControllableComponent state.

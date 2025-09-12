@@ -1,4 +1,4 @@
-package september.game.components;
+package september.engine.ecs.components;
 
 import org.joml.Vector4f;
 import september.engine.ecs.Component;

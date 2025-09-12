@@ -5,9 +5,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import september.engine.EngineTestHarness;
+import september.engine.ecs.components.ColliderComponent;
+import september.engine.ecs.components.ColliderComponent.ColliderType;
 import september.engine.ecs.components.TransformComponent;
-import september.game.components.ColliderComponent;
-import september.game.components.ColliderComponent.ColliderType;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

@@ -1,4 +1,4 @@
-package september.game.components;
+package september.engine.ecs.components;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

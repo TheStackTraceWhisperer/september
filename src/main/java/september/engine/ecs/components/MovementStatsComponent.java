@@ -1,4 +1,4 @@
-package september.game.components;
+package september.engine.ecs.components;
 
 import september.engine.ecs.Component;
 

@@ -12,16 +12,16 @@ import september.engine.ecs.ISystem;
 import september.engine.ecs.IWorld;
 import september.engine.ecs.World;
 import september.engine.ecs.components.ControllableComponent;
+import september.engine.ecs.components.MovementStatsComponent;
+import september.engine.ecs.components.SpriteComponent;
 import september.engine.ecs.components.TransformComponent;
 import september.engine.rendering.Camera;
+import september.engine.systems.MovementSystem;
 import september.game.components.EnemyComponent;
-import september.game.components.MovementStatsComponent;
 import september.game.components.PlayerComponent;
-import september.game.components.SpriteComponent;
 import september.game.input.InputMappingService;
 import september.game.input.KeyboardMappingService;
 import september.game.systems.EnemyAISystem;
-import september.game.systems.MovementSystem;
 import september.game.systems.PlayerInputSystem;
 
 /**

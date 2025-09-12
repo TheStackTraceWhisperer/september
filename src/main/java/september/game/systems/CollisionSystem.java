@@ -2,9 +2,9 @@ package september.game.systems;
 
 import september.engine.ecs.ISystem;
 import september.engine.ecs.IWorld;
+import september.engine.ecs.components.ColliderComponent;
+import september.engine.ecs.components.ColliderComponent.ColliderType;
 import september.engine.ecs.components.TransformComponent;
-import september.game.components.ColliderComponent;
-import september.game.components.ColliderComponent.ColliderType;
 
 import java.util.List;
 
