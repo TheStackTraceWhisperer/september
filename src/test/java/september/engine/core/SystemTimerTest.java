@@ -1,31 +1,61 @@
 package september.engine.core;
 
+import org.assertj.core.data.Offset;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class SystemTimerTest {
 
-  @Test
-  void update_advances_delta_and_total_time_non_negative_and_monotonic() {
-    SystemTimer timer = new SystemTimer();
+    // Define a tolerance for timer tests, as Thread.sleep is not perfectly precise.
+    private static final Offset<Float> TOLERANCE = Offset.offset(0.05f); // 50ms tolerance
 
-    // Before first update
-    assertEquals(0f, timer.getDeltaTime(), "Initial delta should be 0");
-    assertEquals(0d, timer.getTotalTime(), "Initial total should be 0");
+    @Test
+    @DisplayName("getDeltaTime should be zero before the first update")
+    void deltaTime_isZero_beforeFirstUpdate() {
+        SystemTimer timer = new SystemTimer();
+        assertThat(timer.getDeltaTime()).isZero();
+    }
 
-    timer.update();
-    float firstDelta = timer.getDeltaTime();
-    double firstTotal = timer.getTotalTime();
+    @Test
+    @DisplayName("getDeltaTime should measure the approximate time between updates")
+    void deltaTime_measuresTime_betweenUpdates() throws InterruptedException {
+        // Arrange
+        SystemTimer timer = new SystemTimer();
+        long sleepMillis = 100;
+        float sleepSeconds = sleepMillis / 1000.0f;
 
-    timer.update();
-    float secondDelta = timer.getDeltaTime();
-    double secondTotal = timer.getTotalTime();
+        // Act
+        timer.update(); // First update to set the initial time
+        Thread.sleep(sleepMillis);
+        timer.update(); // Second update to calculate the delta
 
-    assertTrue(firstDelta >= 0f, "First delta non-negative");
-    assertTrue(firstTotal >= 0d, "First total non-negative");
-    assertTrue(secondDelta >= 0f, "Second delta non-negative");
-    assertTrue(secondTotal >= firstTotal, "Total time monotonic");
-  }
+        // Assert
+        assertThat(timer.getDeltaTime()).isCloseTo(sleepSeconds, TOLERANCE);
+    }
+
+    @Test
+    @DisplayName("getTotalTime should accumulate time over multiple updates")
+    void totalTime_accumulates_overUpdates() throws InterruptedException {
+        // Arrange
+        SystemTimer timer = new SystemTimer();
+        long sleepMillis1 = 50;
+        long sleepMillis2 = 70;
+
+        // Act
+        timer.update();
+        Thread.sleep(sleepMillis1);
+        timer.update();
+        double totalTimeAfterFirstSleep = timer.getTotalTime();
+
+        Thread.sleep(sleepMillis2);
+        timer.update();
+        double totalTimeAfterSecondSleep = timer.getTotalTime();
+
+        // Assert
+        float expectedTotalSeconds = (sleepMillis1 + sleepMillis2) / 1000.0f;
+        assertThat((float) totalTimeAfterSecondSleep).isCloseTo(expectedTotalSeconds, TOLERANCE);
+        assertThat(totalTimeAfterSecondSleep).isGreaterThan(totalTimeAfterFirstSleep);
+    }
 }

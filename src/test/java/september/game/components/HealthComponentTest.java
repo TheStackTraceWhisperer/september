@@ -5,7 +5,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 class HealthComponentTest {
 
@@ -19,10 +20,8 @@ class HealthComponentTest {
         HealthComponent component = new HealthComponent(maxHealth);
 
         // Assert
-        assertAll("Health initialization",
-                () -> assertEquals(maxHealth, component.getMaxHealth(), "Max health should be set correctly."),
-                () -> assertEquals(maxHealth, component.getCurrentHealth(), "Current health should be initialized to max health.")
-        );
+        assertThat(component.getMaxHealth()).as("Max health").isEqualTo(maxHealth);
+        assertThat(component.getCurrentHealth()).as("Current health").isEqualTo(maxHealth);
     }
 
     @ParameterizedTest
@@ -30,8 +29,9 @@ class HealthComponentTest {
     @DisplayName("Constructor should throw IllegalArgumentException for non-positive max health")
     void constructor_throwsForInvalidMaxHealth(int invalidMaxHealth) {
         // Act & Assert
-        assertThrows(IllegalArgumentException.class, () -> new HealthComponent(invalidMaxHealth),
-                "Constructor should throw an exception for max health <= 0.");
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new HealthComponent(invalidMaxHealth))
+                .withMessage("Max health must be positive.");
     }
 
     @Test
@@ -44,7 +44,7 @@ class HealthComponentTest {
         component.takeDamage(30);
 
         // Assert
-        assertEquals(70, component.getCurrentHealth(), "Current health should be reduced by the damage amount.");
+        assertThat(component.getCurrentHealth()).isEqualTo(70);
     }
 
     @Test
@@ -57,7 +57,7 @@ class HealthComponentTest {
         component.takeDamage(100);
 
         // Assert
-        assertEquals(0, component.getCurrentHealth(), "Current health should not go below zero.");
+        assertThat(component.getCurrentHealth()).isZero();
     }
 
     @Test
@@ -70,7 +70,7 @@ class HealthComponentTest {
         component.takeDamage(-50);
 
         // Assert
-        assertEquals(100, component.getCurrentHealth(), "Taking negative damage should not change health.");
+        assertThat(component.getCurrentHealth()).isEqualTo(100);
     }
 
     @Test
@@ -81,7 +81,7 @@ class HealthComponentTest {
         component.takeDamage(99);
 
         // Act & Assert
-        assertTrue(component.isAlive(), "isAlive should be true when current health is positive.");
+        assertThat(component.isAlive()).isTrue();
     }
 
     @Test
@@ -92,6 +92,6 @@ class HealthComponentTest {
         component.takeDamage(100);
 
         // Act & Assert
-        assertFalse(component.isAlive(), "isAlive should be false when current health is zero.");
+        assertThat(component.isAlive()).isFalse();
     }
 }

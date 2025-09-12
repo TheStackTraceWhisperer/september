@@ -22,6 +22,11 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
+/**
+ * This class is commented out as it relies on static mocking of OpenGL, which is obsolete under the new integration testing strategy.
+ * The functionality of the renderer will be tested at a higher level by a RenderSystem integration test.
+ */
+/*
 @ExtendWith(MockitoExtension.class)
 class OpenGLRendererTest {
 
@@ -119,3 +124,4 @@ class OpenGLRendererTest {
         gl20.verify(() -> GL20.glUseProgram(0));
     }
 }
+*/

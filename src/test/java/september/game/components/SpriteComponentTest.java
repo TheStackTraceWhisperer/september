@@ -4,7 +4,7 @@ import org.joml.Vector4f;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class SpriteComponentTest {
 
@@ -18,10 +18,8 @@ class SpriteComponentTest {
         SpriteComponent component = new SpriteComponent(expectedHandle);
 
         // Assert
-        assertAll("Default sprite component state",
-                () -> assertEquals(expectedHandle, component.textureHandle, "The texture handle should be set correctly."),
-                () -> assertEquals(new Vector4f(1.0f, 1.0f, 1.0f, 1.0f), component.color, "The color should default to white.")
-        );
+        assertThat(component.textureHandle).as("Texture handle").isEqualTo(expectedHandle);
+        assertThat(component.color).as("Default color").isEqualTo(new Vector4f(1.0f, 1.0f, 1.0f, 1.0f));
     }
 
     @Test
@@ -35,9 +33,7 @@ class SpriteComponentTest {
         SpriteComponent component = new SpriteComponent(expectedHandle, expectedColor);
 
         // Assert
-        assertAll("Custom sprite component state",
-                () -> assertEquals(expectedHandle, component.textureHandle, "The texture handle should be set correctly."),
-                () -> assertEquals(expectedColor, component.color, "The custom color should be set correctly.")
-        );
+        assertThat(component.textureHandle).as("Texture handle").isEqualTo(expectedHandle);
+        assertThat(component.color).as("Custom color").isEqualTo(expectedColor);
     }
 }

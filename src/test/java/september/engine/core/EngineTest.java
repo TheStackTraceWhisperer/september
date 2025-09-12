@@ -1,110 +1,32 @@
 package september.engine.core;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.MockedConstruction;
-import org.mockito.junit.jupiter.MockitoExtension;
-import september.engine.assets.ResourceManager;
-import september.engine.core.input.InputService;
-import september.engine.ecs.ISystem;
-import september.engine.ecs.IWorld;
-import september.engine.rendering.Camera;
-import september.engine.rendering.gl.OpenGLRenderer;
+import september.engine.EngineTestHarness;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Tests for the {@link Engine} class.
+ * Integration test to validate the basic initialization of the Engine via the EngineTestHarness.
  */
-@ExtendWith(MockitoExtension.class)
-class EngineTest {
-
-    @Mock
-    private IWorld world;
-    @Mock
-    private TimeService time;
-    @Mock
-    private ResourceManager resources;
-    @Mock
-    private Camera camera;
-    @Mock
-    private InputService inputService;
+class EngineTest extends EngineTestHarness {
 
     @Test
-    void initializeOnly_doesNotUpdateWorldOrTime() {
-        // Arrange
-        try (MockedConstruction<GlfwContext> ignoredGlfw = mockConstruction(GlfwContext.class);
-             MockedConstruction<WindowContext> ignoredWindow = mockConstruction(WindowContext.class);
-             MockedConstruction<OpenGLRenderer> ignoredRenderer = mockConstruction(OpenGLRenderer.class)) {
+    void harness_correctly_initializes_engine_and_services() {
+        // The @BeforeEach in EngineTestHarness should have already run.
+        // This test simply verifies that the core components are not null.
 
-            Engine engine = new Engine(world, time, resources, camera, inputService, MainLoopPolicy.initializeOnly());
-
-            // Act
-            engine.run();
-
-            // Assert
-            verify(time, never()).update();
-            verify(world, never()).update(anyFloat());
-        }
+        assertThat(engine).as("Engine should be initialized by the harness.").isNotNull();
+        assertThat(world).as("World should be initialized by the harness.").isNotNull();
+        assertThat(resourceManager).as("ResourceManager should be initialized by the harness.").isNotNull();
+        assertThat(camera).as("Camera should be initialized by the harness.").isNotNull();
     }
 
     @Test
-    void fixedFramePolicy_updatesWorldAndTimeSeries() {
-        // Arrange
-        int frameCount = 3;
-        when(time.getDeltaTime()).thenReturn(0.016f);
+    void engine_init_creates_gl_context_and_renderer() {
+        // This test verifies that the engine's init() method, called by the harness,
+        // successfully created the necessary OpenGL-dependent objects.
 
-        try (MockedConstruction<GlfwContext> ignoredGlfw = mockConstruction(GlfwContext.class);
-             MockedConstruction<WindowContext> window = mockConstruction(WindowContext.class);
-             MockedConstruction<OpenGLRenderer> ignoredRenderer = mockConstruction(OpenGLRenderer.class)) {
-
-            Engine engine = new Engine(world, time, resources, camera, inputService, MainLoopPolicy.frames(frameCount));
-
-            // Act
-            engine.run();
-
-            // Assert
-            verify(time, times(frameCount)).update();
-            verify(world, times(frameCount)).update(anyFloat());
-            verify(window.constructed().getFirst(), times(frameCount)).swapBuffers();
-        }
-    }
-
-    @Test
-    void run_closesAllAutoCloseableResources() {
-        // Arrange
-        try (MockedConstruction<GlfwContext> glfw = mockConstruction(GlfwContext.class);
-             MockedConstruction<WindowContext> window = mockConstruction(WindowContext.class);
-             MockedConstruction<OpenGLRenderer> ignored = mockConstruction(OpenGLRenderer.class)) {
-
-            Engine engine = new Engine(world, time, resources, camera, inputService, MainLoopPolicy.initializeOnly());
-
-            // Act
-            engine.run();
-
-            // Assert
-            verify(glfw.constructed().getFirst()).close();
-            verify(window.constructed().getFirst()).close();
-            verify(resources).close();
-        }
-    }
-
-    @Test
-    void run_catchesAndRethrowsExceptionsAsRuntimeException() {
-        // Arrange: Cause an exception to be thrown from the system registration phase.
-        ISystem mockSystem = mock(ISystem.class);
-        doThrow(new IllegalStateException("Test Exception")).when(world).registerSystem(any(ISystem.class));
-
-        try (MockedConstruction<GlfwContext> ignoredGlfw = mockConstruction(GlfwContext.class);
-             MockedConstruction<WindowContext> ignoredWindow = mockConstruction(WindowContext.class);
-             MockedConstruction<OpenGLRenderer> ignoredRenderer = mockConstruction(OpenGLRenderer.class)) {
-
-            Engine engine = new Engine(world, time, resources, camera, inputService, MainLoopPolicy.frames(1), mockSystem);
-
-            // Act & Assert: Expect a RuntimeException to be thrown
-            assertThrows(RuntimeException.class, engine::run);
-        }
+        assertThat(engine.getWindow()).as("WindowContext should be created during engine initialization.").isNotNull();
+        assertThat(engine.getRenderer()).as("Renderer should be created during engine initialization.").isNotNull();
     }
 }

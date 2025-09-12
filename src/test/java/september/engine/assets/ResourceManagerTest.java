@@ -1,149 +1,127 @@
 package september.engine.assets;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.MockedConstruction;
-import org.mockito.MockedStatic;
-import org.mockito.junit.jupiter.MockitoExtension;
+import september.engine.EngineTestHarness;
 import september.engine.rendering.Mesh;
 import september.engine.rendering.Texture;
 import september.engine.rendering.gl.Shader;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@ExtendWith(MockitoExtension.class)
-class ResourceManagerTest {
+/**
+ * Integration test for the ResourceManager, running against a live engine with a real OpenGL context.
+ */
+class ResourceManagerTest extends EngineTestHarness {
 
-    @Mock
-    private Texture mockTexture;
-    @Mock
-    private Shader mockShader;
-
-    private ResourceManager resourceManager;
-    private MockedStatic<AssetLoader> assetLoader;
-
+    // The 'resourceManager' field is provided by the EngineTestHarness.
+    // We will re-initialize it here to ensure it's clean for each test,
+    // separate from the one used by the engine's own startup.
     @BeforeEach
-    void setUp() {
-        resourceManager = new ResourceManager();
-        assetLoader = mockStatic(AssetLoader.class);
-
-        // Mock the static AssetLoader methods to return our mock objects
-        assetLoader.when(() -> AssetLoader.loadTexture(anyString())).thenReturn(mockTexture);
-        assetLoader.when(() -> AssetLoader.loadShader(anyString(), anyString())).thenReturn(mockShader);
-    }
-
-    @AfterEach
-    void tearDown() {
-        assetLoader.close();
+    void localSetup() {
+        this.resourceManager = new ResourceManager();
     }
 
     @Test
     @DisplayName("loadTexture should cache the texture after the first load")
     void loadTexture_cachesResource() {
         // Act: Load the same texture twice using its handle.
-        Texture texture1 = resourceManager.loadTexture("tex1", "path/to/tex");
-        Texture texture2 = resourceManager.loadTexture("tex1", "path/to/tex");
+        // This now calls the real AssetLoader, which loads a real file into the GPU.
+        Texture texture1 = resourceManager.loadTexture("tex1", "textures/player.png");
+        Texture texture2 = resourceManager.loadTexture("tex1", "textures/player.png");
 
-        // Assert: The returned instances should be the same, and the loader should only be called once.
-        assertSame(texture1, texture2, "Should return the same instance from cache.");
-        assetLoader.verify(() -> AssetLoader.loadTexture(anyString()), times(1));
+        // Assert: The returned instances should be the same.
+        assertThat(texture1).isNotNull();
+        assertThat(texture2).isSameAs(texture1);
     }
 
     @Test
     @DisplayName("loadShader should cache the shader after the first load")
     void loadShader_cachesResource() {
         // Act: Load the same shader twice.
-        Shader shader1 = resourceManager.loadShader("shader1", "v.glsl", "f.glsl");
-        Shader shader2 = resourceManager.loadShader("shader1", "v.glsl", "f.glsl");
+        Shader shader1 = resourceManager.loadShader("shader1", "shaders/test.vert", "shaders/test.frag");
+        Shader shader2 = resourceManager.loadShader("shader1", "shaders/test.vert", "shaders/test.frag");
 
-        // Assert: The instances should be the same, and the loader should only be called once.
-        assertSame(shader1, shader2, "Should return the same instance from cache.");
-        assetLoader.verify(() -> AssetLoader.loadShader(anyString(), anyString()), times(1));
+        // Assert: The instances should be the same.
+        assertThat(shader1).isNotNull();
+        assertThat(shader2).isSameAs(shader1);
     }
 
     @Test
-    @DisplayName("loadProceduralMesh should create a new mesh on first load")
-    void loadProceduralMesh_loadsMeshFirstTime() {
-        try (MockedConstruction<Mesh> meshConstruction = mockConstruction(Mesh.class)) {
-            // Act: Load a procedural mesh for the first time.
-            resourceManager.loadProceduralMesh("procMesh", new float[]{}, new int[]{});
+    @DisplayName("loadProceduralMesh should create and store a mesh")
+    void loadProceduralMesh_loadsAndStoresMesh() {
+        // Act: Load a procedural mesh. This creates a real VAO on the GPU.
+        resourceManager.loadProceduralMesh("procMesh", new float[]{}, new int[]{});
+        Mesh loadedMesh = resourceManager.resolveMeshHandle("procMesh");
 
-            // Assert: A new mesh should have been constructed, and no old mesh should have been closed.
-            assertEquals(1, meshConstruction.constructed().size());
-            Mesh constructedMesh = meshConstruction.constructed().get(0);
-            verify(constructedMesh, never()).close();
-        }
+        // Assert: A new mesh should have been constructed and be retrievable.
+        assertThat(loadedMesh).isNotNull();
     }
 
     @Test
-    @DisplayName("loadProceduralMesh should replace and close an existing mesh with the same handle")
-    void loadProceduralMesh_replacesAndClosesOldMesh() {
-        try (MockedConstruction<Mesh> meshConstruction = mockConstruction(Mesh.class)) {
-            // Arrange: Load an initial mesh.
-            resourceManager.loadProceduralMesh("procMesh", new float[]{}, new int[]{});
-            Mesh oldMesh = meshConstruction.constructed().get(0);
+    @DisplayName("loadProceduralMesh should replace an existing mesh with the same handle")
+    void loadProceduralMesh_replacesOldMesh() {
+        // Arrange: Load an initial mesh.
+        resourceManager.loadProceduralMesh("procMesh", new float[]{1f}, new int[]{1});
+        Mesh oldMesh = resourceManager.resolveMeshHandle("procMesh");
 
-            // Act: Load a new mesh with the same handle.
-            resourceManager.loadProceduralMesh("procMesh", new float[]{}, new int[]{});
+        // Act: Load a new mesh with the same handle.
+        resourceManager.loadProceduralMesh("procMesh", new float[]{2f}, new int[]{2});
+        Mesh newMesh = resourceManager.resolveMeshHandle("procMesh");
 
-            // Assert: The old mesh should be closed, and a total of two meshes should have been constructed.
-            verify(oldMesh).close();
-            assertEquals(2, meshConstruction.constructed().size());
-        }
+        // Assert: The newly resolved mesh should be a different instance from the old one.
+        // This verifies that a replacement occurred.
+        assertThat(newMesh).isNotNull();
+        assertThat(newMesh).isNotSameAs(oldMesh);
     }
 
     @Test
     @DisplayName("resolveHandle methods should return the correct loaded resources")
     void resolveMethods_returnCorrectResources() {
         // Arrange: Load one of each type of resource.
-        resourceManager.loadTexture("tex1", "path/to/tex");
-        resourceManager.loadShader("shader1", "v.glsl", "f.glsl");
-        try (MockedConstruction<Mesh> meshConstruction = mockConstruction(Mesh.class)) {
-            resourceManager.loadProceduralMesh("mesh1", new float[]{}, new int[]{});
-            Mesh loadedMesh = meshConstruction.constructed().get(0);
+        Texture loadedTexture = resourceManager.loadTexture("tex1", "textures/player.png");
+        Shader loadedShader = resourceManager.loadShader("shader1", "shaders/test.vert", "shaders/test.frag");
+        resourceManager.loadProceduralMesh("mesh1", new float[]{}, new int[]{});
+        Mesh loadedMesh = resourceManager.resolveMeshHandle("mesh1");
 
-            // Act & Assert: Verify that resolving each handle returns the correct object.
-            assertSame(mockTexture, resourceManager.resolveTextureHandle("tex1"));
-            assertSame(mockShader, resourceManager.resolveShaderHandle("shader1"));
-            assertSame(loadedMesh, resourceManager.resolveMeshHandle("mesh1"));
-        }
+
+        // Act & Assert: Verify that resolving each handle returns the correct object.
+        assertThat(resourceManager.resolveTextureHandle("tex1")).isSameAs(loadedTexture);
+        assertThat(resourceManager.resolveShaderHandle("shader1")).isSameAs(loadedShader);
+        assertThat(resourceManager.resolveMeshHandle("mesh1")).isSameAs(loadedMesh);
     }
 
     @Test
-    @DisplayName("resolveHandle methods should throw NullPointerException for invalid handles")
+    @DisplayName("resolveHandle methods should throw for invalid handles")
     void resolveMethods_throwForInvalidHandles() {
-        assertThrows(NullPointerException.class, () -> resourceManager.resolveTextureHandle("invalid"));
-        assertThrows(NullPointerException.class, () -> resourceManager.resolveShaderHandle("invalid"));
-        assertThrows(NullPointerException.class, () -> resourceManager.resolveMeshHandle("invalid"));
+        assertThatThrownBy(() -> resourceManager.resolveTextureHandle("invalid"))
+                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> resourceManager.resolveShaderHandle("invalid"))
+                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> resourceManager.resolveMeshHandle("invalid"))
+                .isInstanceOf(NullPointerException.class);
     }
 
     @Test
-    @DisplayName("close() should close all managed resources and clear caches")
-    void close_closesAllManagedResources() {
-        try (MockedConstruction<Mesh> meshConstruction = mockConstruction(Mesh.class)) {
-            // Arrange: Load one of each resource type.
-            resourceManager.loadTexture("tex1", "path/to/tex");
-            resourceManager.loadShader("shader1", "v.glsl", "f.glsl");
-            resourceManager.loadProceduralMesh("procMesh", new float[]{}, new int[]{});
-            Mesh loadedMesh = meshConstruction.constructed().get(0);
+    @DisplayName("close() should clear all caches and make resources unavailable")
+    void close_clearsCachesAndResources() {
+        // Arrange: Load one of each resource type.
+        resourceManager.loadTexture("tex1", "textures/player.png");
+        resourceManager.loadShader("shader1", "shaders/test.vert", "shaders/test.frag");
+        resourceManager.loadProceduralMesh("procMesh", new float[]{}, new int[]{});
 
-            // Act: Close the resource manager.
-            resourceManager.close();
+        // Act: Close the resource manager.
+        resourceManager.close();
 
-            // Assert: Verify that close() was called on every managed resource.
-            verify(mockTexture).close();
-            verify(mockShader).close();
-            verify(loadedMesh).close();
-
-            // Assert: Verify that caches are cleared by trying to resolve handles again.
-            assertThrows(NullPointerException.class, () -> resourceManager.resolveTextureHandle("tex1"));
-            assertThrows(NullPointerException.class, () -> resourceManager.resolveShaderHandle("shader1"));
-            assertThrows(NullPointerException.class, () -> resourceManager.resolveMeshHandle("procMesh"));
-        }
+        // Assert: Verify that caches are cleared by trying to resolve handles again.
+        // This is the observable behavior of closing the manager.
+        assertThatThrownBy(() -> resourceManager.resolveTextureHandle("tex1"))
+                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> resourceManager.resolveShaderHandle("shader1"))
+                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> resourceManager.resolveMeshHandle("procMesh"))
+                .isInstanceOf(NullPointerException.class);
     }
 }

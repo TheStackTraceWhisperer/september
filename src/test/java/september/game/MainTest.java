@@ -27,7 +27,7 @@ class MainTest {
 
                 // Act: Run the main class with a policy that only initializes.
                 // This is sufficient to test the wiring logic.
-                new Main(MainLoopPolicy.initializeOnly()).run();
+                new Main(MainLoopPolicy.skip()).run();
 
                 // Assert
                 // 1. Verify that exactly one Engine instance was created.

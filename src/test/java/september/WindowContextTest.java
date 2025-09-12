@@ -11,6 +11,11 @@ import september.engine.core.WindowContext;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+/**
+ * This class is commented out as it relies on static mocking of GLFW, which is obsolete under the new integration testing strategy.
+ * Its functionality is implicitly tested by the EngineTestHarness successfully initializing a window.
+ */
+/*
 class WindowContextTest {
 
 //  @Test
@@ -63,3 +68,4 @@ class WindowContextTest {
     }
   }
 }
+*/

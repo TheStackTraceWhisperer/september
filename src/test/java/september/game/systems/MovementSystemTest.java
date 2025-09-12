@@ -1,56 +1,66 @@
 package september.game.systems;
 
 import org.joml.Vector3f;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import september.engine.ecs.IWorld;
+import september.engine.EngineTestHarness;
 import september.engine.ecs.components.ControllableComponent;
 import september.engine.ecs.components.TransformComponent;
 import september.game.components.MovementStatsComponent;
 
-import java.util.List;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import static org.mockito.Mockito.*;
-
-@ExtendWith(MockitoExtension.class)
-class MovementSystemTest {
-
-    @Mock
-    private IWorld world;
-    @Mock
-    private ControllableComponent controllable;
-    @Mock
-    private MovementStatsComponent stats;
-
-    // The transform will be a spy so we can verify calls on a real object
-    private TransformComponent transform;
-
-    private MovementSystem movementSystem;
-
-    @BeforeEach
-    void setUp() {
-        transform = spy(new TransformComponent());
-        movementSystem = new MovementSystem(world);
-    }
+/**
+ * Integration test for the MovementSystem that runs against a live, engine-managed World.
+ */
+class MovementSystemTest extends EngineTestHarness {
 
     @Test
-    void update_callsUpdatePreviousPosition() {
-        // Arrange
-        int entityId = 1;
-        when(world.getEntitiesWith(ControllableComponent.class, TransformComponent.class, MovementStatsComponent.class))
-                .thenReturn(List.of(entityId));
-        when(world.getComponent(entityId, ControllableComponent.class)).thenReturn(controllable);
-        when(world.getComponent(entityId, TransformComponent.class)).thenReturn(transform);
-        when(world.getComponent(entityId, MovementStatsComponent.class)).thenReturn(stats);
+    @DisplayName("System should move an entity based on its Controllable and MovementStats components")
+    void entityMovesCorrectly_whenControlled() {
+        // ARRANGE
+        // The harness provides a live world. We create an entity and its components.
+        int entityId = world.createEntity();
 
-        // Act
-        movementSystem.update(0.016f);
+        // 1. Configure the input component to signal movement.
+        var controllable = new ControllableComponent();
+        controllable.wantsToMoveUp = true;
+        controllable.wantsToMoveLeft = true;
 
-        // Assert
-        // Verify that the crucial snapshot method was called.
-        verify(transform).updatePreviousPosition();
+        // 2. Configure the transform and capture its initial state.
+        var transform = new TransformComponent();
+        Vector3f initialPosition = new Vector3f(transform.position);
+
+        // 3. Configure movement stats.
+        var stats = new MovementStatsComponent(100.0f);
+
+        // 4. Add all components to the entity in the world.
+        world.addComponent(entityId, controllable);
+        world.addComponent(entityId, transform);
+        world.addComponent(entityId, stats);
+
+        // ACT
+        // We create a new instance of the system to run it in isolation against the current world state.
+        MovementSystem movementSystem = new MovementSystem(world);
+        float deltaTime = 0.1f; // Use a fixed delta time for a predictable outcome.
+        movementSystem.update(deltaTime);
+
+        // ASSERT
+        // The transform's position should have changed from its initial state.
+        assertThat(transform.position).isNotEqualTo(initialPosition);
+
+        // The 'previousPosition' should now hold the value of the 'initialPosition'.
+        assertThat(transform.previousPosition).isEqualTo(initialPosition);
+
+        // Calculate the expected new position based on the system's logic.
+        // Movement is diagonal (up and left), so we normalize the direction vector.
+        Vector3f direction = new Vector3f(-1.0f, 1.0f, 0.0f).normalize();
+        float distance = stats.speed * deltaTime;
+        Vector3f expectedPosition = new Vector3f(initialPosition).add(direction.mul(distance));
+
+        // Verify the new position matches the expected outcome.
+        assertThat(transform.position.x()).as("X position").isCloseTo(expectedPosition.x, org.assertj.core.data.Offset.offset(0.001f));
+        assertThat(transform.position.y()).as("Y position").isCloseTo(expectedPosition.y, org.assertj.core.data.Offset.offset(0.001f));
+        assertThat(transform.position.z()).as("Z position").isEqualTo(initialPosition.z);
     }
 }

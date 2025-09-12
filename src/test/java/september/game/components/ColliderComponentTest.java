@@ -3,7 +3,7 @@ package september.game.components;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class ColliderComponentTest {
 
@@ -21,12 +21,10 @@ class ColliderComponentTest {
         ColliderComponent component = new ColliderComponent(expectedType, expectedWidth, expectedHeight, expectedOffsetX, expectedOffsetY);
 
         // Assert: Verify that each getter returns the value provided at construction.
-        assertAll("Collider properties verification",
-                () -> assertEquals(expectedType, component.getType(), "The collider type should be correctly set."),
-                () -> assertEquals(expectedWidth, component.getWidth(), "The width should be correctly set."),
-                () -> assertEquals(expectedHeight, component.getHeight(), "The height should be correctly set."),
-                () -> assertEquals(expectedOffsetX, component.getOffsetX(), "The X offset should be correctly set."),
-                () -> assertEquals(expectedOffsetY, component.getOffsetY(), "The Y offset should be correctly set.")
-        );
+        assertThat(component.getType()).as("Collider type").isEqualTo(expectedType);
+        assertThat(component.getWidth()).as("Width").isEqualTo(expectedWidth);
+        assertThat(component.getHeight()).as("Height").isEqualTo(expectedHeight);
+        assertThat(component.getOffsetX()).as("X offset").isEqualTo(expectedOffsetX);
+        assertThat(component.getOffsetY()).as("Y offset").isEqualTo(expectedOffsetY);
     }
 }

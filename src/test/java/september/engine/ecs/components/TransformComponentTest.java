@@ -4,8 +4,7 @@ import org.joml.Vector3f;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class TransformComponentTest {
 
@@ -26,8 +25,12 @@ class TransformComponentTest {
         transform.updatePreviousPosition();
 
         // Assert
-        assertEquals(newPosition, transform.previousPosition, "Previous position should match the new position after update.");
-        assertEquals(transform.position, transform.previousPosition, "Previous position should be equal to the current position.");
+        assertThat(transform.previousPosition)
+                .as("Previous position should match the new position after update.")
+                .isEqualTo(newPosition);
+        assertThat(transform.previousPosition)
+                .as("Previous position should be equal to the current position.")
+                .isEqualTo(transform.position);
     }
 
     @Test
@@ -39,12 +42,16 @@ class TransformComponentTest {
 
         Vector3f newPosition = new Vector3f(40f, 50f, 60f);
         transform.position.set(newPosition);
-        assertNotEquals(initialPosition, transform.position, "Position should have changed before reverting.");
+        assertThat(transform.position)
+                .as("Position should have changed before reverting.")
+                .isNotEqualTo(initialPosition);
 
         // Act
         transform.revertPosition();
 
         // Assert
-        assertEquals(initialPosition, transform.position, "Position should be reverted to the initial state.");
+        assertThat(transform.position)
+                .as("Position should be reverted to the initial state.")
+                .isEqualTo(initialPosition);
     }
 }

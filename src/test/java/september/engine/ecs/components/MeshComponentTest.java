@@ -2,19 +2,19 @@ package september.engine.ecs.components;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class MeshComponentTest {
 
     @Test
     void meshHandle_returnsConstructorValue() {
-        // Arrange: Define a handle that the component will hold.
+        // Arrange
         String expectedHandle = "player_mesh";
 
-        // Act: Create the component with the handle.
+        // Act
         MeshComponent component = new MeshComponent(expectedHandle);
 
-        // Assert: Verify that the accessor method returns the exact handle provided at construction.
-        assertEquals(expectedHandle, component.meshHandle());
+        // Assert
+        assertThat(component.meshHandle()).isEqualTo(expectedHandle);
     }
 }

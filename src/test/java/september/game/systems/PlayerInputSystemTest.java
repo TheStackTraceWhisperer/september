@@ -1,65 +1,75 @@
 package september.game.systems;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import september.engine.ecs.IWorld;
+import september.engine.EngineTestHarness;
 import september.engine.ecs.components.ControllableComponent;
+import september.game.components.PlayerComponent;
 import september.game.input.GameAction;
 import september.game.input.InputMappingService;
 
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
+/**
+ * Integration test for the PlayerInputSystem.
+ * This test uses a real World from the EngineTestHarness but mocks the InputMappingService
+ * to provide controlled, simulated player input.
+ */
 @ExtendWith(MockitoExtension.class)
-class PlayerInputSystemTest {
+class PlayerInputSystemTest extends EngineTestHarness {
 
-    @Mock
-    private IWorld world;
     @Mock
     private InputMappingService mappingService;
 
     private PlayerInputSystem playerInputSystem;
     private ControllableComponent controllable;
     private final int playerId = 0;
-    private final int entityId = 1;
 
     @BeforeEach
-    void setUp() {
+    void setupSystemAndPlayer() {
+        // The harness has already run its setup, providing the 'world'.
+        // We now perform additional setup specific to this test class.
         playerInputSystem = new PlayerInputSystem(world, mappingService);
-        controllable = new ControllableComponent();
 
-        when(world.getEntitiesWith(ControllableComponent.class)).thenReturn(List.of(entityId));
-        when(world.getComponent(entityId, ControllableComponent.class)).thenReturn(controllable);
+        // Create a real entity in the world that the system can operate on.
+        int playerEntity = world.createEntity();
+        controllable = new ControllableComponent();
+        world.addComponent(playerEntity, controllable);
+        // The system specifically looks for entities with PlayerComponent, so we must add it.
+        world.addComponent(playerEntity, new PlayerComponent());
     }
 
     @Test
+    @DisplayName("System should set movement flags when move actions are active")
     void setsMovementFlags_whenMoveActionsAreActive() {
-        // Arrange: Stub ALL actions the system will query to satisfy strict stubbing.
+        // Arrange: Stub the input service to simulate active actions.
         when(mappingService.isActionActive(playerId, GameAction.MOVE_UP)).thenReturn(true);
         when(mappingService.isActionActive(playerId, GameAction.MOVE_DOWN)).thenReturn(false);
         when(mappingService.isActionActive(playerId, GameAction.MOVE_LEFT)).thenReturn(true);
         when(mappingService.isActionActive(playerId, GameAction.MOVE_RIGHT)).thenReturn(false);
         when(mappingService.isActionActive(playerId, GameAction.ATTACK)).thenReturn(false);
 
-        // Act
+        // Act: The system will now query the real world, find our real entity,
+        // and update the real ControllableComponent.
         playerInputSystem.update(0.016f);
 
-        // Assert
-        assertTrue(controllable.wantsToMoveUp);
-        assertFalse(controllable.wantsToMoveDown);
-        assertTrue(controllable.wantsToMoveLeft);
-        assertFalse(controllable.wantsToMoveRight);
-        assertFalse(controllable.wantsToAttack);
+        // Assert: Check the state of the real component.
+        assertThat(controllable.wantsToMoveUp).isTrue();
+        assertThat(controllable.wantsToMoveDown).isFalse();
+        assertThat(controllable.wantsToMoveLeft).isTrue();
+        assertThat(controllable.wantsToMoveRight).isFalse();
+        assertThat(controllable.wantsToAttack).isFalse();
     }
 
     @Test
+    @DisplayName("System should set attack flag when attack action is active")
     void setsAttackFlag_whenAttackActionIsActive() {
-        // Arrange: Stub ALL actions the system will query.
+        // Arrange: Stub the input service.
         when(mappingService.isActionActive(playerId, GameAction.MOVE_UP)).thenReturn(false);
         when(mappingService.isActionActive(playerId, GameAction.MOVE_DOWN)).thenReturn(false);
         when(mappingService.isActionActive(playerId, GameAction.MOVE_LEFT)).thenReturn(false);
@@ -70,13 +80,18 @@ class PlayerInputSystemTest {
         playerInputSystem.update(0.016f);
 
         // Assert
-        assertTrue(controllable.wantsToAttack);
-        assertFalse(controllable.wantsToMoveUp, "Movement flags should not be affected");
+        assertThat(controllable.wantsToAttack).isTrue();
+        assertThat(controllable.wantsToMoveUp).as("Movement flags should not be affected").isFalse();
     }
 
     @Test
+    @DisplayName("System should clear all flags when no actions are active")
     void clearsFlags_whenActionsAreInactive() {
-        // Arrange: Explicitly stub ALL actions as inactive.
+        // Arrange: Set some flags to true initially to ensure the system clears them.
+        controllable.wantsToMoveUp = true;
+        controllable.wantsToAttack = true;
+
+        // Stub the input service to report all actions as inactive.
         when(mappingService.isActionActive(playerId, GameAction.MOVE_UP)).thenReturn(false);
         when(mappingService.isActionActive(playerId, GameAction.MOVE_DOWN)).thenReturn(false);
         when(mappingService.isActionActive(playerId, GameAction.MOVE_LEFT)).thenReturn(false);
@@ -87,10 +102,10 @@ class PlayerInputSystemTest {
         playerInputSystem.update(0.016f);
 
         // Assert
-        assertFalse(controllable.wantsToMoveUp);
-        assertFalse(controllable.wantsToMoveDown);
-        assertFalse(controllable.wantsToMoveLeft);
-        assertFalse(controllable.wantsToMoveRight);
-        assertFalse(controllable.wantsToAttack);
+        assertThat(controllable.wantsToMoveUp).isFalse();
+        assertThat(controllable.wantsToMoveDown).isFalse();
+        assertThat(controllable.wantsToMoveLeft).isFalse();
+        assertThat(controllable.wantsToMoveRight).isFalse();
+        assertThat(controllable.wantsToAttack).isFalse();
     }
 }

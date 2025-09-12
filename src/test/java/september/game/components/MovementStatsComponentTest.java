@@ -3,7 +3,7 @@ package september.game.components;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class MovementStatsComponentTest {
 
@@ -17,6 +17,6 @@ class MovementStatsComponentTest {
         MovementStatsComponent component = new MovementStatsComponent(expectedSpeed);
 
         // Assert: Verify that the public speed field is set to the value provided at construction.
-        assertEquals(expectedSpeed, component.speed, 0.001f, "The speed should be correctly set.");
+        assertThat(component.speed).isEqualTo(expectedSpeed);
     }
 }

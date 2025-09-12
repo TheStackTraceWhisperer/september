@@ -3,160 +3,164 @@ package september.engine.ecs;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.InOrder;
-import org.mockito.Mockito;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class WorldTest {
 
-  private IWorld world;
+    private IWorld world;
 
-  // --- Test Component Classes ---
-  private static class PositionComponent {
-  }
+    // --- Test Component Classes ---
+    private static class PositionComponent {}
+    private static class VelocityComponent {}
 
-  private static class VelocityComponent {
-  }
+    // --- Test System Class ---
+    private static class TestSystem implements ISystem {
+        boolean wasUpdated = false;
+        float lastDeltaTime = 0f;
+        final List<Integer> updateOrderList;
+        final int id;
 
-  @BeforeEach
-  void setUp() {
-    world = new World();
-  }
+        TestSystem() {
+            this.updateOrderList = null;
+            this.id = -1;
+        }
 
-  @Test
-  @DisplayName("Create Entity should return unique and sequential IDs")
-  void createEntity_shouldReturnUniqueIds() {
-    assertEquals(0, world.createEntity());
-    assertEquals(1, world.createEntity());
-    assertEquals(2, world.createEntity());
-  }
+        TestSystem(int id, List<Integer> updateOrderList) {
+            this.id = id;
+            this.updateOrderList = updateOrderList;
+        }
 
-  @Test
-  @DisplayName("Component can be added, checked, retrieved, and removed")
-  void componentLifecycle() {
-    int entity = world.createEntity();
-    PositionComponent component = new PositionComponent();
+        @Override
+        public void update(float deltaTime) {
+            wasUpdated = true;
+            lastDeltaTime = deltaTime;
+            if (updateOrderList != null) {
+                updateOrderList.add(id);
+            }
+        }
+    }
 
-    // Add
-    assertFalse(world.hasComponent(entity, PositionComponent.class), "Should not have component before adding");
-    world.addComponent(entity, component);
-    assertTrue(world.hasComponent(entity, PositionComponent.class), "Should have component after adding");
+    @BeforeEach
+    void setUp() {
+        world = new World();
+    }
 
-    // Get
-    PositionComponent retrieved = world.getComponent(entity, PositionComponent.class);
-    assertNotNull(retrieved, "Retrieved component should not be null");
-    assertSame(component, retrieved, "Retrieved component should be the same instance");
+    @Test
+    @DisplayName("Create Entity should return unique and sequential IDs")
+    void createEntity_shouldReturnUniqueIds() {
+        assertThat(world.createEntity()).isEqualTo(0);
+        assertThat(world.createEntity()).isEqualTo(1);
+        assertThat(world.createEntity()).isEqualTo(2);
+    }
 
-    // Remove
-    world.removeComponent(entity, PositionComponent.class);
-    assertFalse(world.hasComponent(entity, PositionComponent.class), "Should not have component after removing");
-    assertNull(world.getComponent(entity, PositionComponent.class), "Component should be null after removing");
-  }
+    @Test
+    @DisplayName("Component can be added, checked, retrieved, and removed")
+    void componentLifecycle() {
+        int entity = world.createEntity();
+        PositionComponent component = new PositionComponent();
 
-  @Test
-  @DisplayName("Destroying an entity removes it and all its components")
-  void destroyEntity_shouldRemoveAllComponents() {
-    int entity = world.createEntity();
-    world.addComponent(entity, new PositionComponent());
-    world.addComponent(entity, new VelocityComponent());
+        // Add
+        assertThat(world.hasComponent(entity, PositionComponent.class)).as("Should not have component before adding").isFalse();
+        world.addComponent(entity, component);
+        assertThat(world.hasComponent(entity, PositionComponent.class)).as("Should have component after adding").isTrue();
 
-    world.destroyEntity(entity);
+        // Get
+        PositionComponent retrieved = world.getComponent(entity, PositionComponent.class);
+        assertThat(retrieved).as("Retrieved component should not be null").isNotNull();
+        assertThat(retrieved).as("Retrieved component should be the same instance").isSameAs(component);
 
-    assertFalse(world.hasComponent(entity, PositionComponent.class), "PositionComponent should be gone");
-    assertFalse(world.hasComponent(entity, VelocityComponent.class), "VelocityComponent should be gone");
-  }
+        // Remove
+        world.removeComponent(entity, PositionComponent.class);
+        assertThat(world.hasComponent(entity, PositionComponent.class)).as("Should not have component after removing").isFalse();
+        assertThat(world.getComponent(entity, PositionComponent.class)).as("Component should be null after removing").isNull();
+    }
 
-  @Test
-  @DisplayName("Get Entities With should correctly filter entities by components")
-  void getEntitiesWith_shouldFilterCorrectly() {
-    int entity1 = world.createEntity(); // Position + Velocity
-    world.addComponent(entity1, new PositionComponent());
-    world.addComponent(entity1, new VelocityComponent());
+    @Test
+    @DisplayName("Destroying an entity removes it and all its components")
+    void destroyEntity_shouldRemoveAllComponents() {
+        int entity = world.createEntity();
+        world.addComponent(entity, new PositionComponent());
+        world.addComponent(entity, new VelocityComponent());
 
-    int entity2 = world.createEntity(); // Position only
-    world.addComponent(entity2, new PositionComponent());
+        world.destroyEntity(entity);
 
-    int entity3 = world.createEntity(); // No components
+        assertThat(world.hasComponent(entity, PositionComponent.class)).as("PositionComponent should be gone").isFalse();
+        assertThat(world.hasComponent(entity, VelocityComponent.class)).as("VelocityComponent should be gone").isFalse();
+    }
 
-    // Query for PositionComponent
-    List<Integer> withPosition = world.getEntitiesWith(PositionComponent.class);
-    assertTrue(withPosition.contains(entity1));
-    assertTrue(withPosition.contains(entity2));
-    assertFalse(withPosition.contains(entity3));
-    assertEquals(2, withPosition.size());
+    @Test
+    @DisplayName("Get Entities With should correctly filter entities by components")
+    void getEntitiesWith_shouldFilterCorrectly() {
+        int entity1 = world.createEntity(); // Position + Velocity
+        world.addComponent(entity1, new PositionComponent());
+        world.addComponent(entity1, new VelocityComponent());
 
-    // Query for both PositionComponent and VelocityComponent
-    List<Integer> withBoth = world.getEntitiesWith(PositionComponent.class, VelocityComponent.class);
-    assertTrue(withBoth.contains(entity1));
-    assertFalse(withBoth.contains(entity2));
-    assertEquals(1, withBoth.size());
+        int entity2 = world.createEntity(); // Position only
+        world.addComponent(entity2, new PositionComponent());
 
-    // Query with no components should return all entities
-    List<Integer> all = world.getEntitiesWith();
-    assertEquals(3, all.size());
-    assertTrue(all.contains(entity1));
-    assertTrue(all.contains(entity2));
-    assertTrue(all.contains(entity3));
-  }
+        int entity3 = world.createEntity(); // No components
 
-  @Test
-  @DisplayName("Destroyed entities should not appear in queries")
-  void getEntitiesWith_shouldNotIncludeDestroyed() {
-    int entity1 = world.createEntity();
-    world.addComponent(entity1, new PositionComponent());
-    int entity2 = world.createEntity();
-    world.addComponent(entity2, new PositionComponent());
+        // Query for PositionComponent
+        List<Integer> withPosition = world.getEntitiesWith(PositionComponent.class);
+        assertThat(withPosition).containsExactlyInAnyOrder(entity1, entity2);
 
-    world.destroyEntity(entity1);
+        // Query for both PositionComponent and VelocityComponent
+        List<Integer> withBoth = world.getEntitiesWith(PositionComponent.class, VelocityComponent.class);
+        assertThat(withBoth).containsExactly(entity1);
 
-    List<Integer> withPosition = world.getEntitiesWith(PositionComponent.class);
-    assertFalse(withPosition.contains(entity1));
-    assertTrue(withPosition.contains(entity2));
-    assertEquals(1, withPosition.size());
-  }
+        // Query with no components should return all entities
+        List<Integer> all = world.getEntitiesWith();
+        assertThat(all).containsExactlyInAnyOrder(entity1, entity2, entity3);
+    }
 
-  @Test
-  @DisplayName("Update should call update on all registered systems")
-  void update_shouldCallSystems() {
-    ISystem system1 = mock(ISystem.class);
-    ISystem system2 = mock(ISystem.class);
+    @Test
+    @DisplayName("Destroyed entities should not appear in queries")
+    void getEntitiesWith_shouldNotIncludeDestroyed() {
+        int entity1 = world.createEntity();
+        world.addComponent(entity1, new PositionComponent());
+        int entity2 = world.createEntity();
+        world.addComponent(entity2, new PositionComponent());
 
-    world.registerSystem(system1);
-    world.registerSystem(system2);
+        world.destroyEntity(entity1);
 
-    float deltaTime = 0.16f;
-    world.update(deltaTime);
+        List<Integer> withPosition = world.getEntitiesWith(PositionComponent.class);
+        assertThat(withPosition).containsExactly(entity2);
+    }
 
-    // Verify that update was called on both systems with the correct delta time
-    verify(system1, times(1)).update(deltaTime);
-    verify(system2, times(1)).update(deltaTime);
-  }
+    @Test
+    @DisplayName("Update should call update on all registered systems")
+    void update_shouldCallSystems() {
+        TestSystem system1 = new TestSystem();
+        TestSystem system2 = new TestSystem();
 
-  @Test
-  @DisplayName("Update should call systems in the order they were registered")
-  void update_shouldCallSystemsInOrder() {
-    ISystem system1 = mock(ISystem.class);
-    ISystem system2 = mock(ISystem.class);
+        world.registerSystem(system1);
+        world.registerSystem(system2);
 
-    world.registerSystem(system1);
-    world.registerSystem(system2);
+        float deltaTime = 0.16f;
+        world.update(deltaTime);
 
-    InOrder inOrder = Mockito.inOrder(system1, system2);
+        assertThat(system1.wasUpdated).isTrue();
+        assertThat(system1.lastDeltaTime).isEqualTo(deltaTime);
+        assertThat(system2.wasUpdated).isTrue();
+        assertThat(system2.lastDeltaTime).isEqualTo(deltaTime);
+    }
 
-    world.update(0.16f);
+    @Test
+    @DisplayName("Update should call systems in the order they were registered")
+    void update_shouldCallSystemsInOrder() {
+        List<Integer> updateOrder = new ArrayList<>();
+        TestSystem system1 = new TestSystem(1, updateOrder);
+        TestSystem system2 = new TestSystem(2, updateOrder);
 
-    inOrder.verify(system1).update(0.16f);
-    inOrder.verify(system2).update(0.16f);
-  }
+        world.registerSystem(system1);
+        world.registerSystem(system2);
+
+        world.update(0.16f);
+
+        assertThat(updateOrder).containsExactly(1, 2);
+    }
 }

@@ -28,7 +28,7 @@ public interface MainLoopPolicy {
   /**
    * Alias for frames(0).
    */
-  static MainLoopPolicy initializeOnly() {
+  static MainLoopPolicy skip() {
     return frames(0);
   }
 
