@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>KeyboardMappingService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">september</a> &gt; <a href="index.source.html" class="el_package">september.game.input</a> &gt; <span class="el_source">KeyboardMappingService.java</span></div><h1>KeyboardMappingService.java</h1><pre class="source lang-java linenums">package september.game.input;
+import org.lwjgl.glfw.GLFW;
+import september.engine.core.input.InputService;
+
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * A simple implementation of InputMappingService that uses hard-coded keyboard mappings
+ * for a 2D Action RPG. A more advanced implementation would load these from a config file.
+ */
+public class KeyboardMappingService implements InputMappingService {
+
+  private final InputService inputService;
+<span class="nc" id="L15">  private final Map&lt;Integer, Map&lt;GameAction, Integer&gt;&gt; playerMappings = new HashMap&lt;&gt;();</span>
+
+<span class="nc" id="L17">  public KeyboardMappingService(InputService inputService) {</span>
+<span class="nc" id="L18">    this.inputService = inputService;</span>
+<span class="nc" id="L19">    loadDefaultMappings();</span>
+<span class="nc" id="L20">  }</span>
+
+  private void loadDefaultMappings() {
+    // Player 0 (Player 1) gets WASD controls mapped to 2D directions
+<span class="nc" id="L24">    Map&lt;GameAction, Integer&gt; player0Map = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L25">    player0Map.put(GameAction.MOVE_UP, GLFW.GLFW_KEY_W);</span>
+<span class="nc" id="L26">    player0Map.put(GameAction.MOVE_DOWN, GLFW.GLFW_KEY_S);</span>
+<span class="nc" id="L27">    player0Map.put(GameAction.MOVE_LEFT, GLFW.GLFW_KEY_A);</span>
+<span class="nc" id="L28">    player0Map.put(GameAction.MOVE_RIGHT, GLFW.GLFW_KEY_D);</span>
+<span class="nc" id="L29">    playerMappings.put(0, player0Map);</span>
+
+    // TODO: Add mappings for other actions like ATTACK (e.g., Spacebar)
+<span class="nc" id="L32">  }</span>
+
+  @Override
+  public boolean isActionActive(int playerId, GameAction action) {
+<span class="nc" id="L36">    Map&lt;GameAction, Integer&gt; mappings = playerMappings.get(playerId);</span>
+<span class="nc bnc" id="L37" title="All 2 branches missed.">    if (mappings == null) {</span>
+<span class="nc" id="L38">      return false;</span>
+    }
+
+<span class="nc" id="L41">    Integer keyCode = mappings.get(action);</span>
+<span class="nc bnc" id="L42" title="All 2 branches missed.">    if (keyCode == null) {</span>
+<span class="nc" id="L43">      return false;</span>
+    }
+
+<span class="nc" id="L46">    return inputService.isKeyPressed(keyCode);</span>
+  }
+}
+
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

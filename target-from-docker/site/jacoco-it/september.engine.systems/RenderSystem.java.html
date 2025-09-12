@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RenderSystem.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">september</a> &gt; <a href="index.source.html" class="el_package">september.engine.systems</a> &gt; <span class="el_source">RenderSystem.java</span></div><h1>RenderSystem.java</h1><pre class="source lang-java linenums">package september.engine.systems;
+
+import september.engine.assets.ResourceManager;
+import september.engine.ecs.ISystem;
+import september.engine.ecs.IWorld;
+import september.engine.ecs.components.SpriteComponent;
+import september.engine.ecs.components.TransformComponent;
+import september.engine.rendering.Camera;
+import september.engine.rendering.Mesh;
+import september.engine.rendering.Renderer;
+import september.engine.rendering.Texture;
+
+/**
+ * The system responsible for rendering all sprite entities.
+ * &lt;p&gt;
+ * This system acts as the bridge between the ECS and the rendering engine.
+ * It queries the world for entities with a Transform and a Sprite, resolves their
+ * texture and mesh resources, and submits them to the Renderer to be drawn.
+ */
+public class RenderSystem implements ISystem {
+
+  private final IWorld world;
+  private final Renderer renderer;
+  private final ResourceManager resourceManager;
+  private final Camera camera;
+
+<span class="fc" id="L27">  public RenderSystem(IWorld world, Renderer renderer, ResourceManager resourceManager, Camera camera) {</span>
+<span class="fc" id="L28">    this.world = world;</span>
+<span class="fc" id="L29">    this.renderer = renderer;</span>
+<span class="fc" id="L30">    this.resourceManager = resourceManager;</span>
+<span class="fc" id="L31">    this.camera = camera;</span>
+<span class="fc" id="L32">  }</span>
+
+  @Override
+  public void update(float deltaTime) {
+<span class="fc" id="L36">    renderer.beginScene(camera);</span>
+
+    // Get all entities that have the components required for sprite rendering
+<span class="fc" id="L39">    var renderableEntities = world.getEntitiesWith(TransformComponent.class, SpriteComponent.class);</span>
+
+    // For a 2D sprite game, all sprites will use the same underlying quad mesh.
+    // We can resolve this once outside the loop for efficiency.
+<span class="fc" id="L43">    Mesh quadMesh = resourceManager.resolveMeshHandle(&quot;quad&quot;);</span>
+
+<span class="fc bfc" id="L45" title="All 2 branches covered.">    for (int entityId : renderableEntities) {</span>
+<span class="fc" id="L46">      TransformComponent transform = world.getComponent(entityId, TransformComponent.class);</span>
+<span class="fc" id="L47">      SpriteComponent sprite = world.getComponent(entityId, SpriteComponent.class);</span>
+
+      // Use the handle from the SpriteComponent to get the actual Texture resource
+<span class="fc" id="L50">      Texture texture = resourceManager.resolveTextureHandle(sprite.textureHandle);</span>
+
+      // Submit the quad mesh, the specific texture, and the transform to the renderer.
+<span class="fc" id="L53">      renderer.submit(quadMesh, texture, transform.getTransformMatrix());</span>
+<span class="fc" id="L54">    }</span>
+
+<span class="fc" id="L56">    renderer.endScene();</span>
+<span class="fc" id="L57">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

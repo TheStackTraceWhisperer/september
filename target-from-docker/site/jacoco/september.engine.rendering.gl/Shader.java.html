@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Shader.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">september</a> &gt; <a href="index.source.html" class="el_package">september.engine.rendering.gl</a> &gt; <span class="el_source">Shader.java</span></div><h1>Shader.java</h1><pre class="source lang-java linenums">package september.engine.rendering.gl;
+
+import org.joml.Matrix4f;
+import org.joml.Vector3f; // added
+import org.lwjgl.system.MemoryStack;
+
+import java.nio.FloatBuffer;
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.lwjgl.opengl.GL20.*;
+
+/**
+ * Manages an OpenGL shader program, including compiling, linking, and setting uniforms.
+ */
+public class Shader implements AutoCloseable {
+  private final int programId;
+  // Individual shader IDs are no longer needed as fields after linking
+<span class="fc" id="L19">  private final Map&lt;String, Integer&gt; uniforms = new HashMap&lt;&gt;();</span>
+
+<span class="fc" id="L21">  public Shader(String vertexSource, String fragmentSource) {</span>
+<span class="fc" id="L22">    int vertexShaderId = createShader(vertexSource, GL_VERTEX_SHADER);</span>
+<span class="fc" id="L23">    int fragmentShaderId = createShader(fragmentSource, GL_FRAGMENT_SHADER);</span>
+
+<span class="fc" id="L25">    programId = glCreateProgram();</span>
+<span class="fc" id="L26">    glAttachShader(programId, vertexShaderId);</span>
+<span class="fc" id="L27">    glAttachShader(programId, fragmentShaderId);</span>
+<span class="fc" id="L28">    glLinkProgram(programId);</span>
+
+<span class="pc bpc" id="L30" title="1 of 2 branches missed.">    if (glGetProgrami(programId, GL_LINK_STATUS) == 0) {</span>
+<span class="nc" id="L31">      throw new RuntimeException(&quot;Error linking shader code: &quot; + glGetProgramInfoLog(programId, 1024));</span>
+    }
+    // Validate program (useful during development)
+<span class="fc" id="L34">    glValidateProgram(programId); // added for test expectations</span>
+
+    // Best Practice: Detach and delete the individual shaders after a successful link
+    // as they are no longer needed.
+<span class="fc" id="L38">    glDetachShader(programId, vertexShaderId);</span>
+<span class="fc" id="L39">    glDetachShader(programId, fragmentShaderId);</span>
+<span class="fc" id="L40">    glDeleteShader(vertexShaderId);</span>
+<span class="fc" id="L41">    glDeleteShader(fragmentShaderId);</span>
+<span class="fc" id="L42">  }</span>
+
+  public void bind() {
+<span class="fc" id="L45">    glUseProgram(programId);</span>
+<span class="fc" id="L46">  }</span>
+
+  public void unbind() {
+<span class="fc" id="L49">    glUseProgram(0);</span>
+<span class="fc" id="L50">  }</span>
+
+  /**
+   * Caches and sets a Matrix4f uniform.
+   * @param name The name of the uniform in the shader code.
+   * @param value The Matrix4f value to set.
+   */
+  public void setUniform(String name, Matrix4f value) {
+<span class="fc" id="L58">    int location = getUniformLocation(name);</span>
+<span class="fc" id="L59">    try (MemoryStack stack = MemoryStack.stackPush()) {</span>
+<span class="fc" id="L60">      FloatBuffer fb = stack.mallocFloat(16);</span>
+<span class="fc" id="L61">      value.get(fb);</span>
+<span class="fc" id="L62">      glUniformMatrix4fv(location, false, fb);</span>
+    }
+<span class="fc" id="L64">  }</span>
+
+  // Added overload for Vector3f to satisfy tests and future use
+  public void setUniform(String name, Vector3f value) {
+<span class="nc" id="L68">    int location = getUniformLocation(name);</span>
+<span class="nc" id="L69">    glUniform3f(location, value.x, value.y, value.z);</span>
+<span class="nc" id="L70">  }</span>
+
+  /**
+   * Caches and sets an integer uniform. This is essential for setting texture samplers.
+   * @param name The name of the uniform in the shader code (e.g., &quot;uTextureSampler&quot;).
+   * @param value The integer value to set (e.g., 0 for texture unit GL_TEXTURE0).
+   */
+  public void setUniform(String name, int value) {
+<span class="fc" id="L78">    int location = getUniformLocation(name);</span>
+<span class="fc" id="L79">    glUniform1i(location, value);</span>
+<span class="fc" id="L80">  }</span>
+
+  private int getUniformLocation(String name) {
+    // Memoization: Look up the location once and cache it for future frames.
+<span class="fc" id="L84">    return uniforms.computeIfAbsent(name, n -&gt; glGetUniformLocation(programId, n));</span>
+  }
+
+  private int createShader(String shaderSource, int shaderType) {
+<span class="fc" id="L88">    int shaderId = glCreateShader(shaderType);</span>
+<span class="pc bpc" id="L89" title="1 of 2 branches missed.">    if (shaderId == 0) {</span>
+<span class="nc" id="L90">      throw new RuntimeException(&quot;Error creating shader of type &quot; + shaderType);</span>
+    }
+<span class="fc" id="L92">    glShaderSource(shaderId, shaderSource);</span>
+<span class="fc" id="L93">    glCompileShader(shaderId);</span>
+
+<span class="pc bpc" id="L95" title="1 of 2 branches missed.">    if (glGetShaderi(shaderId, GL_COMPILE_STATUS) == 0) {</span>
+<span class="nc" id="L96">      throw new RuntimeException(&quot;Error compiling shader code: &quot; + glGetShaderInfoLog(shaderId, 1024));</span>
+    }
+<span class="fc" id="L98">    return shaderId;</span>
+  }
+
+  @Override
+  public void close() {
+<span class="nc" id="L103">    unbind();</span>
+<span class="nc bnc" id="L104" title="All 2 branches missed.">    if (programId != 0) {</span>
+<span class="nc" id="L105">      glDeleteProgram(programId);</span>
+    }
+<span class="nc" id="L107">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

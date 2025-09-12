@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MovementSystem.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">september</a> &gt; <a href="index.source.html" class="el_package">september.engine.systems</a> &gt; <span class="el_source">MovementSystem.java</span></div><h1>MovementSystem.java</h1><pre class="source lang-java linenums">package september.engine.systems;
+
+import org.joml.Vector3f;
+import september.engine.ecs.ISystem;
+import september.engine.ecs.IWorld;
+import september.engine.ecs.components.ControllableComponent;
+import september.engine.ecs.components.MovementStatsComponent;
+import september.engine.ecs.components.TransformComponent;
+
+/**
+ * This system is responsible for moving entities based on their ControllableComponent state.
+ * It reads the player's intent and applies it to the entity's TransformComponent.
+ */
+public class MovementSystem implements ISystem {
+  private final IWorld world;
+  // Re-use a single vector object per frame to avoid creating garbage
+<span class="nc" id="L17">  private final Vector3f velocity = new Vector3f();</span>
+
+<span class="nc" id="L19">  public MovementSystem(IWorld world) {</span>
+<span class="nc" id="L20">    this.world = world;</span>
+<span class="nc" id="L21">  }</span>
+
+  @Override
+  public void update(float deltaTime) {
+    // Get all entities that can be moved by the player
+<span class="nc" id="L26">    var entities = world.getEntitiesWith(</span>
+      ControllableComponent.class,
+      TransformComponent.class,
+      MovementStatsComponent.class
+    );
+
+<span class="nc bnc" id="L32" title="All 2 branches missed.">    for (int entityId : entities) {</span>
+<span class="nc" id="L33">      ControllableComponent control = world.getComponent(entityId, ControllableComponent.class);</span>
+<span class="nc" id="L34">      TransformComponent transform = world.getComponent(entityId, TransformComponent.class);</span>
+<span class="nc" id="L35">      MovementStatsComponent stats = world.getComponent(entityId, MovementStatsComponent.class);</span>
+
+      // Snapshot the position before we move it. This is crucial for collision response.
+<span class="nc" id="L38">      transform.updatePreviousPosition();</span>
+
+      // Reset velocity for this frame
+<span class="nc" id="L41">      velocity.zero();</span>
+
+      // Build a direction vector from the player's intent
+<span class="nc bnc" id="L44" title="All 2 branches missed.">      if (control.wantsToMoveUp) {</span>
+<span class="nc" id="L45">        velocity.y += 1;</span>
+      }
+<span class="nc bnc" id="L47" title="All 2 branches missed.">      if (control.wantsToMoveDown) {</span>
+<span class="nc" id="L48">        velocity.y -= 1;</span>
+      }
+<span class="nc bnc" id="L50" title="All 2 branches missed.">      if (control.wantsToMoveLeft) {</span>
+<span class="nc" id="L51">        velocity.x -= 1;</span>
+      }
+<span class="nc bnc" id="L53" title="All 2 branches missed.">      if (control.wantsToMoveRight) {</span>
+<span class="nc" id="L54">        velocity.x += 1;</span>
+      }
+
+      // Normalize the vector if the player is moving diagonally.
+      // This is crucial to prevent faster movement on diagonals.
+<span class="nc bnc" id="L59" title="All 2 branches missed.">      if (velocity.lengthSquared() &gt; 0) {</span>
+<span class="nc" id="L60">        velocity.normalize();</span>
+      }
+
+      // Apply speed and delta time to calculate the final movement for this frame
+<span class="nc" id="L64">      velocity.mul(stats.speed * deltaTime);</span>
+
+      // Add the final movement vector to the entity's current position
+<span class="nc" id="L67">      transform.position.add(velocity);</span>
+<span class="nc" id="L68">    }</span>
+<span class="nc" id="L69">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

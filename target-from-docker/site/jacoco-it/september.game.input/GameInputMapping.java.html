@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GameInputMapping.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">september</a> &gt; <a href="index.source.html" class="el_package">september.game.input</a> &gt; <span class="el_source">GameInputMapping.java</span></div><h1>GameInputMapping.java</h1><pre class="source lang-java linenums">package september.game.input;
+
+/**
+ * A placeholder for a more advanced, data-driven input mapping implementation.
+ * &lt;p&gt;
+ * This class would eventually replace the simple, hard-coded {@link KeyboardMappingService}.
+ * Its primary responsibility would be to load control schemes from an external configuration
+ * file (e.g., controls.json), allowing for user-configurable key bindings and support
+ * for multiple input devices like gamepads.
+ * &lt;p&gt;
+ * Future Implementation Steps:
+ * 1. Implement the {@link InputMappingService} interface.
+ * 2. Add logic to parse a configuration file (JSON, XML, etc.) that defines mappings
+ * between abstract {@link GameAction}s and physical key codes or gamepad buttons.
+ * 3. Handle mappings for multiple players and multiple device types (keyboard, gamepad).
+ * 4. Provide a mechanism to save modified key bindings back to the configuration file.
+ */
+<span class="nc" id="L18">public class GameInputMapping /* implements InputMappingService */ {</span>
+
+  // Example of future fields and constructor:
+  //
+  // private final InputService inputService;
+  // private final Map&lt;Integer, Map&lt;GameAction, Integer&gt;&gt; playerKeyMappings;
+  // private final Map&lt;Integer, Map&lt;GameAction, Integer&gt;&gt; playerButtonMappings;
+  //
+  // public GameInputMapping(InputService inputService, String configPath) {
+  //     this.inputService = inputService;
+  //     // TODO: Load and parse the file at configPath into the mapping data structures.
+  // }
+
+  // @Override
+  // public boolean isActionActive(int playerId, GameAction action) {
+  //     // TODO: Implement logic to check the loaded mappings against the inputService state
+  //     //       for both keyboard and gamepad.
+  //     return false;
+  // }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

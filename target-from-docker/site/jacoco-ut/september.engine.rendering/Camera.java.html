@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Camera.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">september</a> &gt; <a href="index.source.html" class="el_package">september.engine.rendering</a> &gt; <span class="el_source">Camera.java</span></div><h1>Camera.java</h1><pre class="source lang-java linenums">package september.engine.rendering;
+
+import lombok.Getter;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
+
+/**
+ * Represents a camera in the game world, responsible for the view and projection matrices.
+ * This camera can operate in either a 2D (Orthographic) or 3D (Perspective) mode.
+ */
+public class Camera {
+
+<span class="fc" id="L13">  private enum ProjectionType {</span>
+<span class="fc" id="L14">    ORTHOGRAPHIC,</span>
+<span class="fc" id="L15">    PERSPECTIVE</span>
+  }
+
+  @Getter
+  private final Matrix4f projectionMatrix;
+  private final Matrix4f viewMatrix;
+  private final Vector3f position;
+  private final Vector3f front;
+  private final Vector3f up;
+
+  // State for recalculating projection on resize
+  private ProjectionType projectionType;
+  private float orthoWidth, orthoHeight;
+  private float fov, nearPlane, farPlane;
+
+<span class="fc" id="L30">  private boolean viewDirty = true;</span>
+
+  /**
+   * Creates a new camera with a default 2D orthographic projection (16 units wide, 9 units tall).
+   */
+<span class="fc" id="L35">  public Camera() {</span>
+<span class="fc" id="L36">    this.projectionMatrix = new Matrix4f();</span>
+<span class="fc" id="L37">    this.viewMatrix = new Matrix4f();</span>
+<span class="fc" id="L38">    this.position = new Vector3f(0.0f, 0.0f, 0.0f);</span>
+<span class="fc" id="L39">    this.front = new Vector3f(0.0f, 0.0f, -1.0f);</span>
+<span class="fc" id="L40">    this.up = new Vector3f(0.0f, 1.0f, 0.0f);</span>
+<span class="fc" id="L41">    setOrthographic(16, 9); // Default to a 16:9 2D world view</span>
+<span class="fc" id="L42">  }</span>
+
+  /**
+   * Creates a new camera with a specific 2D orthographic projection.
+   * @param worldWidth The visible width of the game world.
+   * @param worldHeight The visible height of the game world.
+   */
+  public Camera(float worldWidth, float worldHeight) {
+<span class="fc" id="L50">    this(); // Call the default constructor to initialize fields</span>
+<span class="fc" id="L51">    setOrthographic(worldWidth, worldHeight);</span>
+<span class="fc" id="L52">  }</span>
+
+  private void calculateViewMatrix() {
+<span class="nc" id="L55">    Vector3f target = new Vector3f();</span>
+<span class="nc" id="L56">    position.add(front, target);</span>
+<span class="nc" id="L57">    viewMatrix.identity().lookAt(position, target, up);</span>
+<span class="nc" id="L58">    viewDirty = false;</span>
+<span class="nc" id="L59">  }</span>
+
+  public Matrix4f getViewMatrix() {
+<span class="nc bnc" id="L62" title="All 2 branches missed.">    if (viewDirty) {</span>
+<span class="nc" id="L63">      calculateViewMatrix();</span>
+    }
+<span class="nc" id="L65">    return viewMatrix;</span>
+  }
+
+  public void setPosition(Vector3f position) {
+<span class="nc" id="L69">    this.position.set(position);</span>
+<span class="nc" id="L70">    this.viewDirty = true;</span>
+<span class="nc" id="L71">  }</span>
+
+  /**
+   * Configures the camera for 2D rendering with an orthographic projection.
+   * The view will be centered at the origin.
+   *
+   * @param worldWidth  The desired visible width of the world.
+   * @param worldHeight The desired visible height of the world.
+   */
+  public final void setOrthographic(float worldWidth, float worldHeight) {
+<span class="fc" id="L81">    this.projectionType = ProjectionType.ORTHOGRAPHIC;</span>
+<span class="fc" id="L82">    this.orthoWidth = worldWidth;</span>
+<span class="fc" id="L83">    this.orthoHeight = worldHeight;</span>
+<span class="fc" id="L84">    float halfW = worldWidth / 2.0f;</span>
+<span class="fc" id="L85">    float halfH = worldHeight / 2.0f;</span>
+<span class="fc" id="L86">    projectionMatrix.identity().ortho(-halfW, halfW, -halfH, halfH, -1.0f, 100.0f);</span>
+<span class="fc" id="L87">  }</span>
+
+  /**
+   * Configures the camera for 3D rendering with a perspective projection.
+   *
+   * @param fov          The vertical field of view, in degrees.
+   * @param aspectRatio  The aspect ratio of the viewport (width / height).
+   * @param nearPlane    The distance to the near clipping plane.
+   * @param farPlane     The distance to the far clipping plane.
+   */
+  public final void setPerspective(float fov, float aspectRatio, float nearPlane, float farPlane) {
+<span class="nc" id="L98">    this.projectionType = ProjectionType.PERSPECTIVE;</span>
+<span class="nc" id="L99">    this.fov = fov;</span>
+<span class="nc" id="L100">    this.nearPlane = nearPlane;</span>
+<span class="nc" id="L101">    this.farPlane = farPlane;</span>
+<span class="nc" id="L102">    projectionMatrix.identity().perspective((float) Math.toRadians(fov), aspectRatio, nearPlane, farPlane);</span>
+<span class="nc" id="L103">  }</span>
+
+  /**
+   * Updates the camera's projection matrix to match a new screen size,
+   * maintaining the original aspect ratio to prevent distortion.
+   *
+   * @param screenWidth  The new width of the window's framebuffer.
+   * @param screenHeight The new height of the window's framebuffer.
+   */
+  public void resize(int screenWidth, int screenHeight) {
+<span class="nc" id="L113">    float newAspectRatio = (float) screenWidth / (float) screenHeight;</span>
+
+<span class="nc bnc" id="L115" title="All 2 branches missed.">    if (projectionType == ProjectionType.PERSPECTIVE) {</span>
+<span class="nc" id="L116">      setPerspective(this.fov, newAspectRatio, this.nearPlane, this.farPlane);</span>
+<span class="nc bnc" id="L117" title="All 2 branches missed.">    } else if (projectionType == ProjectionType.ORTHOGRAPHIC) {</span>
+<span class="nc" id="L118">      float targetAspectRatio = orthoWidth / orthoHeight;</span>
+      float left, right, bottom, top;
+
+      // This logic ensures the original world view is always visible, expanding
+      // in one dimension to fill the new window shape (pillarboxing/letterboxing).
+<span class="nc bnc" id="L123" title="All 2 branches missed.">      if (newAspectRatio &gt;= targetAspectRatio) {</span>
+        // Window is wider than target, so height is the constraining dimension
+<span class="nc" id="L125">        float scaledWidth = orthoHeight * newAspectRatio;</span>
+<span class="nc" id="L126">        left = -scaledWidth / 2.0f;</span>
+<span class="nc" id="L127">        right = scaledWidth / 2.0f;</span>
+<span class="nc" id="L128">        bottom = -orthoHeight / 2.0f;</span>
+<span class="nc" id="L129">        top = orthoHeight / 2.0f;</span>
+<span class="nc" id="L130">      } else {</span>
+        // Window is taller than target, so width is the constraining dimension
+<span class="nc" id="L132">        float scaledHeight = orthoWidth / newAspectRatio;</span>
+<span class="nc" id="L133">        left = -orthoWidth / 2.0f;</span>
+<span class="nc" id="L134">        right = orthoWidth / 2.0f;</span>
+<span class="nc" id="L135">        bottom = -scaledHeight / 2.0f;</span>
+<span class="nc" id="L136">        top = scaledHeight / 2.0f;</span>
+      }
+<span class="nc" id="L138">      projectionMatrix.identity().ortho(left, right, bottom, top, -1.0f, 100.0f);</span>
+    }
+<span class="nc" id="L140">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

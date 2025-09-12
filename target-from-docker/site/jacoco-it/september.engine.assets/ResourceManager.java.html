@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ResourceManager.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">september</a> &gt; <a href="index.source.html" class="el_package">september.engine.assets</a> &gt; <span class="el_source">ResourceManager.java</span></div><h1>ResourceManager.java</h1><pre class="source lang-java linenums">package september.engine.assets;
+
+import september.engine.rendering.Mesh;
+import september.engine.rendering.Texture;
+import september.engine.rendering.gl.Shader;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+
+/**
+ * Manages the loading, caching, and lifecycle of engine assets.
+ * &lt;p&gt;
+ * This class ensures that resources like meshes and textures are loaded only once
+ * and provides a central point of access for retrieving them via a string handle.
+ * It implements AutoCloseable to guarantee that all native resources it manages
+ * are freed when the manager is closed.
+ */
+<span class="fc" id="L19">public final class ResourceManager implements AutoCloseable {</span>
+
+<span class="fc" id="L21">  private final Map&lt;String, Mesh&gt; meshCache = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L22">  private final Map&lt;String, Texture&gt; textureCache = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L23">  private final Map&lt;String, Shader&gt; shaderCache = new HashMap&lt;&gt;();</span>
+
+  /**
+   * Loads a texture from a file, stores it in the cache, and returns it.
+   * If the texture is already cached, returns the existing instance.
+   *
+   * @param handle   The unique handle for this texture.
+   * @param filePath The classpath path to the image file.
+   * @return The cached or newly loaded Texture.
+   */
+  public Texture loadTexture(String handle, String filePath) {
+<span class="fc" id="L34">    return textureCache.computeIfAbsent(handle, h -&gt; AssetLoader.loadTexture(filePath));</span>
+  }
+
+  /**
+   * Loads a shader program from two files, stores it, and returns it.
+   * If the shader is already cached, returns the existing instance.
+   *
+   * @param handle       The unique handle for this shader.
+   * @param vertexPath   The classpath path to the vertex shader file.
+   * @param fragmentPath The classpath path to the fragment shader file.
+   * @return The cached or newly loaded Shader.
+   */
+  public Shader loadShader(String handle, String vertexPath, String fragmentPath) {
+<span class="nc" id="L47">    return shaderCache.computeIfAbsent(handle, h -&gt; AssetLoader.loadShader(vertexPath, fragmentPath));</span>
+  }
+
+  /**
+   * Creates a new Mesh from raw vertex data and stores it under a given handle.
+   * If a mesh with the same handle already exists, it will be closed and replaced.
+   *
+   * @param handle   The unique string identifier for this mesh.
+   * @param vertices The vertex data (e.g., positions, UVs).
+   * @param indices  The index data defining the triangles.
+   */
+  public void loadProceduralMesh(String handle, float[] vertices, int[] indices) {
+<span class="pc bpc" id="L59" title="1 of 2 branches missed.">    if (meshCache.containsKey(handle)) {</span>
+<span class="nc" id="L60">      meshCache.get(handle).close(); // Clean up the old mesh if it exists</span>
+    }
+<span class="fc" id="L62">    meshCache.put(handle, new Mesh(vertices, indices));</span>
+<span class="fc" id="L63">  }</span>
+
+  public Mesh resolveMeshHandle(String handle) {
+<span class="fc" id="L66">    Mesh mesh = meshCache.get(handle);</span>
+<span class="fc" id="L67">    Objects.requireNonNull(mesh, &quot;Mesh not found: &quot; + handle);</span>
+<span class="fc" id="L68">    return mesh;</span>
+  }
+
+  public Texture resolveTextureHandle(String handle) {
+<span class="fc" id="L72">    Texture texture = textureCache.get(handle);</span>
+<span class="fc" id="L73">    Objects.requireNonNull(texture, &quot;Texture not found: &quot; + handle);</span>
+<span class="fc" id="L74">    return texture;</span>
+  }
+
+  public Shader resolveShaderHandle(String handle) {
+<span class="nc" id="L78">    Shader shader = shaderCache.get(handle);</span>
+<span class="nc" id="L79">    Objects.requireNonNull(shader, &quot;Shader not found: &quot; + handle);</span>
+<span class="nc" id="L80">    return shader;</span>
+  }
+
+  /**
+   * Frees all managed resources. This iterates through all cached assets
+   * and calls their respective close() methods to release native resources.
+   */
+  @Override
+  public void close() {
+<span class="fc" id="L89">    meshCache.values().forEach(Mesh::close);</span>
+<span class="fc" id="L90">    meshCache.clear();</span>
+
+<span class="fc" id="L92">    textureCache.values().forEach(Texture::close);</span>
+<span class="fc" id="L93">    textureCache.clear();</span>
+
+<span class="fc" id="L95">    shaderCache.values().forEach(Shader::close);</span>
+<span class="fc" id="L96">    shaderCache.clear();</span>
+<span class="fc" id="L97">  }</span>
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>World.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">september</a> &gt; <a href="index.source.html" class="el_package">september.engine.ecs</a> &gt; <span class="el_source">World.java</span></div><h1>World.java</h1><pre class="source lang-java linenums">package september.engine.ecs;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+/**
+ * A concrete implementation of the IWorld interface.
+ * &lt;p&gt;
+ * This class orchestrates the various managers (Entity, Component, System)
+ * to provide a coherent ECS framework.
+ */
+public class World implements IWorld {
+
+  private final EntityManager entityManager;
+  private final ComponentManager componentManager;
+  private final SystemManager systemManager;
+
+<span class="fc" id="L23">  public World() {</span>
+<span class="fc" id="L24">    this.entityManager = new EntityManager();</span>
+<span class="fc" id="L25">    this.componentManager = new ComponentManager();</span>
+<span class="fc" id="L26">    this.systemManager = new SystemManager();</span>
+<span class="fc" id="L27">  }</span>
+
+  @Override
+  public int createEntity() {
+<span class="fc" id="L31">    return entityManager.createEntity();</span>
+  }
+
+  @Override
+  public void destroyEntity(int entityId) {
+    // Notify all managers of the entity's destruction.
+<span class="nc" id="L37">    componentManager.entityDestroyed(entityId);</span>
+<span class="nc" id="L38">    entityManager.destroyEntity(entityId);</span>
+<span class="nc" id="L39">  }</span>
+
+  @Override
+  public &lt;T&gt; void addComponent(int entityId, T component) {
+<span class="fc" id="L43">    componentManager.addComponent(entityId, component);</span>
+<span class="fc" id="L44">  }</span>
+
+  @Override
+  public &lt;T&gt; T getComponent(int entityId, Class&lt;T&gt; componentClass) {
+<span class="fc" id="L48">    return componentManager.getComponent(entityId, componentClass);</span>
+  }
+
+  @Override
+  public void removeComponent(int entityId, Class&lt;?&gt; componentClass) {
+<span class="nc" id="L53">    componentManager.removeComponent(entityId, componentClass);</span>
+<span class="nc" id="L54">  }</span>
+
+  @Override
+  public boolean hasComponent(int entityId, Class&lt;?&gt; componentClass) {
+<span class="nc" id="L58">    return componentManager.hasComponent(entityId, componentClass);</span>
+  }
+
+  @Override
+  public void registerSystem(ISystem system) {
+<span class="fc" id="L63">    systemManager.registerSystem(system);</span>
+<span class="fc" id="L64">  }</span>
+
+  @Override
+  public void update(float deltaTime) {
+<span class="fc" id="L68">    systemManager.updateAll(deltaTime);</span>
+<span class="fc" id="L69">  }</span>
+
+  @Override
+  public List&lt;Integer&gt; getEntitiesWith(Class&lt;?&gt;... componentClasses) {
+    // Start with a list of all active entities.
+<span class="fc" id="L74">    List&lt;Integer&gt; activeEntities = entityManager.getActiveEntities();</span>
+
+<span class="pc bpc" id="L76" title="2 of 4 branches missed.">    if (componentClasses == null || componentClasses.length == 0) {</span>
+<span class="nc" id="L77">      return activeEntities;</span>
+    }
+
+    // Filter the list down to only those that have all the required components.
+<span class="fc" id="L81">    return activeEntities.stream()</span>
+<span class="fc" id="L82">      .filter(entityId -&gt; {</span>
+<span class="fc bfc" id="L83" title="All 2 branches covered.">        for (Class&lt;?&gt; componentClass : componentClasses) {</span>
+<span class="fc bfc" id="L84" title="All 2 branches covered.">          if (!componentManager.hasComponent(entityId, componentClass)) {</span>
+<span class="fc" id="L85">            return false; // This entity doesn't have one of the required components.</span>
+          }
+        }
+<span class="fc" id="L88">        return true; // This entity has all required components.</span>
+      })
+<span class="fc" id="L90">      .collect(Collectors.toList());</span>
+  }
+}
+
+/**
+ * Manages the creation, destruction, and tracking of entity IDs.
+ * Package-private as it's an implementation detail of the World.
+ */
+<span class="fc" id="L98">class EntityManager {</span>
+<span class="fc" id="L99">  private int nextEntityId = 0;</span>
+<span class="fc" id="L100">  private final Set&lt;Integer&gt; activeEntities = new HashSet&lt;&gt;();</span>
+  // A more advanced implementation might use a queue/stack to recycle destroyed IDs.
+
+  int createEntity() {
+<span class="fc" id="L104">    int id = nextEntityId++;</span>
+<span class="fc" id="L105">    activeEntities.add(id);</span>
+<span class="fc" id="L106">    return id;</span>
+  }
+
+  void destroyEntity(int entityId) {
+<span class="nc" id="L110">    activeEntities.remove(entityId);</span>
+<span class="nc" id="L111">  }</span>
+
+  List&lt;Integer&gt; getActiveEntities() {
+<span class="fc" id="L114">    return new ArrayList&lt;&gt;(activeEntities);</span>
+  }
+}
+
+/**
+ * Manages the storage and mapping of all components to their entities.
+ * Package-private as it's an implementation detail of the World.
+ */
+<span class="fc" id="L122">class ComponentManager {</span>
+  // A map from a Component Class to another map, which maps an Entity ID to the component instance.
+  // Example: { TransformComponent.class -&gt; { 1 -&gt; transform1, 2 -&gt; transform2 } }
+<span class="fc" id="L125">  private final Map&lt;Class&lt;?&gt;, Map&lt;Integer, Object&gt;&gt; componentStores = new HashMap&lt;&gt;();</span>
+
+  &lt;T&gt; void addComponent(int entityId, T component) {
+<span class="fc" id="L128">    Class&lt;?&gt; componentClass = component.getClass();</span>
+<span class="fc" id="L129">    componentStores</span>
+<span class="fc" id="L130">      .computeIfAbsent(componentClass, k -&gt; new HashMap&lt;&gt;())</span>
+<span class="fc" id="L131">      .put(entityId, component);</span>
+<span class="fc" id="L132">  }</span>
+
+  &lt;T&gt; T getComponent(int entityId, Class&lt;T&gt; componentClass) {
+<span class="fc" id="L135">    Map&lt;Integer, Object&gt; store = componentStores.get(componentClass);</span>
+<span class="pc bpc" id="L136" title="1 of 2 branches missed.">    if (store == null) {</span>
+<span class="nc" id="L137">      return null;</span>
+    }
+    // The cast is safe due to the structure of the map and addComponent logic.
+<span class="fc" id="L140">    return componentClass.cast(store.get(entityId));</span>
+  }
+
+  void removeComponent(int entityId, Class&lt;?&gt; componentClass) {
+<span class="nc" id="L144">    Map&lt;Integer, Object&gt; store = componentStores.get(componentClass);</span>
+<span class="nc bnc" id="L145" title="All 2 branches missed.">    if (store != null) {</span>
+<span class="nc" id="L146">      store.remove(entityId);</span>
+    }
+<span class="nc" id="L148">  }</span>
+
+  boolean hasComponent(int entityId, Class&lt;?&gt; componentClass) {
+<span class="fc" id="L151">    Map&lt;Integer, Object&gt; store = componentStores.get(componentClass);</span>
+<span class="pc bpc" id="L152" title="1 of 4 branches missed.">    return store != null &amp;&amp; store.containsKey(entityId);</span>
+  }
+
+  void entityDestroyed(int entityId) {
+    // When an entity is destroyed, we must remove all of its components.
+<span class="nc bnc" id="L157" title="All 2 branches missed.">    for (Map&lt;Integer, Object&gt; store : componentStores.values()) {</span>
+<span class="nc" id="L158">      store.remove(entityId);</span>
+<span class="nc" id="L159">    }</span>
+<span class="nc" id="L160">  }</span>
+}
+
+/**
+ * Manages the registration and execution of all systems.
+ * Package-private as it's an implementation detail of the World.
+ */
+<span class="fc" id="L167">class SystemManager {</span>
+<span class="fc" id="L168">  private final List&lt;ISystem&gt; systems = new ArrayList&lt;&gt;();</span>
+
+  void registerSystem(ISystem system) {
+<span class="fc" id="L171">    systems.add(system);</span>
+<span class="fc" id="L172">  }</span>
+
+  void updateAll(float deltaTime) {
+<span class="fc bfc" id="L175" title="All 2 branches covered.">    for (ISystem system : systems) {</span>
+<span class="fc" id="L176">      system.update(deltaTime);</span>
+<span class="fc" id="L177">    }</span>
+<span class="fc" id="L178">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

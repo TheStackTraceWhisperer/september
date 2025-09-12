@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WindowContext.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">september</a> &gt; <a href="index.source.html" class="el_package">september.engine.core</a> &gt; <span class="el_source">WindowContext.java</span></div><h1>WindowContext.java</h1><pre class="source lang-java linenums">package september.engine.core;
+
+import org.lwjgl.glfw.GLFW;
+import org.lwjgl.opengl.GL;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL30;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * GLFW window wrapper that creates an OpenGL 4.6 core profile context.
+ */
+public final class WindowContext implements AutoCloseable {
+<span class="fc" id="L14">  private static final Logger log = LoggerFactory.getLogger(WindowContext.class);</span>
+
+<span class="fc" id="L16">  private boolean created = false;</span>
+<span class="fc" id="L17">  private long handle = 0L;</span>
+
+<span class="fc" id="L19">  public WindowContext(int width, int height, String title) {</span>
+    // Single attempt: request OpenGL 4.6 core profile
+<span class="fc" id="L21">    GLFW.glfwDefaultWindowHints();</span>
+<span class="fc" id="L22">    GLFW.glfwWindowHint(GLFW.GLFW_CLIENT_API, GLFW.GLFW_OPENGL_API);</span>
+<span class="fc" id="L23">    GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 4);</span>
+<span class="fc" id="L24">    GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 6);</span>
+<span class="fc" id="L25">    GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_CORE_PROFILE);</span>
+<span class="fc" id="L26">    GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, GLFW.GLFW_TRUE); // Added for resize support</span>
+<span class="fc" id="L27">    GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE); // Create hidden, show after setup</span>
+
+<span class="fc" id="L29">    log.info(&quot;Creating GLFW window with OpenGL 4.6 core profile&quot;);</span>
+<span class="fc" id="L30">    long window = GLFW.glfwCreateWindow(width, height, title, 0L, 0L);</span>
+<span class="pc bpc" id="L31" title="1 of 2 branches missed.">    if (window == 0L) {</span>
+<span class="nc" id="L32">      throw new IllegalStateException(&quot;Unable to create GLFW window (requested OpenGL 4.6 core profile)&quot;);</span>
+    }
+
+<span class="fc" id="L35">    this.handle = window;</span>
+<span class="fc" id="L36">    this.created = true;</span>
+
+    // Make context current
+<span class="fc" id="L39">    GLFW.glfwMakeContextCurrent(window);</span>
+<span class="pc bpc" id="L40" title="1 of 2 branches missed.">    if (GLFW.glfwGetCurrentContext() != window) {</span>
+<span class="nc" id="L41">      GLFW.glfwDestroyWindow(window);</span>
+<span class="nc" id="L42">      this.handle = 0L;</span>
+<span class="nc" id="L43">      this.created = false;</span>
+<span class="nc" id="L44">      throw new IllegalStateException(&quot;Failed to make OpenGL context current&quot;);</span>
+    }
+
+    try {
+<span class="fc" id="L48">      GL.createCapabilities();</span>
+      // Set initial state
+<span class="fc" id="L50">      GLFW.glfwSwapInterval(1); // Enable v-sync</span>
+<span class="fc" id="L51">      GL30.glViewport(0, 0, width, height); // Set initial viewport</span>
+
+      try {
+<span class="fc" id="L54">        String glVersion = GL11.glGetString(GL11.GL_VERSION);</span>
+<span class="fc" id="L55">        String glRenderer = GL11.glGetString(GL11.GL_RENDERER);</span>
+<span class="fc" id="L56">        String glVendor = GL11.glGetString(GL11.GL_VENDOR);</span>
+<span class="fc" id="L57">        log.info(&quot;OpenGL reported version: {}&quot;, glVersion);</span>
+<span class="fc" id="L58">        log.info(&quot;OpenGL renderer: {}&quot;, glRenderer);</span>
+<span class="fc" id="L59">        log.info(&quot;OpenGL vendor: {}&quot;, glVendor);</span>
+<span class="nc" id="L60">      } catch (Throwable t) {</span>
+<span class="nc" id="L61">        log.warn(&quot;Failed to query OpenGL version information&quot;, t);</span>
+<span class="fc" id="L62">      }</span>
+<span class="nc" id="L63">    } catch (IllegalStateException ise) {</span>
+<span class="nc" id="L64">      GLFW.glfwDestroyWindow(window);</span>
+<span class="nc" id="L65">      this.handle = 0L;</span>
+<span class="nc" id="L66">      this.created = false;</span>
+<span class="nc" id="L67">      throw ise;</span>
+<span class="fc" id="L68">    }</span>
+
+<span class="fc" id="L70">    GLFW.glfwShowWindow(window);</span>
+<span class="fc" id="L71">    log.info(&quot;Created GLFW window: handle={}&quot;, window);</span>
+<span class="fc" id="L72">  }</span>
+
+  public long handle() {
+<span class="fc" id="L75">    return handle;</span>
+  }
+
+  public void swapBuffers() {
+<span class="fc" id="L79">    GLFW.glfwSwapBuffers(handle);</span>
+<span class="fc" id="L80">  }</span>
+
+  /**
+   * Processes all pending events for the window.
+   */
+  public void pollEvents() {
+<span class="fc" id="L86">    GLFW.glfwPollEvents();</span>
+<span class="fc" id="L87">  }</span>
+
+  /**
+   * Sets a listener to be called when the window's framebuffer is resized.
+   * This method handles setting the GLFW callback and managing the GL viewport.
+   *
+   * @param listener The listener that will handle the resize event for game logic (e.g., camera).
+   */
+  public void setResizeListener(WindowResizeListener listener) {
+<span class="fc" id="L96">    GLFW.glfwSetFramebufferSizeCallback(handle, (win, w, h) -&gt; {</span>
+<span class="nc bnc" id="L97" title="All 4 branches missed.">      if (w &gt; 0 &amp;&amp; h &gt; 0) {</span>
+        // The context is responsible for the GL call
+<span class="nc" id="L99">        GL30.glViewport(0, 0, w, h);</span>
+        // The listener is responsible for game-logic updates (like camera)
+<span class="nc bnc" id="L101" title="All 2 branches missed.">        if (listener != null) {</span>
+<span class="nc" id="L102">          listener.onResize(w, h);</span>
+        }
+      }
+<span class="nc" id="L105">    });</span>
+<span class="fc" id="L106">  }</span>
+
+  @Override
+  public void close() {
+<span class="pc bpc" id="L110" title="1 of 2 branches missed.">    if (!created) {</span>
+<span class="nc" id="L111">      return;</span>
+    }
+<span class="pc bpc" id="L113" title="1 of 2 branches missed.">    if (handle != 0L) {</span>
+<span class="fc" id="L114">      log.info(&quot;Destroying GLFW window: handle={}&quot;, handle);</span>
+<span class="fc" id="L115">      GLFW.glfwDestroyWindow(handle);</span>
+<span class="fc" id="L116">      handle = 0L;</span>
+    }
+<span class="fc" id="L118">    created = false;</span>
+<span class="fc" id="L119">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
