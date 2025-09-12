@@ -6,8 +6,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import september.engine.EngineTestHarness;
 import september.engine.ecs.components.ColliderComponent;
-import september.engine.ecs.components.ColliderComponent.ColliderType;
 import september.engine.ecs.components.TransformComponent;
+import september.game.components.GameColliderType;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -20,87 +20,105 @@ class CollisionSystemTest extends EngineTestHarness {
 
     @BeforeEach
     void setupSystem() {
-        // The harness provides the 'world'. We create the system under test with it.
         collisionSystem = new CollisionSystem(world);
     }
 
     @Test
-    @DisplayName("Player should be reverted to previous position after colliding with a Wall")
+    @DisplayName("Player vs. Wall: Player position should revert, Wall position should not")
     void playerVsWall_revertsPlayerPosition() {
         // Arrange
-        var playerTransform = new TransformComponent();
-        playerTransform.position.set(0, 0, 0);
-        playerTransform.updatePreviousPosition(); // Snapshot position before "movement"
-        playerTransform.position.set(10, 10, 0); // Simulate movement into a colliding position
+        var playerTransform = createTestTransform(new Vector3f(0, 0, 0), new Vector3f(10, 10, 0));
+        var wallTransform = createTestTransform(new Vector3f(12, 12, 0));
+        Vector3f wallPositionBeforeUpdate = new Vector3f(wallTransform.position);
 
-        var wallTransform = new TransformComponent();
-        wallTransform.position.set(12, 12, 0); // Positioned to overlap with the player
-
-        createEntityWithCollider(playerTransform, new ColliderComponent(ColliderType.PLAYER, 16, 16, 0, 0));
-        createEntityWithCollider(wallTransform, new ColliderComponent(ColliderType.WALL, 16, 16, 0, 0));
+        createEntityWithCollider(playerTransform, new ColliderComponent(GameColliderType.PLAYER, 16, 16, 0, 0));
+        createEntityWithCollider(wallTransform, new ColliderComponent(GameColliderType.WALL, 16, 16, 0, 0));
 
         // Act
         collisionSystem.update(0.016f);
 
         // Assert
-        assertThat(playerTransform.position)
-                .as("Player position should be reverted to its previous state")
-                .isEqualTo(playerTransform.previousPosition);
+        assertThat(playerTransform.position).as("Player position should revert").isEqualTo(playerTransform.previousPosition);
+        assertThat(wallTransform.position).as("Wall position should not change").isEqualTo(wallPositionBeforeUpdate);
     }
 
     @Test
-    @DisplayName("Positions should not be reverted when no collision occurs")
+    @DisplayName("Wall vs. Player: Player position should revert, Wall position should not")
+    void wallVsPlayer_revertsPlayerPosition() {
+        // Arrange
+        var playerTransform = createTestTransform(new Vector3f(0, 0, 0), new Vector3f(10, 10, 0));
+        var wallTransform = createTestTransform(new Vector3f(12, 12, 0));
+        Vector3f wallPositionBeforeUpdate = new Vector3f(wallTransform.position);
+
+        // Create wall first to test the other branch of the collision logic
+        createEntityWithCollider(wallTransform, new ColliderComponent(GameColliderType.WALL, 16, 16, 0, 0));
+        createEntityWithCollider(playerTransform, new ColliderComponent(GameColliderType.PLAYER, 16, 16, 0, 0));
+
+        // Act
+        collisionSystem.update(0.016f);
+
+        // Assert
+        assertThat(playerTransform.position).as("Player position should revert").isEqualTo(playerTransform.previousPosition);
+        assertThat(wallTransform.position).as("Wall position should not change").isEqualTo(wallPositionBeforeUpdate);
+    }
+
+    @Test
+    @DisplayName("No Collision: Neither entity's position should change")
     void noCollision_forNonOverlappingEntities() {
         // Arrange
-        var playerTransform = new TransformComponent();
-        playerTransform.position.set(0, 0, 0);
-        playerTransform.updatePreviousPosition();
-        playerTransform.position.set(10, 10, 0);
+        var playerTransform = createTestTransform(new Vector3f(0, 0, 0), new Vector3f(10, 10, 0));
+        var wallTransform = createTestTransform(new Vector3f(100, 100, 0)); // Far away
         Vector3f playerPositionBeforeUpdate = new Vector3f(playerTransform.position);
+        Vector3f wallPositionBeforeUpdate = new Vector3f(wallTransform.position);
 
-        var wallTransform = new TransformComponent();
-        wallTransform.position.set(100, 100, 0); // Far away, no collision
-
-        createEntityWithCollider(playerTransform, new ColliderComponent(ColliderType.PLAYER, 16, 16, 0, 0));
-        createEntityWithCollider(wallTransform, new ColliderComponent(ColliderType.WALL, 16, 16, 0, 0));
+        createEntityWithCollider(playerTransform, new ColliderComponent(GameColliderType.PLAYER, 16, 16, 0, 0));
+        createEntityWithCollider(wallTransform, new ColliderComponent(GameColliderType.WALL, 16, 16, 0, 0));
 
         // Act
         collisionSystem.update(0.016f);
 
         // Assert
-        assertThat(playerTransform.position)
-                .as("Player position should not change when there is no collision")
-                .isEqualTo(playerPositionBeforeUpdate);
+        assertThat(playerTransform.position).as("Player position should not change").isEqualTo(playerPositionBeforeUpdate);
+        assertThat(wallTransform.position).as("Wall position should not change").isEqualTo(wallPositionBeforeUpdate);
     }
 
     @Test
-    @DisplayName("Positions should not be reverted for Player vs. Enemy collision")
+    @DisplayName("Player vs. Enemy: Neither entity's position should revert")
     void noRevert_forPlayerVsEnemyCollision() {
         // Arrange
-        var playerTransform = new TransformComponent();
-        playerTransform.position.set(0, 0, 0);
-        playerTransform.updatePreviousPosition();
-        playerTransform.position.set(10, 10, 0);
+        var playerTransform = createTestTransform(new Vector3f(0, 0, 0), new Vector3f(10, 10, 0));
+        var enemyTransform = createTestTransform(new Vector3f(12, 12, 0)); // Overlapping
         Vector3f playerPositionBeforeUpdate = new Vector3f(playerTransform.position);
+        Vector3f enemyPositionBeforeUpdate = new Vector3f(enemyTransform.position);
 
-        var enemyTransform = new TransformComponent();
-        enemyTransform.position.set(12, 12, 0); // Overlapping
-
-        createEntityWithCollider(playerTransform, new ColliderComponent(ColliderType.PLAYER, 16, 16, 0, 0));
-        createEntityWithCollider(enemyTransform, new ColliderComponent(ColliderType.ENEMY, 16, 16, 0, 0));
+        createEntityWithCollider(playerTransform, new ColliderComponent(GameColliderType.PLAYER, 16, 16, 0, 0));
+        createEntityWithCollider(enemyTransform, new ColliderComponent(GameColliderType.ENEMY, 16, 16, 0, 0));
 
         // Act
         collisionSystem.update(0.016f);
 
         // Assert
-        assertThat(playerTransform.position)
-                .as("Player position should not be reverted on collision with an enemy")
-                .isEqualTo(playerPositionBeforeUpdate);
+        assertThat(playerTransform.position).as("Player position should not revert").isEqualTo(playerPositionBeforeUpdate);
+        assertThat(enemyTransform.position).as("Enemy position should not revert").isEqualTo(enemyPositionBeforeUpdate);
     }
 
     private void createEntityWithCollider(TransformComponent transform, ColliderComponent collider) {
         int entity = world.createEntity();
         world.addComponent(entity, transform);
         world.addComponent(entity, collider);
+    }
+
+    private TransformComponent createTestTransform(Vector3f position) {
+        var transform = new TransformComponent();
+        transform.position.set(position);
+        transform.updatePreviousPosition();
+        return transform;
+    }
+
+    private TransformComponent createTestTransform(Vector3f previousPosition, Vector3f currentPosition) {
+        var transform = new TransformComponent();
+        transform.previousPosition.set(previousPosition);
+        transform.position.set(currentPosition);
+        return transform;
     }
 }

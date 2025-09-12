@@ -3,8 +3,8 @@ package september.game.systems;
 import september.engine.ecs.ISystem;
 import september.engine.ecs.IWorld;
 import september.engine.ecs.components.ColliderComponent;
-import september.engine.ecs.components.ColliderComponent.ColliderType;
 import september.engine.ecs.components.TransformComponent;
+import september.game.components.GameColliderType;
 
 import java.util.List;
 
@@ -39,14 +39,15 @@ public class CollisionSystem implements ISystem {
     }
 
     private void handleCollision(TransformComponent transformA, ColliderComponent colliderA, TransformComponent transformB, ColliderComponent colliderB) {
-        ColliderType typeA = colliderA.getType();
-        ColliderType typeB = colliderB.getType();
+        ColliderComponent.ColliderType typeA = colliderA.getType();
+        ColliderComponent.ColliderType typeB = colliderB.getType();
 
         // --- Player vs. Wall Collision ---
         // This is the core of our solid-object collision response.
-        if (typeA == ColliderType.PLAYER && typeB == ColliderType.WALL) {
+        // We now compare against the concrete GameColliderType enum.
+        if (typeA == GameColliderType.PLAYER && typeB == GameColliderType.WALL) {
             transformA.revertPosition();
-        } else if (typeB == ColliderType.PLAYER && typeA == ColliderType.WALL) {
+        } else if (typeB == GameColliderType.PLAYER && typeA == GameColliderType.WALL) {
             transformB.revertPosition();
         }
 

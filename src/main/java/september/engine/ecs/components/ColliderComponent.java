@@ -8,13 +8,12 @@ import september.engine.ecs.Component;
 @AllArgsConstructor
 public final class ColliderComponent implements Component {
 
-    public enum ColliderType {
-        PLAYER,
-        WALL,
-        ENEMY,
-        ITEM,
-        PROJECTILE
-    }
+    /**
+     * A marker interface for defining collider types.
+     * This allows the game to create its own enum of types that implement this interface,
+     * decoupling the engine from game-specific concepts.
+     */
+    public interface ColliderType {}
 
     private final ColliderType type;
     private final int width;
