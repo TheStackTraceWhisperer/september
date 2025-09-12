@@ -13,16 +13,16 @@ jobs:
     strategy:
       matrix:
         profile: [linux, windows, mac]
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up JDK 21
       uses: actions/setup-java@v4
       with:
         java-version: '21'
         distribution: 'temurin'
-    
+
     - name: Cache Maven packages
       uses: actions/cache@v3
       with:
@@ -31,7 +31,7 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-m2-${{ matrix.profile }}
           ${{ runner.os }}-m2
-    
+
     - name: Install dependencies
       run: |
         sudo apt-get update
@@ -41,7 +41,7 @@ jobs:
           maven \
           x11proto-core-dev
         sudo rm -rf /var/lib/apt/lists/*
-    
+
     - name: Build and test with Maven
       run: |
         if [[ "${{ github.event_name }}" == "pull_request" ]]; then
@@ -61,7 +61,7 @@ jobs:
         fi
       env:
         MESA_GL_VERSION_OVERRIDE: 4.6
-    
+
     - name: Add coverage to PR
       id: jacoco
       uses: madrapps/jacoco-report@v1.6.1
@@ -74,7 +74,7 @@ jobs:
         min-coverage-changed-files: 60
         title: 'JaCoCo Coverage Report (${{ matrix.profile }})'
         update-comment: true
-    
+
     - name: Publish Test Report
       uses: mikepenz/action-junit-report@v4
       if: always() && hashFiles('**/target/surefire-reports/TEST-*.xml') != ''
@@ -82,7 +82,7 @@ jobs:
         report_paths: '**/target/surefire-reports/TEST-*.xml,**/target/failsafe-reports/TEST-*.xml'
         check_name: 'Test Results (${{ matrix.profile }})'
         fail_on_failure: false
-    
+
     - name: Upload JaCoCo coverage reports
       uses: actions/upload-artifact@v4
       if: always() && hashFiles('target/site/jacoco/jacoco.xml') != ''
@@ -93,7 +93,7 @@ jobs:
           target/site/jacoco-ut/
           target/site/jacoco-it/
         retention-days: 30
-    
+
     - name: Build profile-specific artifacts
       run: |
         if [[ "${{ github.event_name }}" == "pull_request" ]]; then
@@ -105,7 +105,7 @@ jobs:
             mvn -B package -P${{ matrix.profile }} -DskipTests
           fi
         fi
-    
+
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
@@ -118,10 +118,10 @@ jobs:
     needs: build
     runs-on: ubuntu-24.04
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up JDK 21
       uses: actions/setup-java@v4
       with:
@@ -130,16 +130,35 @@ jobs:
         server-id: github
         server-username: MAVEN_USERNAME
         server-password: MAVEN_TOKEN
-    
+
     - name: Cache Maven packages
       uses: actions/cache@v3
       with:
         path: ~/.m2
         key: ${{ runner.os }}-m2-publish-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
-    
+
+    - name: Create Maven settings.xml
+      run: |
+        mkdir -p ~/.m2
+        cat > ~/.m2/settings.xml << EOF
+        <?xml version="1.0" encoding="UTF-8"?>
+        <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                                      http://maven.apache.org/xsd/settings-1.0.0.xsd">
+          <servers>
+            <server>
+              <id>github</id>
+              <username>\${env.MAVEN_USERNAME}</username>
+              <password>\${env.MAVEN_TOKEN}</password>
+            </server>
+          </servers>
+        </settings>
+        EOF
+
     - name: Publish to GitHub Packages
-      run: mvn -B deploy -DskipTests
+      run: mvn -B deploy -DskipTests -X
       env:
         MAVEN_USERNAME: ${{ github.actor }}
         MAVEN_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -148,15 +167,15 @@ jobs:
     needs: build
     runs-on: ubuntu-24.04
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Download all artifacts
       uses: actions/download-artifact@v4
       with:
         path: artifacts
-    
+
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
