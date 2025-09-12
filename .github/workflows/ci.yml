@@ -157,6 +157,28 @@ jobs:
         </settings>
         EOF
 
+    - name: Debug Maven authentication
+      run: |
+        echo "=== Maven settings.xml contents (with redacted credentials) ==="
+        sed 's/<password>.*<\/password>/<password>***<\/password>/g' ~/.m2/settings.xml
+        echo ""
+        echo "=== Environment variables ==="
+        echo "MAVEN_USERNAME: $MAVEN_USERNAME"
+        if [ -n "$MAVEN_TOKEN" ]; then
+          TOKEN_LENGTH=${#MAVEN_TOKEN}
+          if [ $TOKEN_LENGTH -gt 6 ]; then
+            REDACTED_TOKEN="${MAVEN_TOKEN:0:3}***${MAVEN_TOKEN: -3}"
+          else
+            REDACTED_TOKEN="***"
+          fi
+          echo "MAVEN_TOKEN: $REDACTED_TOKEN"
+        else
+          echo "MAVEN_TOKEN: (not set)"
+        fi
+      env:
+        MAVEN_USERNAME: ${{ github.actor }}
+        MAVEN_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     - name: Publish to GitHub Packages
       run: mvn -B deploy -DskipTests -X
       env:
