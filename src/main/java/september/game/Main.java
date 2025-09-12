@@ -1,5 +1,6 @@
 package september.game;
 
+import lombok.extern.slf4j.Slf4j;
 import org.joml.Vector3f;
 import september.engine.assets.ResourceManager;
 import september.engine.core.Engine;
@@ -31,6 +32,7 @@ import september.game.systems.PlayerInputSystem;
  * is to instantiate all the necessary services, configure the initial game state
  * (entities and components), and then create and run the main Engine instance.
  */
+@Slf4j
 public final class Main implements Runnable {
   private final MainLoopPolicy loopPolicy;
 
@@ -98,8 +100,7 @@ public final class Main implements Runnable {
     try {
       gameEngine.run();
     } catch (Exception e) {
-      System.err.println("A fatal error occurred in the engine.");
-      e.printStackTrace();
+      log.error("A fatal error occurred in the engine.", e);
     }
   }
 
