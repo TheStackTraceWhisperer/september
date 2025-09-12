@@ -51,7 +51,7 @@ if [ ! -S "$XVFB_SOCKET" ]; then
   exit 1
 fi
 
-# Execute the main command passed to the container (e.g., mvn clean verify)
+# Execute the main command passed to the container (e.g., mvn verify)
 exec "$@"
 EOF
 
@@ -59,4 +59,4 @@ EOF
 ENTRYPOINT ["entrypoint.sh"]
 
 # Set the default command to run, filtering for a specific test class.
-CMD ["mvn", "-ntp", "clean", "verify", "-Dtest=september.Glsl460FeatureTest"]
+CMD ["mvn", "-ntp", "verify", "-Dtest=september.Glsl460FeatureTest"]
