@@ -1,0 +1,28 @@
+# This Dockerfile creates a minimal image to test native EGL-based headless OpenGL 4.6.
+# It bypasses Xvfb and relies on the standard EGL path.
+FROM ubuntu:24.04
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+# Install EGL-based mesa utilities using the new package names.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        mesa-utils-extra \
+        libgl1 \
+        libglx-mesa0 \
+        libgl1-mesa-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+# Add a simple entrypoint to run the EGL verification command.
+RUN cat <<'EOF' > /usr/local/bin/entrypoint.sh && \
+    chmod +x /usr/local/bin/entrypoint.sh
+#!/bin/bash
+set -e
+exec "$@"
+EOF
+
+# Set the new script as the main executable.
+ENTRYPOINT ["entrypoint.sh"]
+
+# Set the default command to run for verification.
+CMD ["eglinfo"]

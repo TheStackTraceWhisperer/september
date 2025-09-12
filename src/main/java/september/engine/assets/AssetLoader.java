@@ -13,7 +13,8 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * A utility class for loading raw asset data from files.
- * This class handles the low-level details of reading files from the classpath.
+ * This class handles the low-level details of reading files from the classpath
+ * and supports parsing GLSL #include directives.
  */
 public final class AssetLoader {
 
@@ -22,13 +23,14 @@ public final class AssetLoader {
 
   /**
    * Loads a shader program by reading vertex and fragment shader source files.
+   * This method recursively processes #include directives.
    * @param vertexPath   The classpath resource path to the vertex shader file.
    * @param fragmentPath The classpath resource path to the fragment shader file.
    * @return A new, compiled Shader object.
    */
   public static Shader loadShader(String vertexPath, String fragmentPath) {
-    String vertexSource = loadResourceAsString(vertexPath);
-    String fragmentSource = loadResourceAsString(fragmentPath);
+    String vertexSource = loadShaderSourceWithIncludes(vertexPath);
+    String fragmentSource = loadShaderSourceWithIncludes(fragmentPath);
     return new Shader(vertexSource, fragmentSource);
   }
 
@@ -39,7 +41,7 @@ public final class AssetLoader {
    */
   public static Texture loadTexture(String filePath) {
     try {
-      ByteBuffer imageBuffer = loadResourceAsByteBuffer(filePath);
+      ByteBuffer imageBuffer = readResourceToByteBuffer(filePath);
       return new Texture(imageBuffer);
     } catch (IOException e) {
       throw new RuntimeException("Failed to load texture resource: " + filePath, e);
@@ -47,11 +49,42 @@ public final class AssetLoader {
   }
 
   /**
+   * Recursively loads a shader source file, processing #include directives.
+   * @param filePath The classpath path to the shader file.
+   * @return The complete shader source with all includes resolved.
+   */
+  private static String loadShaderSourceWithIncludes(String filePath) {
+    String source = readResourceToString(filePath);
+
+    // Determine the base path for relative includes
+    String basePath = "";
+    int lastSlash = filePath.lastIndexOf('/');
+    if (lastSlash != -1) {
+        basePath = filePath.substring(0, lastSlash + 1);
+    }
+
+    StringBuilder finalSource = new StringBuilder();
+    for (String line : source.split("\\R")) { // Split by any newline sequence
+        String trimmedLine = line.trim();
+        if (trimmedLine.startsWith("#include")) {
+            // Extract path from quotes
+            String includePath = trimmedLine.substring(trimmedLine.indexOf('"') + 1, trimmedLine.lastIndexOf('"'));
+            // Recursively load and append the included source
+            finalSource.append(loadShaderSourceWithIncludes(basePath + includePath));
+            finalSource.append(System.lineSeparator());
+        } else {
+            finalSource.append(line).append(System.lineSeparator());
+        }
+    }
+    return finalSource.toString();
+  }
+
+  /**
    * Reads a resource file from the classpath into a single String.
    * @param filePath The classpath resource path.
    * @return The contents of the file as a string.
    */
-  private static String loadResourceAsString(String filePath) {
+  private static String readResourceToString(String filePath) {
     try (InputStream is = AssetLoader.class.getClassLoader().getResourceAsStream(filePath)) {
       if (is == null) {
         throw new IOException("Resource not found: " + filePath);
@@ -75,7 +108,7 @@ public final class AssetLoader {
    * @param filePath The classpath resource path.
    * @return A ByteBuffer containing the file data.
    */
-  private static ByteBuffer loadResourceAsByteBuffer(String filePath) throws IOException {
+  public static ByteBuffer readResourceToByteBuffer(String filePath) throws IOException {
     InputStream source = AssetLoader.class.getClassLoader().getResourceAsStream(filePath);
     if (source == null) {
         throw new IOException("Resource not found: " + filePath);

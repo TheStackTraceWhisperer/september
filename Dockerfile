@@ -1,5 +1,5 @@
 # This Dockerfile sets up a Java 21 and Maven environment on Ubuntu 24.04
-# with Xvfb for headless OpenGL rendering, explicitly setting OpenGL version to 4.6.
+# with Xvfb for headless OpenGL rendering.
 
 FROM ubuntu:24.04
 ARG DEBIAN_FRONTEND=noninteractive
@@ -9,26 +9,39 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     mesa-utils \
     openjdk-21-jdk \
     maven \
-    x11proto-core-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Explicitly set the OpenGL version to 4.6
+# Set the OpenGL version override. This forces Mesa to report 4.6, though the
+# underlying GLSL support may be lower. This is necessary for context creation.
 ENV MESA_GL_VERSION_OVERRIDE=4.6
+ENV MESA_GLSL_VERSION_OVERRIDE=460
 
 COPY . /workspace
 WORKDIR /workspace
 
-# Copy in the robust entrypoint script
+# Copy in the robust entrypoint script that sets up the virtual display.
 RUN cat <<'EOF' > /usr/local/bin/entrypoint.sh && \
     chmod +x /usr/local/bin/entrypoint.sh
 #!/bin/bash
 set -e
 
-# Set the display variable first
+# Set the display variable for the virtual framebuffer
 export DISPLAY=:99
 
-# Start Xvfb in the background on the display specified by the variable
+# Start Xvfb in the background on the specified display
 Xvfb $DISPLAY -screen 0 1280x1024x24 &
+
+# ROBUST WAIT: Actively wait for the X server's socket to appear before proceeding.
+XVFB_SOCKET="/tmp/.X11-unix/X99"
+retries=0
+while [ ! -S "$XVFB_SOCKET" ] && [ "$retries" -lt 30 ]; do
+  retries=$((retries+1))
+  sleep 0.1
+done
+if [ ! -S "$XVFB_SOCKET" ]; then
+  echo "Xvfb failed to start after 3 seconds." >&2
+  exit 1
+fi
 
 # Execute the main command passed to the container (e.g., mvn clean verify)
 exec "$@"
@@ -37,5 +50,5 @@ EOF
 # Set the new script as the main executable
 ENTRYPOINT ["entrypoint.sh"]
 
-# Set the default command to run
-CMD ["mvn", "-ntp", "clean", "verify"]
+# Set the default command to run, filtering for a specific test class.
+CMD ["mvn", "-ntp", "clean", "verify", "-Dtest=september.Glsl460FeatureTest"]

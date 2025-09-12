@@ -154,10 +154,12 @@ Use DEBUG for verbose internals.
 
 ---
 ## 13. Testing
+Our testing philosophy is based on high-value integration tests. See `TESTING.md` for full details.
+
 <table>
 <tr><th>Bad</th><th>Good</th></tr>
-<tr><td>Sleeping for timing</td><td>Use `MainLoopPolicy.frames(n)` or `timed(..)`</td></tr>
-<tr><td>Real GLFW in unit test</td><td>Static mock GLFW + frame policy</td></tr>
+<tr><td>Static mocking native libraries (GLFW, OpenGL)</td><td>Use `EngineTestHarness` for a live context</td></tr>
+<tr><td>Testing implementation details (e.g., `verify(method).wasCalled()`)</td><td>Testing observable behavior (e.g., `assertThat(object.getState()).isEqualTo(newState)`)</td></tr>
 </table>
 
 ---
