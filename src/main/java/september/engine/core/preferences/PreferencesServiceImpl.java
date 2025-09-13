@@ -11,7 +11,28 @@ import java.util.Map;
 
 /**
  * Implementation of PreferencesService with explicit save model and change tracking.
- * Uses active vs saved state comparison for modification detection.
+ * 
+ * This hybrid approach combines the best patterns from two designs:
+ * 
+ * FROM USER'S EXPLICIT SAVE MODEL:
+ * - Active vs saved Properties objects for clean state tracking
+ * - isModified() method comparing active vs saved state  
+ * - Explicit flush() and revert() operations
+ * - Simple Properties-based storage with string serialization
+ * - Clear load() → modify → save()/revert() lifecycle
+ * 
+ * FROM TYPE-SAFE APPROACH:
+ * - Property<T> abstraction for compile-time type safety
+ * - JSON serialization support for complex objects
+ * - Individual property dirty state tracking
+ * - PropertyType system for pluggable serialization
+ * 
+ * BENEFITS OF HYBRID:
+ * - Predictable explicit save model (no automatic debouncing)
+ * - Type safety prevents runtime errors from incorrect types
+ * - Support for complex objects via JSON
+ * - Simple state management using Properties comparison
+ * - Backward compatible with existing API
  */
 public final class PreferencesServiceImpl implements PreferencesService {
     
