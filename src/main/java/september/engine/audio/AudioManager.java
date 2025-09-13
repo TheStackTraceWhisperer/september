@@ -60,12 +60,12 @@ public final class AudioManager implements AutoCloseable {
       throw new RuntimeException("OpenAL 1.0 is not supported");
     }
 
+    initialized = true;
+
     // Set up the audio listener at the origin
     setListenerPosition(0.0f, 0.0f, 0.0f);
     setListenerOrientation(0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f);
     setMasterVolume(1.0f);
-
-    initialized = true;
   }
 
   /**
