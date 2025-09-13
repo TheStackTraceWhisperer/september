@@ -1,8 +1,14 @@
 package september.engine.core;
 
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import september.engine.assets.ResourceManager;
+import september.engine.audio.AudioManager;
+import september.engine.core.input.GlfwGamepadService;
 import september.engine.core.input.GlfwInputService;
 import september.engine.core.input.InputService;
+import september.engine.core.input.GamepadService;
 import september.engine.core.preferences.PreferencesService;
 import september.engine.core.preferences.PreferencesServiceImpl;
 import september.engine.ecs.ISystem;
@@ -12,136 +18,128 @@ import september.engine.rendering.Renderer;
 import september.engine.rendering.gl.OpenGLRenderer;
 import september.engine.systems.RenderSystem;
 
+@Slf4j
 public final class Engine implements Runnable {
-    private final IWorld world;
-    private final TimeService timeService;
-    private final ResourceManager resourceManager;
-    private final Camera camera;
-    private final InputService inputService;
-    private final ISystem[] systemsToRegister;
-    private final MainLoopPolicy loopPolicy;
+  private final Game game;
+  private final MainLoopPolicy loopPolicy;
 
-    // Fields to hold the context-dependent resources
-    private GlfwContext glfwContext;
-    private WindowContext window;
-    private Renderer renderer;
-    private PreferencesService preferencesService;
+  // Services managed by the Engine
+  private IWorld world;
+  private TimeService timeService;
+  private ResourceManager resourceManager;
+  private Camera camera;
+  private InputService inputService;
+  private GamepadService gamepadService;
+  private AudioManager audioManager;
+  private PreferencesService preferencesService;
+  private GlfwContext glfwContext;
+  private WindowContext window;
+  private Renderer renderer;
 
-    public Engine(IWorld world, TimeService timeService, ResourceManager resourceManager, Camera camera,
-                  InputService inputService, MainLoopPolicy loopPolicy, ISystem... systemsToRegister) {
-        this.world = world;
-        this.timeService = timeService;
-        this.resourceManager = resourceManager;
-        this.camera = camera;
-        this.inputService = inputService;
-        this.loopPolicy = loopPolicy;
-        this.systemsToRegister = systemsToRegister;
+  public Engine(Game game, MainLoopPolicy loopPolicy) {
+    this.game = game;
+    this.loopPolicy = loopPolicy;
+  }
+
+  public void init() {
+    try {
+      // --- INITIALIZE ALL CORE ENGINE SERVICES ---
+      world = new september.engine.ecs.World();
+      timeService = new SystemTimer();
+      resourceManager = new ResourceManager();
+      inputService = new GlfwInputService();
+      gamepadService = new GlfwGamepadService();
+      audioManager = new AudioManager();
+      preferencesService = new PreferencesServiceImpl("september-engine");
+      glfwContext = new GlfwContext();
+      window = new WindowContext(800, 600, "September Engine");
+      renderer = new OpenGLRenderer();
+
+      // Camera setup can be part of the engine's default initialization
+      camera = new Camera(800.0f, 600.0f);
+      camera.setPerspective(45.0f, 800.0f / 600.0f, 0.1f, 100.0f);
+
+
+      // --- SET UP CALLBACKS ---
+      window.setResizeListener(camera::resize);
+      if (inputService instanceof GlfwInputService) {
+        ((GlfwInputService) inputService).installCallbacks(window);
+      }
+      audioManager.initialize();
+
+      // --- CREATE THE SERVICES OBJECT ---
+      var services = new EngineServices(world, resourceManager, inputService, gamepadService,
+        timeService, audioManager, preferencesService, camera, renderer, window);
+
+      // --- INITIALIZE THE GAME LOGIC ---
+      game.init(services);
+
+      // --- REGISTER ALL SYSTEMS ---
+      // Register engine-provided systems first
+      world.registerSystem(new RenderSystem(world, renderer, resourceManager, camera));
+      // Register all game-provided systems
+      for (ISystem system : game.getSystems()) {
+        world.registerSystem(system);
+      }
+
+    } catch (Exception e) {
+      shutdown();
+      throw new RuntimeException("Engine initialization failed", e);
     }
+  }
 
-    public void init() {
-        try {
-            // --- INITIALIZE PREFERENCES SERVICE ---
-            preferencesService = new PreferencesServiceImpl("september-engine");
-            
-            glfwContext = new GlfwContext();
-            window = new WindowContext(800, 600, "September Engine");
-
-            // --- SET UP CALLBACKS ---
-            window.setResizeListener(camera::resize);
-            if (inputService instanceof GlfwInputService) {
-                ((GlfwInputService) inputService).installCallbacks(window);
-            }
-
-            // --- INITIALIZE RENDERER AND GPU ASSETS *AFTER* CONTEXT CREATION ---
-            renderer = new OpenGLRenderer();
-            loadGpuAssets();
-
-            // --- REGISTER SYSTEMS ---
-            if (systemsToRegister != null) {
-                for (ISystem system : systemsToRegister) {
-                    world.registerSystem(system);
-                }
-            }
-            world.registerSystem(new RenderSystem(world, renderer, resourceManager, camera));
-        } catch (Exception e) {
-            // If init fails, we should clean up what might have been created.
-            shutdown();
-            throw new RuntimeException("Engine initialization failed", e);
-        }
+  private void mainLoop() {
+    int frames = 0;
+    while (loopPolicy.continueRunning(frames, window.handle())) {
+      window.pollEvents();
+      timeService.update();
+      float dt = timeService.getDeltaTime();
+      world.update(dt);
+      window.swapBuffers();
+      frames++;
     }
+  }
 
-    private void mainLoop() {
-        int frames = 0;
-        while (loopPolicy.continueRunning(frames, window.handle())) {
-            window.pollEvents();
-            timeService.update();
-            float dt = timeService.getDeltaTime();
-            world.update(dt);
-            window.swapBuffers();
-            frames++;
-        }
-    }
+  public void shutdown() {
+    game.shutdown();
 
-    public void shutdown() {
-        // The resources must be closed in the reverse order of their creation.
-        if (window != null) {
-            window.close();
-        }
-        if (glfwContext != null) {
-            glfwContext.close();
-        }
-        // The resource manager is passed in, but we can close it here if the engine is responsible for it.
-        // The original try-with-resources did this, so we will replicate that behavior.
-        if (resourceManager != null) {
-            resourceManager.close();
-        }
-        // Close preferences service to flush any pending saves
-        if (preferencesService != null) {
-            try {
-                preferencesService.close();
-            } catch (Exception e) {
-                System.err.println("Error closing preferences service: " + e.getMessage());
-            }
-        }
+    if (audioManager != null) {
+      audioManager.close();
     }
+    if (window != null) {
+      window.close();
+    }
+    if (glfwContext != null) {
+      glfwContext.close();
+    }
+    if (resourceManager != null) {
+      resourceManager.close();
+    }
+    if (preferencesService != null) {
+      try {
+        preferencesService.close();
+      } catch (Exception e) {
+        log.error("Error closing preferences service", e);
+      }
+    }
+  }
 
-    @Override
-    public void run() {
-        try {
-            init();
-            mainLoop();
-        } finally {
-            shutdown();
-        }
+  @Override
+  public void run() {
+    try {
+      init();
+      mainLoop();
+    } finally {
+      shutdown();
     }
+  }
 
-    private void loadGpuAssets() {
-        float[] vertices = {
-                0.5f, 0.5f, 0.0f, 1.0f, 1.0f,
-                0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
-                -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
-                -0.5f, 0.5f, 0.0f, 0.0f, 1.0f
-        };
-        int[] indices = {0, 1, 3, 1, 2, 3};
-        resourceManager.loadProceduralMesh("quad", vertices, indices);
-        resourceManager.loadTexture("player_texture", "textures/player.png");
-        resourceManager.loadTexture("enemy_texture", "textures/enemy.png");
-    }
-
-    // Getters for tests
-    public IWorld getWorld() {
-        return world;
-    }
-
-    public Renderer getRenderer() {
-        return renderer;
-    }
-
-    public WindowContext getWindow() {
-        return window;
-    }
-    
-    public PreferencesService getPreferencesService() {
-        return preferencesService;
-    }
+  // Getters for tests
+  public IWorld getWorld() { return world; }
+  public Renderer getRenderer() { return renderer; }
+  public WindowContext getWindow() { return window; }
+  public PreferencesService getPreferencesService() { return preferencesService; }
+  public ResourceManager getResourceManager() { return resourceManager; }
+  public Camera getCamera() { return camera; }
+  public AudioManager getAudioManager() { return audioManager; }
 }

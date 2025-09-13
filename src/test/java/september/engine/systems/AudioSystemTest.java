@@ -158,7 +158,7 @@ class AudioSystemTest extends EngineTestHarness {
   }
 
   @Test
-  void soundEffectComponent_playsOnce_andRemovesItself() {
+  void soundEffectComponent_playsOnce_andRemovesItself() throws InterruptedException {
     // Arrange
     int entity = world.createEntity();
     SoundEffectComponent soundComp = new SoundEffectComponent("test-click", GameSoundEffectType.UI_BUTTON_CLICK);
@@ -170,11 +170,12 @@ class AudioSystemTest extends EngineTestHarness {
     // Assert - Should be triggered
     assertThat(soundComp.hasBeenTriggered).isTrue();
 
-    // Act - Wait for sound to finish and process cleanup
-    // Since our test sounds are very short, a few frames should be enough
-    for (int i = 0; i < 10; i++) {
-      audioSystem.update(0.016f);
-    }
+    // Act - Wait for sound to finish. The test audio clips are very short.
+    // A short sleep is sufficient to ensure the OpenAL source moves to the STOPPED state.
+    Thread.sleep(200); // Wait 200ms
+
+    // Process cleanup
+    audioSystem.update(0.016f);
 
     // Assert - Component should be removed after playing
     SoundEffectComponent remainingComp = world.getComponent(entity, SoundEffectComponent.class);

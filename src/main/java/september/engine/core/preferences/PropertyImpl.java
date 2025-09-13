@@ -1,34 +1,36 @@
 package september.engine.core.preferences;
 
 import java.util.Objects;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Implementation of Property interface that tracks changes and handles serialization.
  */
+@Slf4j
 final class PropertyImpl<T> implements Property<T> {
-    
+
     private final String key;
     private final T defaultValue;
     private final PropertyType<T> type;
     private final PreferencesServiceImpl service;
-    
+
     private T currentValue;
-    
+
     PropertyImpl(String key, T defaultValue, PropertyType<T> type, PreferencesServiceImpl service) {
         this.key = key;
         this.defaultValue = defaultValue;
         this.type = type;
         this.service = service;
-        
+
         // Load initial value from preferences
         this.currentValue = loadFromPreferences();
     }
-    
+
     @Override
     public T get() {
         return currentValue;
     }
-    
+
     @Override
     public void set(T value) {
         if (!Objects.equals(currentValue, value)) {
@@ -38,24 +40,24 @@ final class PropertyImpl<T> implements Property<T> {
             service.setPropertyValue(key, serializedValue);
         }
     }
-    
+
     @Override
     public T getDefault() {
         return defaultValue;
     }
-    
+
     @Override
     public boolean isModified() {
         return !Objects.equals(currentValue, defaultValue);
     }
-    
+
     @Override
     public boolean isDirty() {
         // A property is dirty if its current value differs from the saved value
         T savedValue = getSavedValue();
         return !Objects.equals(currentValue, savedValue);
     }
-    
+
     @Override
     public void revert() {
         if (isDirty()) {
@@ -71,12 +73,12 @@ final class PropertyImpl<T> implements Property<T> {
             }
         }
     }
-    
+
     @Override
     public String getKey() {
         return key;
     }
-    
+
     /**
      * Loads the value from preferences, returning the default if not found.
      */
@@ -85,16 +87,16 @@ final class PropertyImpl<T> implements Property<T> {
         if (serializedValue == null) {
             return defaultValue;
         }
-        
+
         try {
             return type.deserialize(serializedValue);
         } catch (Exception e) {
             // If deserialization fails, return default and log error
-            System.err.println("Failed to deserialize preference '" + key + "': " + e.getMessage());
+            log.error("Failed to deserialize preference '{}'", key, e);
             return defaultValue;
         }
     }
-    
+
     /**
      * Gets the saved (baseline) value for this property.
      */
@@ -103,7 +105,7 @@ final class PropertyImpl<T> implements Property<T> {
         if (serializedValue == null) {
             return defaultValue;
         }
-        
+
         try {
             return type.deserialize(serializedValue);
         } catch (Exception e) {
@@ -111,7 +113,7 @@ final class PropertyImpl<T> implements Property<T> {
             return defaultValue;
         }
     }
-    
+
     /**
      * Reloads the value from the current active state.
      * Called during revert operations to sync with the service state.

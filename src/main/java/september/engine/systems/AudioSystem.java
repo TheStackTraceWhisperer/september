@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
 
 /**
  * The system responsible for managing all audio playback in the engine.
@@ -189,24 +190,21 @@ public class AudioSystem implements ISystem {
    * Updates all entities with SoundEffectComponent.
    */
   private void updateSoundEffects(float deltaTime) {
+    List<Integer> entitiesToCleanup = new ArrayList<>();
     var entities = world.getEntitiesWith(SoundEffectComponent.class);
 
     for (int entityId : entities) {
       SoundEffectComponent soundComp = world.getComponent(entityId, SoundEffectComponent.class);
       AudioSource soundSource = soundEffectSourceMap.get(entityId);
 
-      // Create sound source if it doesn't exist and hasn't been triggered
       if (soundSource == null && !soundComp.hasBeenTriggered) {
         soundSource = audioManager.createSource();
         soundEffectSourceMap.put(entityId, soundSource);
 
-        // Sound effects are typically not positioned in 3D space (UI sounds)
-        soundSource.setPosition(0.0f, 0.0f, 0.0f);
         soundSource.setVolume(soundComp.volume);
         soundSource.setPitch(soundComp.pitch);
-        soundSource.setLooping(false); // Sound effects don't loop
+        soundSource.setLooping(false);
 
-        // Start playing if auto-play is enabled
         if (soundComp.autoPlay) {
           AudioBuffer buffer = resourceManager.resolveAudioBufferHandle(soundComp.soundBufferHandle);
           soundSource.play(buffer);
@@ -214,36 +212,39 @@ public class AudioSystem implements ISystem {
         }
       }
 
-      // Remove finished sound effects
       if (soundSource != null && soundSource.isStopped() && soundComp.hasBeenTriggered) {
         if (soundComp.removeAfterPlay) {
-          world.removeComponent(entityId, SoundEffectComponent.class);
-          soundSource.close();
-          soundEffectSourceMap.remove(entityId);
+          entitiesToCleanup.add(entityId);
         }
       }
     }
 
-    // Clean up sound effect sources for entities that no longer have SoundEffectComponent
-    cleanupAudioSources(entities, soundEffectSourceMap);
+    // Perform cleanup after iteration to avoid concurrent modification issues
+    for (int entityId : entitiesToCleanup) {
+      AudioSource soundSource = soundEffectSourceMap.remove(entityId);
+      if (soundSource != null) {
+        soundSource.close();
+      }
+      world.removeComponent(entityId, SoundEffectComponent.class);
+    }
+
+    // Final cleanup pass for any sources whose entities were removed by other means
+    cleanupAudioSources(world.getEntitiesWith(SoundEffectComponent.class), soundEffectSourceMap);
   }
+
 
   /**
    * Cleans up audio sources for entities that no longer have the corresponding audio component.
    */
   private void cleanupAudioSources(List<Integer> currentEntities, Map<Integer, AudioSource> sourceMap) {
-    // Convert list to set for efficient lookup
     var currentEntitySet = new java.util.HashSet<>(currentEntities);
-
-    // Remove sources for entities that no longer exist or don't have the component
-    Iterator<Map.Entry<Integer, AudioSource>> iterator = sourceMap.entrySet().iterator();
-    while (iterator.hasNext()) {
-      Map.Entry<Integer, AudioSource> entry = iterator.next();
+    sourceMap.entrySet().removeIf(entry -> {
       if (!currentEntitySet.contains(entry.getKey())) {
         entry.getValue().close();
-        iterator.remove();
+        return true;
       }
-    }
+      return false;
+    });
   }
 
   /**
@@ -255,7 +256,7 @@ public class AudioSystem implements ISystem {
    * @param soundType    The type of sound effect
    * @param volume       The volume level
    */
-  public void playSoundEffect(int entityId, String bufferHandle, 
+  public void playSoundEffect(int entityId, String bufferHandle,
                               SoundEffectComponent.SoundEffectType soundType, float volume) {
     SoundEffectComponent soundComp = new SoundEffectComponent(bufferHandle, soundType, volume);
     world.addComponent(entityId, soundComp);
@@ -298,7 +299,6 @@ public class AudioSystem implements ISystem {
    * Stops all audio playback and cleans up resources.
    */
   public void stopAll() {
-    // Stop and clean up all audio sources
     audioSourceMap.values().forEach(AudioSource::close);
     audioSourceMap.clear();
 

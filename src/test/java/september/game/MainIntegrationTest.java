@@ -2,6 +2,8 @@ package september.game;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import september.engine.core.Engine;
+import september.engine.core.Game;
 import september.engine.core.MainLoopPolicy;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -9,10 +11,16 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 class MainIntegrationTest {
 
   @Test
-  @DisplayName("Main.run() should complete a single frame without throwing an exception")
-  void main_runs_without_mocking_when_glfw_is_available() {
-    assertThatCode(() -> new Main(MainLoopPolicy.frames(1)).run())
-            .doesNotThrowAnyException();
-  }
+  @DisplayName("Engine should run a single frame of the Game without throwing an exception")
+  void engine_runs_game_without_error() {
+    // Arrange: Create an instance of our Game implementation with a policy to run only one frame.
+    Game game = new Main(MainLoopPolicy.frames(1));
 
+    // Act & Assert: The test now correctly creates an Engine, gives it the Game to run,
+    // and invokes the engine's run loop.
+    assertThatCode(() -> {
+      Engine engine = new Engine(game, MainLoopPolicy.frames(1));
+      engine.run();
+    }).doesNotThrowAnyException();
+  }
 }

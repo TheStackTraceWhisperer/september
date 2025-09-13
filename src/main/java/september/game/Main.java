@@ -4,6 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.joml.Vector3f;
 import september.engine.assets.ResourceManager;
 import september.engine.core.Engine;
+import september.engine.core.EngineServices;
+import september.engine.core.Game;
 import september.engine.core.MainLoopPolicy;
 import september.engine.core.SystemTimer;
 import september.engine.core.TimeService;
@@ -27,6 +29,10 @@ import september.game.input.MultiDeviceMappingService;
 import september.game.systems.EnemyAISystem;
 import september.game.systems.PlayerInputSystem;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 /**
  * The entry point for the game application.
  *
@@ -35,8 +41,9 @@ import september.game.systems.PlayerInputSystem;
  * (entities and components), and then create and run the main Engine instance.
  */
 @Slf4j
-public final class Main implements Runnable {
+public final class Main implements Game {
   private final MainLoopPolicy loopPolicy;
+  private final List<ISystem> gameSystems = new ArrayList<>();
 
   public Main() {
     this(MainLoopPolicy.standard());
@@ -47,43 +54,26 @@ public final class Main implements Runnable {
   }
 
   @Override
-  public void run() {
-    // --- 1. Create Context-Independent Services and Configuration ---
-    TimeService timeService = new SystemTimer();
-    IWorld world = new World();
-    ResourceManager resourceManager = new ResourceManager();
-    InputService inputService = new GlfwInputService();
-    GamepadService gamepadService = new GlfwGamepadService();
-    InputMappingService mappingService = new MultiDeviceMappingService(inputService, gamepadService);
-
-    final float VIRTUAL_WIDTH = 800.0f;
-    final float VIRTUAL_HEIGHT = 600.0f;
-    Camera camera = new Camera(VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
+  public void init(EngineServices services) {
+    // --- 1. Load Game Assets ---
+    services.resourceManager().loadTexture("player_texture", "textures/player.png");
+    services.resourceManager().loadTexture("enemy_texture", "textures/enemy.png");
+    float[] vertices = { 0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f };
+    int[] indices = {0, 1, 3, 1, 2, 3};
+    services.resourceManager().loadProceduralMesh("quad", vertices, indices);
 
 
-    // --- CAMERA CONFIGURATION ---
-    // Move the camera 5 units "out of the screen" to look at the origin.
-    camera.setPosition(new Vector3f(0.0f, 0.0f, 5.0f));
-
-    // Set up the perspective projection.
-    // This defines a 45-degree field of view, an aspect ratio for an 800x600 window,
-    // and a view distance from 0.1 to 100 units.
-    camera.setPerspective(45.0f, 800.0f / 600.0f, 0.1f, 100.0f);
-
-
-    // --- 2. Load Game Assets ---
-    // NOTE: This call has been MOVED into the Engine class.
-    // We cannot load textures here because there is no OpenGL context yet.
-    // resourceManager.loadTexture("player_texture", "textures/player.png");
+    // --- 2. Configure Engine Services (e.g., Camera) ---
+    services.camera().setPosition(new Vector3f(0.0f, 0.0f, 5.0f));
 
     // --- 3. Define Initial Game State ---
+    var world = services.world();
     int playerEntity = world.createEntity();
     world.addComponent(playerEntity, new TransformComponent());
-    // We still define WHAT sprite to use, but the loading happens later.
     world.addComponent(playerEntity, new SpriteComponent("player_texture"));
     world.addComponent(playerEntity, new ControllableComponent());
     world.addComponent(playerEntity, new MovementStatsComponent(2.5f));
-    world.addComponent(playerEntity, new PlayerComponent()); // Tag the entity as the player
+    world.addComponent(playerEntity, new PlayerComponent());
 
     int enemyEntity = world.createEntity();
     world.addComponent(enemyEntity, new TransformComponent());
@@ -91,23 +81,32 @@ public final class Main implements Runnable {
     world.addComponent(enemyEntity, new MovementStatsComponent(2.5f));
     world.addComponent(enemyEntity, new EnemyComponent());
 
-    // --- 4. Create Systems ---
-    // The order is important: input should be processed before movement.
-    ISystem playerInputSystem = new PlayerInputSystem(world, mappingService);
-    ISystem movementSystem = new MovementSystem(world);
-    ISystem enemyAISystem = new EnemyAISystem(world, timeService);
+    // --- 4. Create and Store Game Systems ---
+    InputMappingService mappingService = new MultiDeviceMappingService(services.inputService(), services.gamepadService());
+    gameSystems.add(new PlayerInputSystem(world, mappingService));
+    gameSystems.add(new MovementSystem(world));
+    gameSystems.add(new EnemyAISystem(world, services.timeService()));
+  }
 
-    // --- 5. Create and Run the Engine ---
-    Engine gameEngine = new Engine(world, timeService, resourceManager, camera, inputService, loopPolicy, playerInputSystem, movementSystem, enemyAISystem);
+  @Override
+  public Collection<ISystem> getSystems() {
+    return gameSystems;
+  }
 
-    try {
-      gameEngine.run();
-    } catch (Exception e) {
-      log.error("A fatal error occurred in the engine.", e);
-    }
+  @Override
+  public void shutdown() {
+    // No game-specific shutdown logic is needed for this simple game.
+    log.info("Game shutting down.");
   }
 
   public static void main(String[] args) {
-    new Main().run();
+    // The application entry point.
+    try {
+      Game myGame = new Main();
+      Engine gameEngine = new Engine(myGame, MainLoopPolicy.standard());
+      gameEngine.run();
+    } catch (Exception e) {
+      log.error("A fatal error occurred.", e);
+    }
   }
 }
