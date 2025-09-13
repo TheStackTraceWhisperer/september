@@ -18,12 +18,6 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Set up JDK 21
-      uses: actions/setup-java@v4
-      with:
-        java-version: '21'
-        distribution: 'temurin'
-
     - name: Cache Maven packages
       uses: actions/cache@v3
       with:
@@ -32,25 +26,16 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-m2-
 
-    - name: Build and Test with Maven
-      run: |
-        # Set up environment for headless testing
-        export MESA_GL_VERSION_OVERRIDE=4.6
-        
-        # Run full build with tests (ignoring failures for artifact generation)
-        xvfb-run -s "-screen 0 1920x1080x24" mvn -B clean verify -Dmaven.test.failure.ignore=true
-
-    - name: Build and Test with Docker (Fallback)
+    - name: Build and Test with Docker
       run: |
         # Build the Docker image that contains all dependencies and the correct environment
         docker build -t september-ci .
 
-        # Run the tests inside the container without overwriting existing artifacts
-        # This serves as a fallback and validation of the Docker environment
-        docker run --name september-test september-ci
+        # Create target directory for volume mounting
+        mkdir -p ./target
 
-        # Clean up the container
-        docker rm september-test
+        # Run the tests inside the container with volume mount to preserve artifacts
+        docker run --rm -v ${{ github.workspace }}/target:/workspace/target september-ci
 
     - name: Add coverage to PR
       id: jacoco
