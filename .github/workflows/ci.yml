@@ -10,6 +10,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-24.04
+    permissions:
+      pull-requests: write  # for jacoco coverage comments
+      checks: write        # for test report publishing
 
     steps:
     - name: Checkout repository
@@ -70,6 +73,9 @@ jobs:
     needs: build
     runs-on: ubuntu-24.04
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read       # to read repository content
+      packages: write      # to publish to GitHub Packages
 
     steps:
     - uses: actions/checkout@v4
@@ -90,6 +96,8 @@ jobs:
     needs: build
     runs-on: ubuntu-24.04
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write      # to create releases
 
     steps:
     - name: Download all artifacts
