@@ -101,7 +101,6 @@ jobs:
         name: september-linux-artifacts
         path: target/september-*.jar
         retention-days: 30
-        retention-days: 30
 
   publish:
     needs: build
