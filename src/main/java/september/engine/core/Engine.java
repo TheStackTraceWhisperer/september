@@ -3,6 +3,8 @@ package september.engine.core;
 import september.engine.assets.ResourceManager;
 import september.engine.core.input.GlfwInputService;
 import september.engine.core.input.InputService;
+import september.engine.core.preferences.PreferencesService;
+import september.engine.core.preferences.PreferencesServiceImpl;
 import september.engine.ecs.ISystem;
 import september.engine.ecs.IWorld;
 import september.engine.rendering.Camera;
@@ -23,6 +25,7 @@ public final class Engine implements Runnable {
     private GlfwContext glfwContext;
     private WindowContext window;
     private Renderer renderer;
+    private PreferencesService preferencesService;
 
     public Engine(IWorld world, TimeService timeService, ResourceManager resourceManager, Camera camera,
                   InputService inputService, MainLoopPolicy loopPolicy, ISystem... systemsToRegister) {
@@ -37,6 +40,9 @@ public final class Engine implements Runnable {
 
     public void init() {
         try {
+            // --- INITIALIZE PREFERENCES SERVICE ---
+            preferencesService = new PreferencesServiceImpl("september-engine");
+            
             glfwContext = new GlfwContext();
             window = new WindowContext(800, 600, "September Engine");
 
@@ -89,6 +95,14 @@ public final class Engine implements Runnable {
         if (resourceManager != null) {
             resourceManager.close();
         }
+        // Close preferences service to flush any pending saves
+        if (preferencesService != null) {
+            try {
+                preferencesService.close();
+            } catch (Exception e) {
+                System.err.println("Error closing preferences service: " + e.getMessage());
+            }
+        }
     }
 
     @Override
@@ -125,5 +139,9 @@ public final class Engine implements Runnable {
 
     public WindowContext getWindow() {
         return window;
+    }
+    
+    public PreferencesService getPreferencesService() {
+        return preferencesService;
     }
 }
