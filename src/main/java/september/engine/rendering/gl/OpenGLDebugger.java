@@ -1,11 +1,12 @@
 package september.engine.rendering.gl;
 
-import org.lwjgl.opengl.GL;
+import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL43;
-import org.lwjgl.opengl.GLDebugMessageCallback;
 import org.lwjgl.system.Callback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.function.IntSupplier;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL43.*;
@@ -13,6 +14,7 @@ import static org.lwjgl.opengl.GL43.*;
 /**
  * Utility to enable OpenGL debug output.
  * Provides much more informative error messages than glGetError.
+ * This class assumes it is being run in an OpenGL 4.3+ context, where debug output is guaranteed to be available.
  */
 public final class OpenGLDebugger {
 
@@ -25,50 +27,34 @@ public final class OpenGLDebugger {
      */
     public static void init() {
         log.info("Initializing OpenGL Debugger...");
-        if (GL.getCapabilities().GL_KHR_debug) {
-            // Create a custom callback that routes messages to our SLF4J logger
-            GLDebugMessageCallback callback = GLDebugMessageCallback.create((source, type, id, severity, length, message, userParam) -> {
-                String msg = GLDebugMessageCallback.getMessage(length, message);
-                switch (severity) {
-                    case GL_DEBUG_SEVERITY_HIGH:
-                        log.error("[GL] High - Source: 0x{}, Type: 0x{}, ID: {}: {}", Integer.toHexString(source), Integer.toHexString(type), id, msg);
-                        break;
-                    case GL_DEBUG_SEVERITY_MEDIUM:
-                        log.warn("[GL] Medium - Source: 0x{}, Type: 0x{}, ID: {}: {}", Integer.toHexString(source), Integer.toHexString(type), id, msg);
-                        break;
-                    case GL_DEBUG_SEVERITY_LOW:
-                        log.info("[GL] Low - Source: 0x{}, Type: 0x{}, ID: {}: {}", Integer.toHexString(source), Integer.toHexString(type), id, msg);
-                        break;
-                    case GL_DEBUG_SEVERITY_NOTIFICATION:
-                        log.debug("[GL] Notification: {}", msg);
-                        break;
-                    default:
-                        log.trace("[GL] Unknown: {}", msg);
-                        break;
-                }
-            });
 
-            debugCallback = callback; // Store it to be freed later
-            GL43.glDebugMessageCallback(callback, 0);
+        // Create and set our custom callback that routes messages to SLF4J.
+        debugCallback = new Slf4jGLDebugCallback(log);
+        GL43.glDebugMessageCallback((Slf4jGLDebugCallback) debugCallback, 0);
 
-            // Set the debug level. Use GL_DEBUG_SEVERITY_NOTIFICATION for verbose output.
-            glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, (int[]) null, true);
-            glEnable(GL_DEBUG_OUTPUT);
-            glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-            log.info("OpenGL Debugger Initialized.");
-        } else {
-            log.warn("GL_KHR_debug not supported. Full debug output is unavailable.");
-        }
+        // Set the debug level. Use GL_DEBUG_SEVERITY_NOTIFICATION for verbose output.
+        glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, (int[]) null, true);
+        glEnable(GL_DEBUG_OUTPUT);
+        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+        log.info("OpenGL Debugger Initialized.");
     }
 
     /**
      * Checks for any accumulated OpenGL errors and throws a RuntimeException if any are found.
-     * This method is intended mainly for unit testing and development diagnostics.
+     * This is the public entry point that uses the real OpenGL error supplier.
      */
     public static void checkErrors() {
+        checkErrors(GL11::glGetError);
+    }
+
+    /**
+     * Test-visible method that checks for errors using a provided supplier.
+     * @param errorSupplier A supplier that returns sequential OpenGL error codes.
+     */
+    static void checkErrors(IntSupplier errorSupplier) {
         int error;
         StringBuilder sb = new StringBuilder();
-        while ((error = glGetError()) != GL_NO_ERROR) {
+        while ((error = errorSupplier.getAsInt()) != GL_NO_ERROR) {
             if (sb.length() == 0) {
                 sb.append("OpenGL error(s): ");
             }
