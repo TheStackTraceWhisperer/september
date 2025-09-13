@@ -31,16 +31,14 @@ jobs:
         # Build the Docker image that contains all dependencies and the correct environment
         docker build -t september-ci .
 
-        # Run the tests inside the container and copy results back
-        # This avoids volume mount permission issues
-        docker run --name september-test september-ci
-
-        # Create target directory structure and copy test results and artifacts out of the container
+        # Create target directory for volume mounting
         mkdir -p ./target
-        docker cp september-test:/workspace/target/. ./target/ || true
 
-        # Clean up the container
-        docker rm september-test
+        # Run the tests inside the container with volume mount to preserve artifacts
+        docker run --rm -v ${{ github.workspace }}/target:/workspace/target september-ci
+
+        # Fix permissions on generated files so the GitHub Actions runner can read them
+        sudo chown -R runner:runner ./target
 
     - name: Add coverage to PR
       id: jacoco
@@ -62,7 +60,29 @@ jobs:
         check_name: 'Test Results'
         fail_on_failure: false
 
-    - name: Upload Artifacts
+    # Upload comprehensive test reports and coverage artifacts
+    - name: Upload Test Reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-reports
+        path: |
+          target/surefire-reports/
+          target/failsafe-reports/
+        retention-days: 30
+
+    - name: Upload JaCoCo Coverage Reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: coverage-reports
+        path: |
+          target/site/jacoco/
+          target/site/jacoco-ut/
+          target/site/jacoco-it/
+        retention-days: 30
+
+    - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
       if: always()
       with:
