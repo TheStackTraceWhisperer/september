@@ -1,5 +1,6 @@
 package september.engine.assets;
 
+import september.engine.audio.AudioBuffer;
 import september.engine.rendering.Mesh;
 import september.engine.rendering.Texture;
 import september.engine.rendering.gl.Shader;
@@ -21,6 +22,7 @@ public final class ResourceManager implements AutoCloseable {
   private final Map<String, Mesh> meshCache = new HashMap<>();
   private final Map<String, Texture> textureCache = new HashMap<>();
   private final Map<String, Shader> shaderCache = new HashMap<>();
+  private final Map<String, AudioBuffer> audioBufferCache = new HashMap<>();
 
   /**
    * Loads a texture from a file, stores it in the cache, and returns it.
@@ -74,10 +76,28 @@ public final class ResourceManager implements AutoCloseable {
     return texture;
   }
 
+  /**
+   * Loads an audio buffer from an OGG Vorbis file, stores it in the cache, and returns it.
+   * If the audio buffer is already cached, returns the existing instance.
+   *
+   * @param handle   The unique handle for this audio buffer.
+   * @param filePath The classpath path to the OGG file.
+   * @return The cached or newly loaded AudioBuffer.
+   */
+  public AudioBuffer loadAudioBuffer(String handle, String filePath) {
+    return audioBufferCache.computeIfAbsent(handle, h -> AudioBuffer.loadFromOggFile(filePath));
+  }
+
   public Shader resolveShaderHandle(String handle) {
     Shader shader = shaderCache.get(handle);
     Objects.requireNonNull(shader, "Shader not found: " + handle);
     return shader;
+  }
+
+  public AudioBuffer resolveAudioBufferHandle(String handle) {
+    AudioBuffer audioBuffer = audioBufferCache.get(handle);
+    Objects.requireNonNull(audioBuffer, "AudioBuffer not found: " + handle);
+    return audioBuffer;
   }
 
   /**
@@ -94,6 +114,9 @@ public final class ResourceManager implements AutoCloseable {
 
     shaderCache.values().forEach(Shader::close);
     shaderCache.clear();
+
+    audioBufferCache.values().forEach(AudioBuffer::close);
+    audioBufferCache.clear();
   }
 }
 
