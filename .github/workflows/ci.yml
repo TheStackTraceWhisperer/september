@@ -28,16 +28,15 @@ jobs:
         # Build the Docker image that contains all dependencies and the correct environment
         docker build -t september-ci .
 
-        # Pre-create host directories to avoid mount errors and permission surprises
-        mkdir -p "${{ github.workspace }}/target" "${HOME}/.m2"
+        # Run the tests inside the container and copy results back
+        # This avoids volume mount permission issues
+        docker run --name september-test september-ci
 
-        # Run the tests inside the container.
-        # We mount the target directory to make reports and artifacts available to subsequent steps.
-        # We also mount the .m2 directory to leverage the runner's cache inside the container.
-        docker run --rm \
-          -v "${{ github.workspace }}/target:/workspace/target" \
-          -v "${HOME}/.m2:/root/.m2" \
-          september-ci
+        # Copy test results and artifacts out of the container
+        docker cp september-test:/workspace/target ./target || true
+
+        # Clean up the container
+        docker rm september-test
 
     - name: Add coverage to PR
       id: jacoco

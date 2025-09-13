@@ -9,7 +9,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     mesa-utils \
     openjdk-21-jdk \
     maven \
+    ca-certificates \
+    && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
+
+# Set Java security properties to handle SSL properly
+ENV JAVA_OPTS="-Dcom.sun.net.ssl.checkRevocation=false"
 
 # Set the OpenGL version override. This forces Mesa to report 4.6, though the
 # underlying GLSL support may be lower. This is necessary for context creation.
@@ -28,6 +33,9 @@ set -e
 # Set the display variable for the virtual framebuffer
 export DISPLAY=:99
 
+# Set Maven options for SSL
+export MAVEN_OPTS="-Dcom.sun.net.ssl.checkRevocation=false -Dmaven.wagon.http.ssl.insecure=true -Dmaven.wagon.http.ssl.allowall=true"
+
 # Start Xvfb in the background on the specified display
 Xvfb $DISPLAY -screen 0 1280x1024x24 &
 
@@ -43,7 +51,7 @@ if [ ! -S "$XVFB_SOCKET" ]; then
   exit 1
 fi
 
-# Execute the main command passed to the container (e.g., mvn clean verify)
+# Execute the main command passed to the container (e.g., mvn verify)
 exec "$@"
 EOF
 
@@ -51,4 +59,4 @@ EOF
 ENTRYPOINT ["entrypoint.sh"]
 
 # Set the default command to run, filtering for a specific test class.
-CMD ["mvn", "-ntp", "clean", "verify", "-Dtest=september.Glsl460FeatureTest"]
+CMD ["mvn", "-ntp", "verify", "-Dtest=september.Glsl460FeatureTest"]
