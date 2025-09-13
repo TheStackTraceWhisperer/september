@@ -95,18 +95,24 @@ class PreferencesServiceTest {
     }
     
     @Test
-    void debouncing_shouldDelayAutomaticSaves() throws Exception {
+    void explicitSaveModel_shouldNotAutomaticallySave() throws Exception {
         // Given
-        Property<String> property = preferencesService.createProperty("test.debounce", "original", PropertyType.STRING);
+        Property<String> property = preferencesService.createProperty("test.explicit", "original", PropertyType.STRING);
         property.set("modified");
         
-        // When - don't flush immediately, let debouncing work
+        // When - don't flush immediately, with explicit save model
         assertThat(property.isDirty()).isTrue();
         
-        // Wait for debounce period
+        // Wait some time
         Thread.sleep(100);
         
-        // Then - should be automatically saved after debounce delay
+        // Then - should still be dirty since no explicit flush was called
+        assertThat(property.isDirty()).isTrue();
+        
+        // When we explicitly flush
+        preferencesService.flush();
+        
+        // Then - should no longer be dirty
         assertThat(property.isDirty()).isFalse();
     }
     

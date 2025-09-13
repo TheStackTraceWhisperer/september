@@ -1,27 +1,30 @@
 package september.engine.core.preferences;
 
+import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
-import java.util.Set;
+import java.util.Map;
 
 /**
- * Implementation of PreferencesService with debounced saves and change tracking.
+ * Implementation of PreferencesService with explicit save model and change tracking.
+ * Uses active vs saved state comparison for modification detection.
  */
 public final class PreferencesServiceImpl implements PreferencesService {
     
-    private static final long DEFAULT_DEBOUNCE_DELAY_MS = 500;
+    private static final String PREFERENCES_KEY = "properties_data";
     
     private final Preferences preferences;
-    private final ScheduledExecutorService scheduler;
-    private final Set<PropertyImpl<?>> dirtyProperties;
-    private final long debounceDelayMs;
+    private final Map<String, PropertyImpl<?>> propertyCache;
     
-    private ScheduledFuture<?> pendingSave;
+    // Represents the current settings, which can be modified by the user.
+    private Properties activeProperties = new Properties();
+    // A clean, read-only copy of the last state that was loaded or saved.
+    private Properties savedProperties = new Properties();
+    
     private volatile boolean closed = false;
     
     /**
@@ -30,24 +33,24 @@ public final class PreferencesServiceImpl implements PreferencesService {
      * @param nodeName the name of the preferences node
      */
     public PreferencesServiceImpl(String nodeName) {
-        this(nodeName, DEFAULT_DEBOUNCE_DELAY_MS);
+        this.preferences = Preferences.userNodeForPackage(PreferencesServiceImpl.class).node(nodeName);
+        this.propertyCache = new ConcurrentHashMap<>();
+        
+        // Load existing settings to establish baseline
+        load();
     }
     
     /**
      * Creates a new preferences service with custom debounce delay.
+     * For backward compatibility with existing tests.
      *
      * @param nodeName the name of the preferences node
-     * @param debounceDelayMs the delay in milliseconds before saving changes
+     * @param debounceDelayMs ignored - kept for compatibility
+     * @deprecated Use {@link #PreferencesServiceImpl(String)} instead
      */
+    @Deprecated
     public PreferencesServiceImpl(String nodeName, long debounceDelayMs) {
-        this.preferences = Preferences.userNodeForPackage(PreferencesServiceImpl.class).node(nodeName);
-        this.scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
-            Thread t = new Thread(r, "preferences-save-thread");
-            t.setDaemon(true);
-            return t;
-        });
-        this.dirtyProperties = ConcurrentHashMap.newKeySet();
-        this.debounceDelayMs = debounceDelayMs;
+        this(nodeName);
     }
     
     @Override
@@ -55,7 +58,15 @@ public final class PreferencesServiceImpl implements PreferencesService {
         if (closed) {
             throw new IllegalStateException("PreferencesService has been closed");
         }
-        return new PropertyImpl<>(key, defaultValue, type, this);
+        
+        // Use cached property if available, otherwise create new one
+        @SuppressWarnings("unchecked")
+        PropertyImpl<T> property = (PropertyImpl<T>) propertyCache.get(key);
+        if (property == null) {
+            property = new PropertyImpl<>(key, defaultValue, type, this);
+            propertyCache.put(key, property);
+        }
+        return property;
     }
     
     @Override
@@ -64,16 +75,7 @@ public final class PreferencesServiceImpl implements PreferencesService {
             return;
         }
         
-        synchronized (this) {
-            // Cancel pending save
-            if (pendingSave != null) {
-                pendingSave.cancel(false);
-                pendingSave = null;
-            }
-            
-            // Save immediately
-            saveAllDirtyProperties();
-        }
+        save();
     }
     
     @Override
@@ -82,17 +84,11 @@ public final class PreferencesServiceImpl implements PreferencesService {
             return;
         }
         
-        synchronized (this) {
-            // Cancel pending save
-            if (pendingSave != null) {
-                pendingSave.cancel(false);
-                pendingSave = null;
-            }
-            
-            // Reload all dirty properties from storage
-            dirtyProperties.forEach(PropertyImpl::reload);
-            dirtyProperties.clear();
-        }
+        // Restore active state from the clean baseline
+        this.activeProperties = (Properties) this.savedProperties.clone();
+        
+        // Reload all cached properties from the reverted state
+        propertyCache.values().forEach(PropertyImpl::reload);
     }
     
     @Override
@@ -107,6 +103,14 @@ public final class PreferencesServiceImpl implements PreferencesService {
         return preferences.name();
     }
     
+    /**
+     * Determines if the active settings are different from the last saved state.
+     * @return true if the active settings have changed.
+     */
+    public boolean isModified() {
+        return !activeProperties.equals(savedProperties);
+    }
+    
     @Override
     public void close() {
         if (closed) {
@@ -117,70 +121,73 @@ public final class PreferencesServiceImpl implements PreferencesService {
         
         // Save any pending changes immediately
         flush();
-        
-        // Shutdown the scheduler
-        scheduler.shutdown();
-        try {
-            if (!scheduler.awaitTermination(1, TimeUnit.SECONDS)) {
-                scheduler.shutdownNow();
-            }
-        } catch (InterruptedException e) {
-            scheduler.shutdownNow();
-            Thread.currentThread().interrupt();
-        }
     }
     
     /**
-     * Marks a property as dirty and schedules a debounced save.
+     * Loads settings from the persistent store, creating a clean baseline.
      */
-    void markDirty(PropertyImpl<?> property) {
-        if (closed) {
+    private void load() {
+        String serializedProps = preferences.get(PREFERENCES_KEY, null);
+        Properties loadedProps = new Properties();
+
+        if (serializedProps != null) {
+            try (StringReader reader = new StringReader(serializedProps)) {
+                loadedProps.load(reader);
+            } catch (IOException e) {
+                System.err.println("Error parsing loaded preferences: " + e.getMessage());
+            }
+        }
+        
+        // Establish the clean baseline for both states.
+        this.savedProperties = (Properties) loadedProps.clone();
+        this.activeProperties = (Properties) loadedProps.clone();
+    }
+
+    /**
+     * Commits the active settings to the persistent store if they have been modified.
+     */
+    private void save() {
+        if (!isModified()) {
             return;
         }
-        
-        synchronized (this) {
-            dirtyProperties.add(property);
+
+        try (StringWriter writer = new StringWriter()) {
+            activeProperties.store(writer, "September Engine - User Preferences");
+            preferences.put(PREFERENCES_KEY, writer.toString());
+            preferences.flush();
+
+            // The save was successful. Update the clean baseline to the new state.
+            this.savedProperties = (Properties) this.activeProperties.clone();
             
-            // Cancel previous save and schedule a new one
-            if (pendingSave != null) {
-                pendingSave.cancel(false);
-            }
-            
-            pendingSave = scheduler.schedule(this::saveAllDirtyProperties, debounceDelayMs, TimeUnit.MILLISECONDS);
+        } catch (IOException | BackingStoreException e) {
+            System.err.println("CRITICAL: Error saving preferences: " + e.getMessage());
         }
+    }
+
+    /**
+     * Sets a preference value in the active, in-memory state.
+     */
+    void setPropertyValue(String key, String value) {
+        if (value == null) {
+            activeProperties.remove(key);
+        } else {
+            activeProperties.setProperty(key, value);
+        }
+    }
+
+    /**
+     * Retrieves a preference value from the current active state.
+     * Returns null if no value exists for the key.
+     */
+    String getPropertyValue(String key) {
+        return activeProperties.getProperty(key);
     }
     
     /**
-     * Removes a property from the dirty set.
+     * Gets the saved (baseline) value for a property key.
+     * Returns null if no saved value exists for the key.
      */
-    void unmarkDirty(PropertyImpl<?> property) {
-        synchronized (this) {
-            dirtyProperties.remove(property);
-        }
-    }
-    
-    /**
-     * Saves all dirty properties and clears the dirty set.
-     */
-    private void saveAllDirtyProperties() {
-        if (closed) {
-            return;
-        }
-        
-        synchronized (this) {
-            try {
-                // Save each dirty property
-                dirtyProperties.forEach(PropertyImpl::save);
-                dirtyProperties.clear();
-                
-                // Force preferences to flush to backing store
-                preferences.flush();
-                
-            } catch (BackingStoreException e) {
-                System.err.println("Failed to flush preferences to backing store: " + e.getMessage());
-            } finally {
-                pendingSave = null;
-            }
-        }
+    String getSavedPropertyValue(String key) {
+        return savedProperties.getProperty(key);
     }
 }

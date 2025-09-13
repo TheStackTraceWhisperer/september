@@ -13,7 +13,6 @@ final class PropertyImpl<T> implements Property<T> {
     private final PreferencesServiceImpl service;
     
     private T currentValue;
-    private T lastSavedValue;
     
     PropertyImpl(String key, T defaultValue, PropertyType<T> type, PreferencesServiceImpl service) {
         this.key = key;
@@ -22,8 +21,7 @@ final class PropertyImpl<T> implements Property<T> {
         this.service = service;
         
         // Load initial value from preferences
-        this.lastSavedValue = loadFromPreferences();
-        this.currentValue = this.lastSavedValue;
+        this.currentValue = loadFromPreferences();
     }
     
     @Override
@@ -35,7 +33,9 @@ final class PropertyImpl<T> implements Property<T> {
     public void set(T value) {
         if (!Objects.equals(currentValue, value)) {
             currentValue = value;
-            service.markDirty(this);
+            // Update the active properties in the service
+            String serializedValue = type.serialize(value);
+            service.setPropertyValue(key, serializedValue);
         }
     }
     
@@ -51,14 +51,24 @@ final class PropertyImpl<T> implements Property<T> {
     
     @Override
     public boolean isDirty() {
-        return !Objects.equals(currentValue, lastSavedValue);
+        // A property is dirty if its current value differs from the saved value
+        T savedValue = getSavedValue();
+        return !Objects.equals(currentValue, savedValue);
     }
     
     @Override
     public void revert() {
         if (isDirty()) {
-            currentValue = lastSavedValue;
-            service.unmarkDirty(this);
+            T savedValue = getSavedValue();
+            currentValue = savedValue;
+            // Update the active properties to match the saved state for this key
+            if (savedValue != null) {
+                String serializedValue = type.serialize(savedValue);
+                service.setPropertyValue(key, serializedValue);
+            } else {
+                // Remove from active properties if no saved value exists
+                service.setPropertyValue(key, null);
+            }
         }
     }
     
@@ -68,22 +78,10 @@ final class PropertyImpl<T> implements Property<T> {
     }
     
     /**
-     * Saves the current value to preferences storage.
-     * Called by the preferences service during debounced saves.
-     */
-    void save() {
-        if (isDirty()) {
-            String serializedValue = type.serialize(currentValue);
-            service.getPreferences().put(key, serializedValue);
-            lastSavedValue = currentValue;
-        }
-    }
-    
-    /**
      * Loads the value from preferences, returning the default if not found.
      */
     private T loadFromPreferences() {
-        String serializedValue = service.getPreferences().get(key, null);
+        String serializedValue = service.getPropertyValue(key);
         if (serializedValue == null) {
             return defaultValue;
         }
@@ -98,12 +96,28 @@ final class PropertyImpl<T> implements Property<T> {
     }
     
     /**
-     * Reloads the value from preferences storage.
-     * Called during revert operations.
+     * Gets the saved (baseline) value for this property.
+     */
+    private T getSavedValue() {
+        String serializedValue = service.getSavedPropertyValue(key);
+        if (serializedValue == null) {
+            return defaultValue;
+        }
+        
+        try {
+            return type.deserialize(serializedValue);
+        } catch (Exception e) {
+            // If deserialization fails, return default
+            return defaultValue;
+        }
+    }
+    
+    /**
+     * Reloads the value from the current active state.
+     * Called during revert operations to sync with the service state.
      */
     void reload() {
         T reloadedValue = loadFromPreferences();
-        lastSavedValue = reloadedValue;
         currentValue = reloadedValue;
     }
 }
