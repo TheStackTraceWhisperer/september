@@ -10,7 +10,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openjdk-21-jdk \
     maven \
     ca-certificates \
-    libopenal1 \
     && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
@@ -21,11 +20,6 @@ ENV JAVA_OPTS="-Dcom.sun.net.ssl.checkRevocation=false"
 # underlying GLSL support may be lower. This is necessary for context creation.
 ENV MESA_GL_VERSION_OVERRIDE=4.6
 ENV MESA_GLSL_VERSION_OVERRIDE=460
-
-# Configure OpenAL to use null backend for headless audio testing.
-# This provides full OpenAL API compatibility while discarding audio output,
-# similar to how Xvfb provides headless graphics testing.
-ENV ALSOFT_DRIVERS=null
 
 COPY . /workspace
 WORKDIR /workspace
