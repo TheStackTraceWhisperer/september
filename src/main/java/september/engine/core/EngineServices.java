@@ -6,16 +6,13 @@ import september.engine.core.input.GamepadService;
 import september.engine.core.input.InputService;
 import september.engine.core.preferences.PreferencesService;
 import september.engine.ecs.IWorld;
+import september.engine.ecs.SystemManager;
 import september.engine.rendering.Camera;
 import september.engine.rendering.Renderer;
 
-/**
- * A service locator record that provides access to all core engine services.
- * This object is passed to the Game implementation to allow it to interact
- * with the engine in a decoupled way.
- */
 public record EngineServices(
   IWorld world,
+  SystemManager systemManager,
   ResourceManager resourceManager,
   InputService inputService,
   GamepadService gamepadService,

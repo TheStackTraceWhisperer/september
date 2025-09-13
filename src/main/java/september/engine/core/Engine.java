@@ -1,6 +1,5 @@
 package september.engine.core;
 
-import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import september.engine.assets.ResourceManager;
@@ -13,13 +12,14 @@ import september.engine.core.preferences.PreferencesService;
 import september.engine.core.preferences.PreferencesServiceImpl;
 import september.engine.ecs.ISystem;
 import september.engine.ecs.IWorld;
+import september.engine.ecs.SystemManager;
 import september.engine.rendering.Camera;
 import september.engine.rendering.Renderer;
 import september.engine.rendering.gl.OpenGLRenderer;
 import september.engine.systems.RenderSystem;
 
-@Slf4j
 public final class Engine implements Runnable {
+  private static final Logger log = LoggerFactory.getLogger(Engine.class);
   private final Game game;
   private final MainLoopPolicy loopPolicy;
 
@@ -35,6 +35,7 @@ public final class Engine implements Runnable {
   private GlfwContext glfwContext;
   private WindowContext window;
   private Renderer renderer;
+  private SystemManager systemManager;
 
   public Engine(Game game, MainLoopPolicy loopPolicy) {
     this.game = game;
@@ -45,6 +46,7 @@ public final class Engine implements Runnable {
     try {
       // --- INITIALIZE ALL CORE ENGINE SERVICES ---
       world = new september.engine.ecs.World();
+      systemManager = new SystemManager();
       timeService = new SystemTimer();
       resourceManager = new ResourceManager();
       inputService = new GlfwInputService();
@@ -55,7 +57,6 @@ public final class Engine implements Runnable {
       window = new WindowContext(800, 600, "September Engine");
       renderer = new OpenGLRenderer();
 
-      // Camera setup can be part of the engine's default initialization
       camera = new Camera(800.0f, 600.0f);
       camera.setPerspective(45.0f, 800.0f / 600.0f, 0.1f, 100.0f);
 
@@ -68,18 +69,16 @@ public final class Engine implements Runnable {
       audioManager.initialize();
 
       // --- CREATE THE SERVICES OBJECT ---
-      var services = new EngineServices(world, resourceManager, inputService, gamepadService,
+      var services = new EngineServices(world, systemManager, resourceManager, inputService, gamepadService,
         timeService, audioManager, preferencesService, camera, renderer, window);
 
       // --- INITIALIZE THE GAME LOGIC ---
       game.init(services);
 
       // --- REGISTER ALL SYSTEMS ---
-      // Register engine-provided systems first
-      world.registerSystem(new RenderSystem(world, renderer, resourceManager, camera));
-      // Register all game-provided systems
+      systemManager.register(new RenderSystem(world, renderer, resourceManager, camera));
       for (ISystem system : game.getSystems()) {
-        world.registerSystem(system);
+        systemManager.register(system);
       }
 
     } catch (Exception e) {
@@ -94,14 +93,16 @@ public final class Engine implements Runnable {
       window.pollEvents();
       timeService.update();
       float dt = timeService.getDeltaTime();
-      world.update(dt);
+      systemManager.updateAll(dt);
       window.swapBuffers();
       frames++;
     }
   }
 
   public void shutdown() {
-    game.shutdown();
+    if (game != null) {
+      game.shutdown();
+    }
 
     if (audioManager != null) {
       audioManager.close();
@@ -142,4 +143,5 @@ public final class Engine implements Runnable {
   public ResourceManager getResourceManager() { return resourceManager; }
   public Camera getCamera() { return camera; }
   public AudioManager getAudioManager() { return audioManager; }
+  public SystemManager getSystemManager() { return systemManager; }
 }

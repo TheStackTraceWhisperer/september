@@ -59,16 +59,6 @@ public class World implements IWorld {
   }
 
   @Override
-  public void registerSystem(ISystem system) {
-    systemManager.registerSystem(system);
-  }
-
-  @Override
-  public void update(float deltaTime) {
-    systemManager.updateAll(deltaTime);
-  }
-
-  @Override
   public List<Integer> getEntitiesWith(Class<?>... componentClasses) {
     // Start with a list of all active entities.
     List<Integer> activeEntities = entityManager.getActiveEntities();
@@ -91,14 +81,9 @@ public class World implements IWorld {
   }
 }
 
-/**
- * Manages the creation, destruction, and tracking of entity IDs.
- * Package-private as it's an implementation detail of the World.
- */
 class EntityManager {
   private int nextEntityId = 0;
   private final Set<Integer> activeEntities = new HashSet<>();
-  // A more advanced implementation might use a queue/stack to recycle destroyed IDs.
 
   int createEntity() {
     int id = nextEntityId++;
@@ -115,13 +100,7 @@ class EntityManager {
   }
 }
 
-/**
- * Manages the storage and mapping of all components to their entities.
- * Package-private as it's an implementation detail of the World.
- */
 class ComponentManager {
-  // A map from a Component Class to another map, which maps an Entity ID to the component instance.
-  // Example: { TransformComponent.class -> { 1 -> transform1, 2 -> transform2 } }
   private final Map<Class<?>, Map<Integer, Object>> componentStores = new HashMap<>();
 
   <T> void addComponent(int entityId, T component) {
@@ -136,7 +115,6 @@ class ComponentManager {
     if (store == null) {
       return null;
     }
-    // The cast is safe due to the structure of the map and addComponent logic.
     return componentClass.cast(store.get(entityId));
   }
 
@@ -153,27 +131,8 @@ class ComponentManager {
   }
 
   void entityDestroyed(int entityId) {
-    // When an entity is destroyed, we must remove all of its components.
     for (Map<Integer, Object> store : componentStores.values()) {
       store.remove(entityId);
-    }
-  }
-}
-
-/**
- * Manages the registration and execution of all systems.
- * Package-private as it's an implementation detail of the World.
- */
-class SystemManager {
-  private final List<ISystem> systems = new ArrayList<>();
-
-  void registerSystem(ISystem system) {
-    systems.add(system);
-  }
-
-  void updateAll(float deltaTime) {
-    for (ISystem system : systems) {
-      system.update(deltaTime);
     }
   }
 }

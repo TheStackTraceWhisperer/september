@@ -17,6 +17,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * This test extends EngineTestHarness to get a live audio context and tests
  * the actual behavior of the AudioSystem with real audio resources.
  */
+// ... imports
+
 class AudioSystemTest extends EngineTestHarness {
 
   private AudioSystem audioSystem;
@@ -30,7 +32,7 @@ class AudioSystemTest extends EngineTestHarness {
 
     // Create and register the audio system
     audioSystem = new AudioSystem(world, audioManager, resourceManager);
-    world.registerSystem(audioSystem);
+    systemManager.register(audioSystem); // CORRECTED: Use systemManager, not world.
   }
 
   @Test

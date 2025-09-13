@@ -10,6 +10,7 @@ import september.engine.core.Game;
 import september.engine.core.MainLoopPolicy;
 import september.engine.ecs.ISystem;
 import september.engine.ecs.IWorld;
+import september.engine.ecs.SystemManager;
 import september.engine.rendering.Camera;
 
 import java.util.Collection;
@@ -29,6 +30,7 @@ public abstract class EngineTestHarness {
   protected ResourceManager resourceManager;
   protected Camera camera;
   protected AudioManager audioManager;
+  protected SystemManager systemManager;
 
   /**
    * A minimal, do-nothing implementation of the Game interface for testing purposes.
@@ -68,10 +70,12 @@ public abstract class EngineTestHarness {
     engine = new Engine(testGame, MainLoopPolicy.skip());
     engine.init();
 
+    // Retrieve all the live, initialized services from the engine instance.
     world = engine.getWorld();
     resourceManager = engine.getResourceManager();
     camera = engine.getCamera();
     audioManager = engine.getAudioManager();
+    systemManager = engine.getSystemManager(); // Add this line
   }
 
   @AfterEach
