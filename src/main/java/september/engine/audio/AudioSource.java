@@ -16,34 +16,19 @@ public final class AudioSource implements AutoCloseable {
 
   private final int sourceId;
   private boolean closed = false;
-  private final boolean ciMode;
-  
-  // Fields for storing values in CI mode
-  private float volume = 1.0f;
-  private float pitch = 1.0f;
-  private Vector3f position = new Vector3f(0.0f, 0.0f, 0.0f);
-  private boolean looping = false;
 
   public AudioSource() {
-    // Check if running in CI mode
-    this.ciMode = "true".equalsIgnoreCase(System.getenv("CI"));
+    this.sourceId = alGenSources();
     
-    if (ciMode) {
-      // In CI mode, use a dummy source ID
-      this.sourceId = -1;
-    } else {
-      this.sourceId = alGenSources();
-      
-      if (alGetError() != AL_NO_ERROR) {
-        throw new RuntimeException("Failed to create OpenAL audio source");
-      }
-      
-      // Set sensible defaults
-      setVolume(1.0f);
-      setPitch(1.0f);
-      setPosition(0.0f, 0.0f, 0.0f);
-      setLooping(false);
+    if (alGetError() != AL_NO_ERROR) {
+      throw new RuntimeException("Failed to create OpenAL audio source");
     }
+    
+    // Set sensible defaults
+    setVolume(1.0f);
+    setPitch(1.0f);
+    setPosition(0.0f, 0.0f, 0.0f);
+    setLooping(false);
   }
 
   /**
@@ -54,11 +39,6 @@ public final class AudioSource implements AutoCloseable {
   public void play(AudioBuffer buffer) {
     if (closed) {
       throw new IllegalStateException("AudioSource has been closed");
-    }
-    
-    // Skip OpenAL calls in CI mode
-    if (ciMode) {
-      return;
     }
     
     alSourcei(sourceId, AL_BUFFER, buffer.getBufferId());
@@ -73,11 +53,6 @@ public final class AudioSource implements AutoCloseable {
       throw new IllegalStateException("AudioSource has been closed");
     }
     
-    // Skip OpenAL calls in CI mode
-    if (ciMode) {
-      return;
-    }
-    
     alSourcePause(sourceId);
   }
 
@@ -89,11 +64,6 @@ public final class AudioSource implements AutoCloseable {
       throw new IllegalStateException("AudioSource has been closed");
     }
     
-    // Skip OpenAL calls in CI mode
-    if (ciMode) {
-      return;
-    }
-    
     alSourcePlay(sourceId);
   }
 
@@ -103,11 +73,6 @@ public final class AudioSource implements AutoCloseable {
   public void stop() {
     if (closed) {
       throw new IllegalStateException("AudioSource has been closed");
-    }
-    
-    // Skip OpenAL calls in CI mode
-    if (ciMode) {
-      return;
     }
     
     alSourceStop(sourceId);
@@ -123,32 +88,7 @@ public final class AudioSource implements AutoCloseable {
       throw new IllegalStateException("AudioSource has been closed");
     }
     
-    this.volume = Math.max(0.0f, volume);
-    
-    // Skip OpenAL calls in CI mode
-    if (ciMode) {
-      return;
-    }
-    
-    alSourcef(sourceId, AL_GAIN, this.volume);
-  }
-
-  /**
-   * Gets the current volume of this audio source.
-   *
-   * @return Current volume level
-   */
-  public float getVolume() {
-    if (closed) {
-      throw new IllegalStateException("AudioSource has been closed");
-    }
-    
-    // Return stored value in CI mode
-    if (ciMode) {
-      return volume;
-    }
-    
-    return alGetSourcef(sourceId, AL_GAIN);
+    alSourcef(sourceId, AL_GAIN, Math.max(0.0f, volume));
   }
 
   /**
@@ -161,32 +101,7 @@ public final class AudioSource implements AutoCloseable {
       throw new IllegalStateException("AudioSource has been closed");
     }
     
-    this.pitch = Math.max(0.1f, pitch);
-    
-    // Skip OpenAL calls in CI mode
-    if (ciMode) {
-      return;
-    }
-    
-    alSourcef(sourceId, AL_PITCH, this.pitch);
-  }
-
-  /**
-   * Gets the current pitch of this audio source.
-   *
-   * @return Current pitch multiplier
-   */
-  public float getPitch() {
-    if (closed) {
-      throw new IllegalStateException("AudioSource has been closed");
-    }
-    
-    // Return stored value in CI mode
-    if (ciMode) {
-      return pitch;
-    }
-    
-    return alGetSourcef(sourceId, AL_PITCH);
+    alSourcef(sourceId, AL_PITCH, Math.max(0.1f, pitch));
   }
 
   /**
@@ -199,13 +114,6 @@ public final class AudioSource implements AutoCloseable {
   public void setPosition(float x, float y, float z) {
     if (closed) {
       throw new IllegalStateException("AudioSource has been closed");
-    }
-    
-    this.position.set(x, y, z);
-    
-    // Skip OpenAL calls in CI mode
-    if (ciMode) {
-      return;
     }
     
     alSource3f(sourceId, AL_POSITION, x, y, z);
@@ -221,25 +129,6 @@ public final class AudioSource implements AutoCloseable {
   }
 
   /**
-   * Gets the current position of this audio source.
-   *
-   * @return Current position vector (copy)
-   */
-  public Vector3f getPosition() {
-    if (closed) {
-      throw new IllegalStateException("AudioSource has been closed");
-    }
-    
-    // Return stored value in CI mode
-    if (ciMode) {
-      return new Vector3f(position);
-    }
-    
-    // In normal mode, we could query OpenAL but let's return stored value for consistency
-    return new Vector3f(position);
-  }
-
-  /**
    * Sets whether this audio source should loop when it reaches the end.
    *
    * @param looping true to enable looping, false to play once
@@ -249,32 +138,7 @@ public final class AudioSource implements AutoCloseable {
       throw new IllegalStateException("AudioSource has been closed");
     }
     
-    this.looping = looping;
-    
-    // Skip OpenAL calls in CI mode
-    if (ciMode) {
-      return;
-    }
-    
     alSourcei(sourceId, AL_LOOPING, looping ? AL_TRUE : AL_FALSE);
-  }
-
-  /**
-   * Gets whether this audio source is set to loop.
-   *
-   * @return true if looping, false otherwise
-   */
-  public boolean isLooping() {
-    if (closed) {
-      throw new IllegalStateException("AudioSource has been closed");
-    }
-    
-    // Return stored value in CI mode
-    if (ciMode) {
-      return looping;
-    }
-    
-    return alGetSourcei(sourceId, AL_LOOPING) == AL_TRUE;
   }
 
   /**
@@ -285,11 +149,6 @@ public final class AudioSource implements AutoCloseable {
   public int getState() {
     if (closed) {
       throw new IllegalStateException("AudioSource has been closed");
-    }
-    
-    // Return default stopped state in CI mode
-    if (ciMode) {
-      return AL_STOPPED;
     }
     
     return alGetSourcei(sourceId, AL_SOURCE_STATE);
@@ -322,13 +181,23 @@ public final class AudioSource implements AutoCloseable {
     return getState() == AL_STOPPED;
   }
 
+  /**
+   * Gets the current volume of this audio source.
+   *
+   * @return The current volume level
+   */
+  public float getVolume() {
+    if (closed) {
+      throw new IllegalStateException("AudioSource has been closed");
+    }
+    
+    return alGetSourcef(sourceId, AL_GAIN);
+  }
+
   @Override
   public void close() {
     if (!closed) {
-      // Skip OpenAL calls in CI mode
-      if (!ciMode) {
-        alDeleteSources(sourceId);
-      }
+      alDeleteSources(sourceId);
       closed = true;
     }
   }

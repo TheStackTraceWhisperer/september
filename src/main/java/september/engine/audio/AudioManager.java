@@ -22,24 +22,14 @@ public final class AudioManager implements AutoCloseable {
   private long device;
   private long context;
   private boolean initialized = false;
-  private boolean openAlInitialized = false;
 
   /**
    * Initializes the OpenAL audio system.
    * This must be called before any other audio operations.
-   * In CI environments (detected by CI=true environment variable), 
-   * audio initialization is skipped to avoid OpenAL device failures.
    */
   public void initialize() {
     if (initialized) {
       throw new IllegalStateException("AudioManager is already initialized");
-    }
-
-    // Skip OpenAL initialization in CI environments where audio devices are not available
-    String ciEnv = System.getenv("CI");
-    if ("true".equalsIgnoreCase(ciEnv)) {
-      initialized = true;
-      return;
     }
 
     // Open the default audio device
@@ -70,14 +60,12 @@ public final class AudioManager implements AutoCloseable {
       throw new RuntimeException("OpenAL 1.0 is not supported");
     }
 
-    openAlInitialized = true;
+    initialized = true;
 
     // Set up the audio listener at the origin
     setListenerPosition(0.0f, 0.0f, 0.0f);
     setListenerOrientation(0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f);
     setMasterVolume(1.0f);
-
-    initialized = true;
   }
 
   /**
@@ -88,11 +76,6 @@ public final class AudioManager implements AutoCloseable {
   public void setMasterVolume(float volume) {
     if (!initialized) {
       throw new IllegalStateException("AudioManager is not initialized");
-    }
-    
-    // Skip OpenAL calls in CI mode
-    if (!openAlInitialized) {
-      return;
     }
     
     alListenerf(AL_GAIN, Math.max(0.0f, volume));
@@ -108,11 +91,6 @@ public final class AudioManager implements AutoCloseable {
       throw new IllegalStateException("AudioManager is not initialized");
     }
     
-    // Return default volume in CI mode
-    if (!openAlInitialized) {
-      return 1.0f;
-    }
-    
     return alGetListenerf(AL_GAIN);
   }
 
@@ -126,11 +104,6 @@ public final class AudioManager implements AutoCloseable {
   public void setListenerPosition(float x, float y, float z) {
     if (!initialized) {
       throw new IllegalStateException("AudioManager is not initialized");
-    }
-    
-    // Skip OpenAL calls in CI mode
-    if (!openAlInitialized) {
-      return;
     }
     
     alListener3f(AL_POSITION, x, y, z);
@@ -150,11 +123,6 @@ public final class AudioManager implements AutoCloseable {
                                      float upX, float upY, float upZ) {
     if (!initialized) {
       throw new IllegalStateException("AudioManager is not initialized");
-    }
-    
-    // Skip OpenAL calls in CI mode
-    if (!openAlInitialized) {
-      return;
     }
     
     float[] orientation = {forwardX, forwardY, forwardZ, upX, upY, upZ};
@@ -219,13 +187,10 @@ public final class AudioManager implements AutoCloseable {
   @Override
   public void close() {
     if (initialized) {
-      // Only clean up OpenAL resources if they were actually created
-      if (openAlInitialized) {
-        alcMakeContextCurrent(0);
-        alcDestroyContext(context);
-        alcCloseDevice(device);
-        openAlInitialized = false;
-      }
+      // Clean up OpenAL context
+      alcMakeContextCurrent(0);
+      alcDestroyContext(context);
+      alcCloseDevice(device);
       
       initialized = false;
     }

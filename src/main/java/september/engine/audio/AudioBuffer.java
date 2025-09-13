@@ -24,7 +24,6 @@ public final class AudioBuffer implements AutoCloseable {
 
   private final int bufferId;
   private boolean closed = false;
-  private final boolean ciMode;
 
   /**
    * Creates an AudioBuffer from raw PCM audio data.
@@ -34,21 +33,13 @@ public final class AudioBuffer implements AutoCloseable {
    * @param sampleRate  Sample rate in Hz (e.g., 44100)
    */
   public AudioBuffer(ShortBuffer data, int channels, int sampleRate) {
-    // Check if running in CI mode
-    this.ciMode = "true".equalsIgnoreCase(System.getenv("CI"));
+    this.bufferId = alGenBuffers();
     
-    if (ciMode) {
-      // In CI mode, use a dummy buffer ID
-      this.bufferId = -1;
-    } else {
-      this.bufferId = alGenBuffers();
-      
-      int format = channels == 1 ? AL_FORMAT_MONO16 : AL_FORMAT_STEREO16;
-      alBufferData(bufferId, format, data, sampleRate);
-      
-      if (alGetError() != AL_NO_ERROR) {
-        throw new RuntimeException("Failed to upload audio data to OpenAL buffer");
-      }
+    int format = channels == 1 ? AL_FORMAT_MONO16 : AL_FORMAT_STEREO16;
+    alBufferData(bufferId, format, data, sampleRate);
+    
+    if (alGetError() != AL_NO_ERROR) {
+      throw new RuntimeException("Failed to upload audio data to OpenAL buffer");
     }
   }
 
@@ -118,10 +109,7 @@ public final class AudioBuffer implements AutoCloseable {
   @Override
   public void close() {
     if (!closed) {
-      // Skip OpenAL calls in CI mode
-      if (!ciMode) {
-        alDeleteBuffers(bufferId);
-      }
+      alDeleteBuffers(bufferId);
       closed = true;
     }
   }

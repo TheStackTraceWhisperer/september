@@ -2,7 +2,6 @@ package september.engine.systems;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import september.engine.EngineTestHarness;
 import september.engine.ecs.components.AudioSourceComponent;
 import september.engine.ecs.components.MusicComponent;
@@ -17,10 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>
  * This test extends EngineTestHarness to get a live audio context and tests
  * the actual behavior of the AudioSystem with real audio resources.
- * <p>
- * These tests are disabled in CI environments where OpenAL audio devices are not available.
  */
-@DisabledIfEnvironmentVariable(named = "CI", matches = "true")
 class AudioSystemTest extends EngineTestHarness {
 
   private AudioSystem audioSystem;
