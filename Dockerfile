@@ -21,6 +21,9 @@ ENV JAVA_OPTS="-Dcom.sun.net.ssl.checkRevocation=false"
 ENV MESA_GL_VERSION_OVERRIDE=4.6
 ENV MESA_GLSL_VERSION_OVERRIDE=460
 
+# Set CI environment variable to enable CI mode in audio components
+ENV CI=true
+
 COPY . /workspace
 WORKDIR /workspace
 
