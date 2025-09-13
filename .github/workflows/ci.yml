@@ -37,6 +37,9 @@ jobs:
         # Run the tests inside the container with volume mount to preserve artifacts
         docker run --rm -v ${{ github.workspace }}/target:/workspace/target september-ci
 
+        # Fix permissions on generated files so the GitHub Actions runner can read them
+        sudo chown -R runner:runner ./target
+
     - name: Add coverage to PR
       id: jacoco
       uses: madrapps/jacoco-report@v1.6.1
