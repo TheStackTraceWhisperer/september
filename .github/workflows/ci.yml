@@ -35,8 +35,9 @@ jobs:
         # This avoids volume mount permission issues
         docker run --name september-test september-ci
 
-        # Copy test results and artifacts out of the container
-        docker cp september-test:/workspace/target ./target || true
+        # Create target directory structure and copy test results and artifacts out of the container
+        mkdir -p ./target
+        docker cp september-test:/workspace/target/. ./target/ || true
 
         # Clean up the container
         docker rm september-test
@@ -55,7 +56,7 @@ jobs:
 
     - name: Publish Test Report
       uses: mikepenz/action-junit-report@v4
-      if: always() && hashFiles('**/target/surefire-reports/TEST-*.xml') != ''
+      if: always()
       with:
         report_paths: '**/target/surefire-reports/TEST-*.xml,**/target/failsafe-reports/TEST-*.xml'
         check_name: 'Test Results'
