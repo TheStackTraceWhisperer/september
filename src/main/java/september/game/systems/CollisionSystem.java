@@ -43,15 +43,18 @@ public class CollisionSystem implements ISystem {
         ColliderComponent.ColliderType typeB = colliderB.getType();
 
         // --- Player vs. Wall Collision ---
-        // This is the core of our solid-object collision response.
-        // We now compare against the concrete GameColliderType enum.
         if (typeA == GameColliderType.PLAYER && typeB == GameColliderType.WALL) {
             transformA.revertPosition();
         } else if (typeB == GameColliderType.PLAYER && typeA == GameColliderType.WALL) {
             transformB.revertPosition();
         }
 
-        // Future collision types (e.g., PLAYER vs. ENEMY) can be added here.
+        // --- Enemy vs. Wall Collision ---
+        if (typeA == GameColliderType.ENEMY && typeB == GameColliderType.WALL) {
+            transformA.revertPosition();
+        } else if (typeB == GameColliderType.ENEMY && typeA == GameColliderType.WALL) {
+            transformB.revertPosition();
+        }
     }
 
     private boolean checkCollision(TransformComponent transformA, ColliderComponent colliderA, TransformComponent transformB, ColliderComponent colliderB) {

@@ -63,6 +63,45 @@ class CollisionSystemTest extends EngineTestHarness {
     }
 
     @Test
+    @DisplayName("Enemy vs. Wall: Enemy position should revert, Wall position should not")
+    void enemyVsWall_revertsEnemyPosition() {
+        // Arrange
+        var enemyTransform = createTestTransform(new Vector3f(0, 0, 0), new Vector3f(10, 10, 0));
+        var wallTransform = createTestTransform(new Vector3f(12, 12, 0));
+        Vector3f wallPositionBeforeUpdate = new Vector3f(wallTransform.position);
+
+        createEntityWithCollider(enemyTransform, new ColliderComponent(GameColliderType.ENEMY, 16, 16, 0, 0));
+        createEntityWithCollider(wallTransform, new ColliderComponent(GameColliderType.WALL, 16, 16, 0, 0));
+
+        // Act
+        collisionSystem.update(0.016f);
+
+        // Assert
+        assertThat(enemyTransform.position).as("Enemy position should revert").isEqualTo(enemyTransform.previousPosition);
+        assertThat(wallTransform.position).as("Wall position should not change").isEqualTo(wallPositionBeforeUpdate);
+    }
+
+    @Test
+    @DisplayName("Enemy vs. Enemy: Neither entity's position should revert")
+    void enemyVsEnemy_doesNotRevertPositions() {
+        // Arrange
+        var enemy1Transform = createTestTransform(new Vector3f(0, 0, 0), new Vector3f(10, 10, 0));
+        var enemy2Transform = createTestTransform(new Vector3f(12, 12, 0));
+        Vector3f enemy1PositionBeforeUpdate = new Vector3f(enemy1Transform.position);
+        Vector3f enemy2PositionBeforeUpdate = new Vector3f(enemy2Transform.position);
+
+        createEntityWithCollider(enemy1Transform, new ColliderComponent(GameColliderType.ENEMY, 16, 16, 0, 0));
+        createEntityWithCollider(enemy2Transform, new ColliderComponent(GameColliderType.ENEMY, 16, 16, 0, 0));
+
+        // Act
+        collisionSystem.update(0.016f);
+
+        // Assert
+        assertThat(enemy1Transform.position).as("Enemy 1 position should not revert").isEqualTo(enemy1PositionBeforeUpdate);
+        assertThat(enemy2Transform.position).as("Enemy 2 position should not revert").isEqualTo(enemy2PositionBeforeUpdate);
+    }
+
+    @Test
     @DisplayName("No Collision: Neither entity's position should change")
     void noCollision_forNonOverlappingEntities() {
         // Arrange
