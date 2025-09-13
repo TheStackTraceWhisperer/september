@@ -7,6 +7,8 @@ import september.engine.core.Engine;
 import september.engine.core.MainLoopPolicy;
 import september.engine.core.SystemTimer;
 import september.engine.core.TimeService;
+import september.engine.core.input.GamepadService;
+import september.engine.core.input.GlfwGamepadService;
 import september.engine.core.input.GlfwInputService;
 import september.engine.core.input.InputService;
 import september.engine.ecs.ISystem;
@@ -21,7 +23,7 @@ import september.engine.systems.MovementSystem;
 import september.game.components.EnemyComponent;
 import september.game.components.PlayerComponent;
 import september.game.input.InputMappingService;
-import september.game.input.KeyboardMappingService;
+import september.game.input.MultiDeviceMappingService;
 import september.game.systems.EnemyAISystem;
 import september.game.systems.PlayerInputSystem;
 
@@ -51,7 +53,8 @@ public final class Main implements Runnable {
     IWorld world = new World();
     ResourceManager resourceManager = new ResourceManager();
     InputService inputService = new GlfwInputService();
-    InputMappingService mappingService = new KeyboardMappingService(inputService);
+    GamepadService gamepadService = new GlfwGamepadService();
+    InputMappingService mappingService = new MultiDeviceMappingService(inputService, gamepadService);
 
     final float VIRTUAL_WIDTH = 800.0f;
     final float VIRTUAL_HEIGHT = 600.0f;
