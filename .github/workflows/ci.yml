@@ -61,7 +61,10 @@ jobs:
     - name: Add coverage to PR
       id: jacoco
       uses: madrapps/jacoco-report@v1.6.1
-      if: github.event_name == 'pull_request' && always()
+      if: |
+        github.event_name == 'pull_request' && always() &&
+        (hashFiles('engine/target/site/jacoco/jacoco.xml') != '' || 
+         hashFiles('game/target/site/jacoco/jacoco.xml') != '')
       with:
         paths: |
           ${{ github.workspace }}/engine/target/site/jacoco/jacoco.xml
@@ -72,27 +75,45 @@ jobs:
         title: 'JaCoCo Coverage Report'
         update-comment: true
 
-    - name: Publish Unit Test Report
+    - name: Publish Engine Unit Test Report
       uses: mikepenz/action-junit-report@v4
       if: always()
       with:
-        report_paths: |
-          engine/target/surefire-reports/TEST-*.xml
-          game/target/surefire-reports/TEST-*.xml
-        check_name: 'Unit Tests'
+        report_paths: 'engine/target/surefire-reports/TEST-*.xml'
+        check_name: 'Engine Unit Tests'
         fail_on_failure: false
         job_summary: true
         include_passed: true
         require_tests: false
 
-    - name: Publish Integration Test Report
+    - name: Publish Game Unit Test Report
       uses: mikepenz/action-junit-report@v4
       if: always()
       with:
-        report_paths: |
-          engine/target/failsafe-reports/TEST-*.xml
-          game/target/failsafe-reports/TEST-*.xml
-        check_name: 'Integration Tests'
+        report_paths: 'game/target/surefire-reports/TEST-*.xml'
+        check_name: 'Game Unit Tests'
+        fail_on_failure: false
+        job_summary: true
+        include_passed: true
+        require_tests: false
+
+    - name: Publish Engine Integration Test Report
+      uses: mikepenz/action-junit-report@v4
+      if: always()
+      with:
+        report_paths: 'engine/target/failsafe-reports/TEST-*.xml'
+        check_name: 'Engine Integration Tests'
+        fail_on_failure: false
+        job_summary: true
+        include_passed: true
+        require_tests: false
+
+    - name: Publish Game Integration Test Report
+      uses: mikepenz/action-junit-report@v4
+      if: always()
+      with:
+        report_paths: 'game/target/failsafe-reports/TEST-*.xml'
+        check_name: 'Game Integration Tests'
         fail_on_failure: false
         job_summary: true
         include_passed: true
@@ -113,7 +134,7 @@ jobs:
 
     - name: Upload JaCoCo Coverage Reports
       uses: actions/upload-artifact@v4
-      if: always()
+      if: always() && (hashFiles('engine/target/site/jacoco/jacoco.xml') != '' || hashFiles('game/target/site/jacoco/jacoco.xml') != '')
       with:
         name: coverage-reports
         path: |
