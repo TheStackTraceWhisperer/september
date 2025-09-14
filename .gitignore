@@ -4,6 +4,10 @@ target-from-docker/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+### Copilot Issue Creator ###
+generated_issues/
+*.log
+
 ### IntelliJ IDEA ###
 .idea/modules.xml
 .idea/jarRepositories.xml

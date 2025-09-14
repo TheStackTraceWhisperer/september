@@ -1,0 +1,192 @@
+name: Copilot Issue Creator
+
+on:
+  # Manual trigger for Copilot agents
+  workflow_dispatch:
+    inputs:
+      scan_type:
+        description: 'Type of scan to perform'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - security
+          - code-patterns
+          - dependencies
+      create_issues:
+        description: 'Actually create issues (not just dry run)'
+        required: false
+        default: false
+        type: boolean
+      max_issues:
+        description: 'Maximum number of issues to create'
+        required: false
+        default: '5'
+        type: string
+  
+  # Automatic triggers (optional)
+  schedule:
+    # Run weekly on Sundays at 02:00 UTC
+    - cron: '0 2 * * 0'
+  
+  push:
+    branches: [ main ]
+    paths:
+      - 'pom.xml'  # Run when dependencies change
+      - '.github/copilot-issue-config.yml'  # Run when config changes
+
+jobs:
+  scan-and-create-issues:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write  # Required to create issues
+      pull-requests: read  # Required to read PR context
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml requests
+          
+      - name: Make script executable
+        run: chmod +x scripts/copilot-issue-creator.py
+        
+      - name: Determine scan parameters
+        id: params
+        run: |
+          # Set defaults for scheduled runs
+          SCAN_TYPE="${{ github.event.inputs.scan_type || 'all' }}"
+          CREATE_ISSUES="${{ github.event.inputs.create_issues || 'false' }}"
+          MAX_ISSUES="${{ github.event.inputs.max_issues || '5' }}"
+          
+          # For scheduled runs, always do dry run first
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            CREATE_ISSUES="false"
+          fi
+          
+          # For push events, only scan dependencies and do dry run
+          if [ "${{ github.event_name }}" = "push" ]; then
+            SCAN_TYPE="dependencies"
+            CREATE_ISSUES="false"
+          fi
+          
+          echo "scan_type=$SCAN_TYPE" >> $GITHUB_OUTPUT
+          echo "create_issues=$CREATE_ISSUES" >> $GITHUB_OUTPUT
+          echo "max_issues=$MAX_ISSUES" >> $GITHUB_OUTPUT
+          
+      - name: Run security scan
+        if: ${{ steps.params.outputs.scan_type == 'security' || steps.params.outputs.scan_type == 'all' }}
+        run: |
+          echo "Running security vulnerability scan..."
+          python scripts/copilot-issue-creator.py \
+            --scan-type security \
+            --dry-run
+            
+      - name: Run code pattern scan
+        if: ${{ steps.params.outputs.scan_type == 'code-patterns' || steps.params.outputs.scan_type == 'all' }}
+        run: |
+          echo "Running code pattern scan..."
+          python scripts/copilot-issue-creator.py \
+            --scan-type code-patterns \
+            --dry-run
+            
+      - name: Run dependency scan
+        if: ${{ steps.params.outputs.scan_type == 'dependencies' || steps.params.outputs.scan_type == 'all' }}
+        run: |
+          echo "Running dependency scan..."
+          python scripts/copilot-issue-creator.py \
+            --scan-type dependencies \
+            --dry-run
+            
+      - name: Run full scan and create issues
+        if: ${{ steps.params.outputs.create_issues == 'true' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MAX_ISSUES: ${{ steps.params.outputs.max_issues }}
+        run: |
+          echo "Running full scan and creating issues..."
+          python scripts/copilot-issue-creator.py \
+            --scan-type ${{ steps.params.outputs.scan_type }} \
+            --create-issues
+            
+      - name: Upload scan results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: copilot-scan-results
+          path: |
+            generated_issues/
+            *.log
+          retention-days: 30
+          
+      - name: Create workflow summary
+        if: always()
+        run: |
+          echo "# Copilot Issue Creator Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Scan Type:** ${{ steps.params.outputs.scan_type }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Create Issues:** ${{ steps.params.outputs.create_issues }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Trigger:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -d "generated_issues" ]; then
+            echo "**Issues Found:**" >> $GITHUB_STEP_SUMMARY
+            ls -la generated_issues/ >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**No issues detected**" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## How to Use" >> $GITHUB_STEP_SUMMARY
+          echo "1. **Manual Trigger**: Go to Actions → Copilot Issue Creator → Run workflow" >> $GITHUB_STEP_SUMMARY
+          echo "2. **Copilot Agent**: Use workflow_dispatch trigger with appropriate parameters" >> $GITHUB_STEP_SUMMARY
+          echo "3. **Automatic**: Runs weekly and on dependency changes" >> $GITHUB_STEP_SUMMARY
+          
+      - name: Comment on PR (if triggered by PR)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            let comment = "## 🤖 Copilot Issue Creator Scan Results\n\n";
+            
+            try {
+              const resultsDir = 'generated_issues';
+              if (fs.existsSync(resultsDir)) {
+                const files = fs.readdirSync(resultsDir);
+                if (files.length > 0) {
+                  comment += `Found ${files.length} potential issues:\n\n`;
+                  files.forEach(file => {
+                    comment += `- ${file}\n`;
+                  });
+                  comment += "\n📋 Check the workflow artifacts for detailed issue information.";
+                } else {
+                  comment += "✅ No issues detected in this scan.";
+                }
+              } else {
+                comment += "✅ No issues detected in this scan.";
+              }
+            } catch (error) {
+              comment += "❌ Error reading scan results.";
+            }
+            
+            comment += "\n\n*This scan was automatically triggered by the Copilot Issue Creator.*";
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

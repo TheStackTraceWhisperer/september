@@ -1,0 +1,178 @@
+# Copilot Agent Issue Creation Configuration
+# This file defines patterns and rules for automated issue creation
+
+# Security vulnerability patterns
+security_patterns:
+  # Dependencies with known vulnerabilities
+  vulnerable_dependencies:
+    enabled: true
+    severity_threshold: "medium"  # minimum severity to create issues for
+    sources:
+      - "National Vulnerability Database (NVD)"
+      - "GitHub Security Advisories" 
+      - "Snyk Vulnerability Database"
+    auto_assign: []  # List of GitHub usernames to auto-assign
+    
+  # Code patterns that indicate security issues
+  code_security_patterns:
+    enabled: true
+    patterns:
+      - name: "SQL Injection Risk"
+        regex: 'executeQuery.*\+.*\)'
+        severity: "high"
+        description: "String concatenation in SQL queries may lead to SQL injection"
+        
+      - name: "XSS Risk" 
+        regex: 'innerHTML.*=.*request'
+        severity: "high"
+        description: "Direct use of user input in innerHTML may lead to XSS"
+        
+      - name: "Hardcoded Credentials"
+        regex: '(password|secret|key)\s*=\s*"[^"]{8,}"'
+        severity: "critical"
+        description: "Hardcoded credentials detected in source code"
+        
+      - name: "Weak Cryptography"
+        regex: '(MD5|SHA1|DES)\('
+        severity: "medium"
+        description: "Weak cryptographic algorithms should be avoided"
+
+# Code quality and pattern detection
+code_patterns:
+  todo_comments:
+    enabled: true
+    patterns:
+      - "TODO"
+      - "FIXME" 
+      - "HACK"
+      - "XXX"
+    priority_mapping:
+      "FIXME": "high"
+      "HACK": "high"
+      "TODO": "medium"
+      "XXX": "medium"
+    exclude_files:
+      - "*.md"
+      - "*.txt"
+      - "test/**/*"
+      
+  deprecated_usage:
+    enabled: true
+    severity: "medium"
+    auto_assign: []
+    
+  code_duplication:
+    enabled: true
+    threshold: 10  # minimum lines for duplication detection
+    severity: "low"
+    
+  performance_antipatterns:
+    enabled: true
+    patterns:
+      - name: "String concatenation in loop"
+        regex: 'for.*\{.*\+.*="'
+        severity: "medium"
+        description: "String concatenation in loops is inefficient"
+        
+      - name: "Unnecessary object creation"
+        regex: 'new\s+String\s*\('
+        severity: "low"
+        description: "Unnecessary String object creation"
+
+# Dependency management
+dependency_patterns:
+  outdated_dependencies:
+    enabled: true
+    max_age_months: 12  # Create issues for deps older than this
+    severity: "medium"
+    check_frequency: "weekly"
+    
+  vulnerable_dependencies:
+    enabled: true
+    severity_threshold: "low"
+    auto_assign: []
+    
+  unused_dependencies:
+    enabled: true
+    severity: "low"
+    exclude_scopes:
+      - "test"
+      - "provided"
+      
+  license_compliance:
+    enabled: true
+    allowed_licenses:
+      - "MIT"
+      - "Apache-2.0"
+      - "BSD-3-Clause"
+      - "LGPL-2.1"
+    severity: "high"
+
+# Issue creation settings
+issue_settings:
+  # Maximum number of issues to create in a single run
+  max_issues_per_run: 10
+  
+  # Prevent duplicate issues for the same pattern
+  duplicate_prevention: true
+  
+  # Labels to add to all automated issues
+  default_labels:
+    - "automated"
+    - "copilot-agent"
+    
+  # Default assignees for all automated issues
+  default_assignees: []
+  
+  # Issue title templates
+  title_templates:
+    security: "[SECURITY] {vulnerability_type}: {component_name}"
+    code_pattern: "[CODE-PATTERN] {pattern_type}: {location}"
+    dependency: "[DEPENDENCY] {issue_type}: {dependency_name}"
+    
+  # Rate limiting - prevent spam
+  rate_limit:
+    max_per_hour: 5
+    max_per_day: 20
+    
+# Notification settings
+notifications:
+  # Slack webhook for high-priority issues
+  slack_webhook: ""  # Set via environment variable
+  
+  # Email notifications for critical issues
+  email_notifications:
+    enabled: false
+    recipients: []
+    
+  # GitHub team to mention for security issues
+  security_team: ""  # e.g., "@myorg/security-team"
+
+# File and directory exclusions
+exclusions:
+  # Files to never scan
+  excluded_files:
+    - "node_modules/**/*"
+    - "target/**/*"
+    - "build/**/*"
+    - ".git/**/*"
+    - "*.min.js"
+    - "*.min.css"
+    
+  # Directories to never scan
+  excluded_directories:
+    - ".git"
+    - "node_modules"
+    - "target"
+    - "build"
+    - ".idea"
+    - ".vscode"
+    
+  # File extensions to never scan for code patterns
+  excluded_extensions:
+    - ".jpg"
+    - ".png"
+    - ".gif"
+    - ".pdf"
+    - ".zip"
+    - ".jar"

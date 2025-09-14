@@ -1,0 +1,122 @@
+name: 📦 Dependency Issue (Automated)
+description: Automatically detected dependency-related issue
+title: "[DEPENDENCY] {issue_type}: {dependency_name}"
+labels: ["dependencies", "automated", "maintenance"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **📦 This issue was automatically created by a Copilot agent after detecting a dependency-related concern.**
+        
+  - type: dropdown
+    id: issue_type
+    attributes:
+      label: Issue Type
+      description: What type of dependency issue was detected?
+      options:
+        - Outdated dependency
+        - Vulnerable dependency
+        - Deprecated dependency
+        - License compatibility issue
+        - Dependency conflict
+        - Unused dependency
+        - Missing dependency
+        - Other
+    validations:
+      required: true
+      
+  - type: input
+    id: dependency_name
+    attributes:
+      label: Dependency Name
+      description: Which dependency is affected?
+      placeholder: "e.g., jackson-databind, junit-jupiter, lwjgl"
+    validations:
+      required: true
+      
+  - type: input
+    id: current_version
+    attributes:
+      label: Current Version
+      description: What version is currently being used?
+      placeholder: "e.g., 2.17.0, 5.10.2"
+    validations:
+      required: true
+      
+  - type: input
+    id: recommended_version
+    attributes:
+      label: Recommended Version
+      description: What version should be used instead?
+      placeholder: "e.g., 2.18.1, 5.11.0, or 'Remove entirely' for unused deps"
+    validations:
+      required: false
+      
+  - type: textarea
+    id: description
+    attributes:
+      label: Issue Description
+      description: Detailed description of the dependency issue
+      placeholder: "Describe why this dependency needs attention, what problems it might cause, etc."
+    validations:
+      required: true
+      
+  - type: textarea
+    id: impact_analysis
+    attributes:
+      label: Impact Analysis
+      description: What is the potential impact of this dependency issue?
+      placeholder: |
+        - Security implications
+        - Performance impact
+        - Compatibility concerns
+        - Build/runtime issues
+        - License compliance
+    validations:
+      required: false
+      
+  - type: textarea
+    id: update_instructions
+    attributes:
+      label: Update Instructions
+      description: How should this dependency be updated or addressed?
+      placeholder: |
+        For Maven:
+        1. Update pom.xml version from X.X.X to Y.Y.Y
+        2. Run mvn clean compile to verify compatibility
+        3. Run full test suite
+        4. Check for breaking changes in release notes
+        
+        OR
+        
+        For removal:
+        1. Remove dependency from pom.xml
+        2. Remove unused imports
+        3. Verify build still works
+    validations:
+      required: false
+      
+  - type: input
+    id: references
+    attributes:
+      label: References
+      description: Links to changelogs, security advisories, or documentation
+      placeholder: "https://github.com/dependency/repo/releases/tag/vX.Y.Z"
+    validations:
+      required: false
+      
+  - type: checkboxes
+    id: automation_info
+    attributes:
+      label: Detection Information
+      description: Information about how this issue was detected
+      options:
+        - label: Detected during automated dependency scan
+          required: false
+        - label: Security database checked
+          required: false
+        - label: Version compatibility verified
+          required: false
+        - label: Breaking changes analysis needed
+          required: false
