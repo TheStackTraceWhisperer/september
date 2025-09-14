@@ -10,3 +10,4 @@ package september.engine.ecs;
  */
 public interface Component {
 }
+// Small test change
