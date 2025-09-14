@@ -33,11 +33,17 @@ jobs:
 
         # Run the tests inside the container and copy results back
         # This avoids volume mount permission issues
+        # Note: Container may exit with failure due to test errors, but files should still be generated
         docker run --name september-test september-ci
 
         # Create target directory structure and copy test results and artifacts out of the container
         mkdir -p ./target
-        docker cp september-test:/workspace/target/. ./target/ || true
+        docker cp september-test:/workspace/target/. ./target/ || echo "Warning: Could not copy all files from container"
+
+        # Debug: List what files were actually copied
+        echo "Files copied from container:"
+        find ./target -name "*.xml" -path "*/surefire-reports/*" | head -10 || echo "No surefire XML files found"
+        find ./target -name "*.xml" -path "*/failsafe-reports/*" | head -10 || echo "No failsafe XML files found"
 
         # Clean up the container
         docker rm september-test
@@ -58,9 +64,10 @@ jobs:
       uses: mikepenz/action-junit-report@v4
       if: always()
       with:
-        report_paths: '**/target/surefire-reports/TEST-*.xml,**/target/failsafe-reports/TEST-*.xml'
+        report_paths: 'target/surefire-reports/TEST-*.xml,target/failsafe-reports/TEST-*.xml'
         check_name: 'Test Results'
         fail_on_failure: false
+        job_summary: true
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
