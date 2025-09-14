@@ -50,6 +50,11 @@ jobs:
         echo "Files copied from container:"
         find ./target -name "*.xml" -path "*/surefire-reports/*" | head -10 || echo "No surefire XML files found"
         find ./target -name "*.xml" -path "*/failsafe-reports/*" | head -10 || echo "No failsafe XML files found"
+        
+        # Additional debugging: Show exact paths for mikepenz action
+        echo "Exact paths for test report action:"
+        ls -la target/surefire-reports/TEST-*.xml 2>/dev/null || echo "No surefire TEST-*.xml files"
+        ls -la target/failsafe-reports/TEST-*.xml 2>/dev/null || echo "No failsafe TEST-*.xml files"
 
     - name: Add coverage to PR
       id: jacoco
@@ -67,11 +72,14 @@ jobs:
       uses: mikepenz/action-junit-report@v4
       if: always()
       with:
-        report_paths: 'target/surefire-reports/TEST-*.xml,target/failsafe-reports/TEST-*.xml'
+        report_paths: |
+          target/surefire-reports/TEST-*.xml
+          target/failsafe-reports/TEST-*.xml
         check_name: 'Test Results'
         fail_on_failure: false
         job_summary: true
         include_passed: true
+        require_tests: false
 
     # Upload comprehensive test reports and coverage artifacts
     - name: Upload Test Reports
