@@ -40,18 +40,16 @@ jobs:
         mkdir -p ./target
         docker cp september-test:/workspace/target/. ./target/ || echo "Warning: Could not copy all files from container"
 
+        # Clean up the container
+        docker rm september-test
+
+        # Fix permissions on generated files so the GitHub Actions runner can read them
+        sudo chown -R runner:runner ./target
+
         # Debug: List what files were actually copied
         echo "Files copied from container:"
         find ./target -name "*.xml" -path "*/surefire-reports/*" | head -10 || echo "No surefire XML files found"
         find ./target -name "*.xml" -path "*/failsafe-reports/*" | head -10 || echo "No failsafe XML files found"
-
-        
-
-        # Run the tests inside the container with volume mount to preserve artifacts
-        docker run --rm -v ${{ github.workspace }}/target:/workspace/target september-ci
-
-        # Fix permissions on generated files so the GitHub Actions runner can read them
-        sudo chown -R runner:runner ./target
 
     - name: Add coverage to PR
       id: jacoco
@@ -73,6 +71,7 @@ jobs:
         check_name: 'Test Results'
         fail_on_failure: false
         job_summary: true
+        include_passed: true
 
     # Upload comprehensive test reports and coverage artifacts
     - name: Upload Test Reports
