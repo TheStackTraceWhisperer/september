@@ -119,40 +119,64 @@ jobs:
         include_passed: true
         require_tests: false
 
-    # Upload comprehensive test reports and coverage artifacts
-    - name: Upload Test Reports
+    # Upload comprehensive test reports and coverage artifacts by module
+    - name: Upload Engine Test Reports
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: test-reports
+        name: Engine Test Reports
         path: |
           engine/target/surefire-reports/
           engine/target/failsafe-reports/
+        retention-days: 30
+
+    - name: Upload Game Test Reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: Game Test Reports
+        path: |
           game/target/surefire-reports/
           game/target/failsafe-reports/
         retention-days: 30
 
-    - name: Upload JaCoCo Coverage Reports
+    - name: Upload Engine Coverage Reports
       uses: actions/upload-artifact@v4
-      if: always() && (hashFiles('engine/target/site/jacoco/jacoco.xml') != '' || hashFiles('game/target/site/jacoco/jacoco.xml') != '')
+      if: always() && (hashFiles('engine/target/site/jacoco/jacoco.xml') != '')
       with:
-        name: coverage-reports
+        name: Engine Coverage Reports
         path: |
           engine/target/site/jacoco/
           engine/target/site/jacoco-ut/
           engine/target/site/jacoco-it/
+        retention-days: 30
+
+    - name: Upload Game Coverage Reports
+      uses: actions/upload-artifact@v4
+      if: always() && (hashFiles('game/target/site/jacoco/jacoco.xml') != '')
+      with:
+        name: Game Coverage Reports
+        path: |
           game/target/site/jacoco/
           game/target/site/jacoco-ut/
           game/target/site/jacoco-it/
         retention-days: 30
 
-    - name: Upload Build Artifacts
+    - name: Upload Engine Build Artifacts
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: september-linux-artifacts
+        name: Engine Build Artifacts
         path: |
           engine/target/engine-*.jar
+        retention-days: 30
+
+    - name: Upload Game Build Artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: Game Build Artifacts
+        path: |
           game/target/game-*.jar
         retention-days: 30
 
@@ -195,7 +219,9 @@ jobs:
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
-        files: artifacts/september-linux-artifacts/*.jar
+        files: |
+          artifacts/Engine Build Artifacts/*.jar
+          artifacts/Game Build Artifacts/*.jar
         generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
