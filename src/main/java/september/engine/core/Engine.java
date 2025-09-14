@@ -17,10 +17,6 @@ import september.engine.rendering.Camera;
 import september.engine.rendering.Renderer;
 import september.engine.rendering.gl.OpenGLRenderer;
 import september.engine.systems.RenderSystem;
-import september.game.XkbSuppressionUtility;
-
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 
 public final class Engine implements Runnable {
   private static final Logger log = LoggerFactory.getLogger(Engine.class);
@@ -57,10 +53,8 @@ public final class Engine implements Runnable {
       gamepadService = new GlfwGamepadService();
       audioManager = new AudioManager();
       preferencesService = new PreferencesServiceImpl("september-engine");
-      
-      // Initialize GLFW components with optional XKB warning suppression
-      initializeGlfwComponents();
-      
+      glfwContext = new GlfwContext();
+      window = new WindowContext(800, 600, "September Engine");
       renderer = new OpenGLRenderer();
 
       camera = new Camera(800.0f, 600.0f);
@@ -90,32 +84,6 @@ public final class Engine implements Runnable {
     } catch (Exception e) {
       shutdown();
       throw new RuntimeException("Engine initialization failed", e);
-    }
-  }
-
-  /**
-   * Initializes GLFW components with optional suppression of XKB warnings.
-   * XKB warnings are harmless but create noisy console output during window creation.
-   */
-  private void initializeGlfwComponents() {
-    boolean suppressXkbWarnings = Boolean.parseBoolean(
-        System.getProperty("september.suppress.xkb.warnings", "true"));
-    
-    if (suppressXkbWarnings) {
-      // Suppress stderr during GLFW initialization to hide XKB warnings
-      PrintStream originalErr = System.err;
-      try {
-        System.setErr(new PrintStream(new ByteArrayOutputStream()));
-        glfwContext = new GlfwContext();
-        window = new WindowContext(800, 600, "September Engine");
-      } finally {
-        // Always restore stderr
-        System.setErr(originalErr);
-      }
-    } else {
-      // Normal initialization without suppression
-      glfwContext = new GlfwContext();
-      window = new WindowContext(800, 600, "September Engine");
     }
   }
 

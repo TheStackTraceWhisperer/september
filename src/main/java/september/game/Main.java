@@ -42,13 +42,6 @@ import java.util.List;
  */
 @Slf4j
 public final class Main implements Game {
-  // Suppress noisy XKB warnings at class loading time
-  static {
-    // These system properties help reduce X11/XKB verbosity during GLFW initialization
-    System.setProperty("java.awt.headless", "true");
-    System.setProperty("org.lwjgl.system.stackSize", "128");
-  }
-
   private final MainLoopPolicy loopPolicy;
   private final List<ISystem> gameSystems = new ArrayList<>();
 

@@ -19,6 +19,9 @@ public final class GlfwContext implements AutoCloseable {
    * @throws IllegalStateException if GLFW fails to initialize
    */
   public GlfwContext() {
+    // Configure X11 environment before GLFW initialization to minimize XKB warnings
+    X11Configuration.configureForCleanOutput();
+    
     // Install an error callback that logs to our SLF4J logger.
     this.errorCallback = GLFWErrorCallback.create((error, description) ->
         log.error("[GLFW Error] Code: {}, Description: {}", error, GLFWErrorCallback.getDescription(description))
