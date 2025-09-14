@@ -39,29 +39,33 @@ jobs:
         # Create target directory structure and copy test results and artifacts out of the container
         mkdir -p ./target
         docker cp september-test:/workspace/target/. ./target/ || echo "Warning: Could not copy all files from container"
+        docker cp september-test:/workspace/engine/target/. ./engine/target/ || echo "Warning: Could not copy engine files from container"
+        docker cp september-test:/workspace/game/target/. ./game/target/ || echo "Warning: Could not copy game files from container"
 
         # Clean up the container
         docker rm september-test
 
         # Fix permissions on generated files so the GitHub Actions runner can read them
-        sudo chown -R runner:runner ./target
+        sudo chown -R runner:runner ./target ./engine ./game
 
         # Debug: List what files were actually copied
         echo "Files copied from container:"
-        find ./target -name "*.xml" -path "*/surefire-reports/*" | head -10 || echo "No surefire XML files found"
-        find ./target -name "*.xml" -path "*/failsafe-reports/*" | head -10 || echo "No failsafe XML files found"
+        find . -name "*.xml" -path "*/surefire-reports/*" | head -20 || echo "No surefire XML files found"
+        find . -name "*.xml" -path "*/failsafe-reports/*" | head -20 || echo "No failsafe XML files found"
         
         # Additional debugging: Show exact paths for mikepenz action
         echo "Exact paths for test report action:"
-        ls -la target/surefire-reports/TEST-*.xml 2>/dev/null || echo "No surefire TEST-*.xml files"
-        ls -la target/failsafe-reports/TEST-*.xml 2>/dev/null || echo "No failsafe TEST-*.xml files"
+        find . -name "TEST-*.xml" -path "*/surefire-reports/*" | head -10 || echo "No surefire TEST-*.xml files"
+        find . -name "TEST-*.xml" -path "*/failsafe-reports/*" | head -10 || echo "No failsafe TEST-*.xml files"
 
     - name: Add coverage to PR
       id: jacoco
       uses: madrapps/jacoco-report@v1.6.1
       if: github.event_name == 'pull_request' && always()
       with:
-        paths: ${{ github.workspace }}/target/site/jacoco/jacoco.xml
+        paths: |
+          ${{ github.workspace }}/engine/target/site/jacoco/jacoco.xml
+          ${{ github.workspace }}/game/target/site/jacoco/jacoco.xml
         token: ${{ secrets.GITHUB_TOKEN }}
         min-coverage-overall: 40
         min-coverage-changed-files: 60
@@ -72,7 +76,9 @@ jobs:
       uses: mikepenz/action-junit-report@v4
       if: always()
       with:
-        report_paths: 'target/surefire-reports/TEST-*.xml'
+        report_paths: |
+          engine/target/surefire-reports/TEST-*.xml
+          game/target/surefire-reports/TEST-*.xml
         check_name: 'Unit Tests'
         fail_on_failure: false
         job_summary: true
@@ -83,7 +89,9 @@ jobs:
       uses: mikepenz/action-junit-report@v4
       if: always()
       with:
-        report_paths: 'target/failsafe-reports/TEST-*.xml'
+        report_paths: |
+          engine/target/failsafe-reports/TEST-*.xml
+          game/target/failsafe-reports/TEST-*.xml
         check_name: 'Integration Tests'
         fail_on_failure: false
         job_summary: true
@@ -97,8 +105,10 @@ jobs:
       with:
         name: test-reports
         path: |
-          target/surefire-reports/
-          target/failsafe-reports/
+          engine/target/surefire-reports/
+          engine/target/failsafe-reports/
+          game/target/surefire-reports/
+          game/target/failsafe-reports/
         retention-days: 30
 
     - name: Upload JaCoCo Coverage Reports
@@ -107,9 +117,12 @@ jobs:
       with:
         name: coverage-reports
         path: |
-          target/site/jacoco/
-          target/site/jacoco-ut/
-          target/site/jacoco-it/
+          engine/target/site/jacoco/
+          engine/target/site/jacoco-ut/
+          engine/target/site/jacoco-it/
+          game/target/site/jacoco/
+          game/target/site/jacoco-ut/
+          game/target/site/jacoco-it/
         retention-days: 30
 
     - name: Upload Build Artifacts
@@ -117,7 +130,9 @@ jobs:
       if: always()
       with:
         name: september-linux-artifacts
-        path: target/september-*.jar
+        path: |
+          engine/target/engine-*.jar
+          game/target/game-*.jar
         retention-days: 30
 
   publish:
