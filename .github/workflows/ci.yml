@@ -45,8 +45,13 @@ jobs:
         find ./target -name "*.xml" -path "*/surefire-reports/*" | head -10 || echo "No surefire XML files found"
         find ./target -name "*.xml" -path "*/failsafe-reports/*" | head -10 || echo "No failsafe XML files found"
 
-        # Clean up the container
-        docker rm september-test
+        
+
+        # Run the tests inside the container with volume mount to preserve artifacts
+        docker run --rm -v ${{ github.workspace }}/target:/workspace/target september-ci
+
+        # Fix permissions on generated files so the GitHub Actions runner can read them
+        sudo chown -R runner:runner ./target
 
     - name: Add coverage to PR
       id: jacoco
@@ -69,7 +74,29 @@ jobs:
         fail_on_failure: false
         job_summary: true
 
-    - name: Upload Artifacts
+    # Upload comprehensive test reports and coverage artifacts
+    - name: Upload Test Reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-reports
+        path: |
+          target/surefire-reports/
+          target/failsafe-reports/
+        retention-days: 30
+
+    - name: Upload JaCoCo Coverage Reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: coverage-reports
+        path: |
+          target/site/jacoco/
+          target/site/jacoco-ut/
+          target/site/jacoco-it/
+        retention-days: 30
+
+    - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
       if: always()
       with:
