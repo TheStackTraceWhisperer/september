@@ -11,7 +11,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * Integration test for the AssetLoader, running against a live engine with a real OpenGL context.
  */
-class AssetLoaderTest extends EngineTestHarness {
+class AssetLoaderIT extends EngineTestHarness {
 
     @Test
     void loadShader_constructsShaderSuccessfully_fromRealFiles() {

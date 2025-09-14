@@ -21,7 +21,7 @@ import static org.mockito.Mockito.when;
  * to provide predictable time values for verifying movement logic.
  */
 @ExtendWith(MockitoExtension.class)
-class EnemyAISystemTest extends EngineTestHarness {
+class EnemyAISystemIT extends EngineTestHarness {
 
     @Mock
     private TimeService timeService;

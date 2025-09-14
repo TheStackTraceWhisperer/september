@@ -10,7 +10,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 /**
  * This test provides definitive proof that the GLSL compiler supports version 4.60.
  */
-public class Glsl460FeatureTest extends EngineTestHarness {
+public class Glsl460FeatureIT extends EngineTestHarness {
 
     @Test
     @DisplayName("GLSL compiler should support version 4.60 features (e.g., gl_BaseVertex)")

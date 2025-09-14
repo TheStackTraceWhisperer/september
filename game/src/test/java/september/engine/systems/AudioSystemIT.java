@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 // ... imports
 
-class AudioSystemTest extends EngineTestHarness {
+class AudioSystemIT extends EngineTestHarness {
 
   private AudioSystem audioSystem;
 

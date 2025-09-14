@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Integration test for the CollisionSystem running against a live, engine-managed World.
  */
-class CollisionSystemTest extends EngineTestHarness {
+class CollisionSystemIT extends EngineTestHarness {
 
     private CollisionSystem collisionSystem;
 

@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Integration test for the MovementSystem that runs against a live, engine-managed World.
  */
-class MovementSystemTest extends EngineTestHarness {
+class MovementSystemIT extends EngineTestHarness {
 
     private MovementSystem movementSystem;
 

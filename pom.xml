@@ -15,6 +15,10 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.release>21</maven.compiler.release>
 
+    <!-- JaCoCo argLine properties with empty defaults -->
+    <argLine></argLine>
+    <failsafeArgLine></failsafeArgLine>
+
     <!-- LWJGL version -->
     <lwjgl.version>3.3.3</lwjgl.version>
 
@@ -80,23 +84,8 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <version>3.2.5</version>
           <configuration>
-            <argLine>
-              --add-opens september.engine/september.engine.assets=org.mockito
-              --add-opens september.engine/september.engine.audio=org.mockito
-              --add-opens september.engine/september.engine.core=org.mockito
-              --add-opens september.engine/september.engine.core.input=org.mockito
-              --add-opens september.engine/september.engine.ecs=org.mockito
-              --add-opens september.engine/september.engine.ecs.components=org.mockito
-              --add-opens september.engine/september.engine.rendering=org.mockito
-              --add-opens september.engine/september.engine.systems=org.mockito
-
-              --add-opens september.game/september.game=org.mockito
-              --add-opens september.game/september.game.components=org.mockito
-              --add-opens september.game/september.game.input=org.mockito
-              --add-opens september.game/september.game.systems=org.mockito
-
-              ${argLine}
-            </argLine>
+            <!--suppress MavenModelInspection -->
+            <argLine>${argLine} -XX:+EnableDynamicAgentLoading -Xshare:off</argLine>
             <excludes>
               <exclude>**/*IT.java</exclude>
               <exclude>**/*ITCase.java</exclude>
@@ -110,6 +99,7 @@
           <artifactId>maven-failsafe-plugin</artifactId>
           <version>3.2.5</version>
           <configuration>
+            <!--suppress MavenModelInspection -->
             <argLine>${failsafeArgLine} -XX:+EnableDynamicAgentLoading -Xshare:off</argLine>
             <includes>
               <include>**/*IT.java</include>

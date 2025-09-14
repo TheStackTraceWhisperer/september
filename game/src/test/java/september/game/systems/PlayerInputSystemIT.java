@@ -21,7 +21,7 @@ import static org.mockito.Mockito.when;
  * to provide controlled, simulated player input.
  */
 @ExtendWith(MockitoExtension.class)
-class PlayerInputSystemTest extends EngineTestHarness {
+class PlayerInputSystemIT extends EngineTestHarness {
 
     @Mock
     private InputMappingService mappingService;

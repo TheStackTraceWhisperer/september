@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * Integration test for the ResourceManager, running against a live engine with a real OpenGL context.
  */
-class ResourceManagerTest extends EngineTestHarness {
+class ResourceManagerIT extends EngineTestHarness {
 
     // The 'resourceManager' field is provided by the EngineTestHarness.
     // We will re-initialize it here to ensure it's clean for each test,

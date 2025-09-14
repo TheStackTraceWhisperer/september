@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
  * This test verifies that the system can successfully render a scene with a renderable entity
  * using a live world, renderer, resource manager, and camera.
  */
-class RenderSystemTest extends EngineTestHarness {
+class RenderSystemIT extends EngineTestHarness {
 
     private RenderSystem renderSystem;
 

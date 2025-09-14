@@ -5,7 +5,7 @@ import september.engine.EngineTestHarness;
 /**
  * This test verifies that the AssetLoader can correctly parse #include directives in shader files.
  */
-public class AssetLoaderIncludeTest extends EngineTestHarness {
+public class AssetLoaderIncludeIT extends EngineTestHarness {
 //    @Test
 //    @DisplayName("AssetLoader should support the #include directive in shaders")
 //    void assetLoader_supportsIncludeDirective() {

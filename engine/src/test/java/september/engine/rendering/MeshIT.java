@@ -10,7 +10,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 /**
  * Integration test for the Mesh class, verifying its behavior in a live OpenGL context.
  */
-class MeshTest extends EngineTestHarness {
+class MeshIT extends EngineTestHarness {
 
     @Test
     @DisplayName("Constructor should create a valid mesh with GPU resources")

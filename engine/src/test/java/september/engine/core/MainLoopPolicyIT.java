@@ -11,7 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Integration test for MainLoopPolicy, verifying its behavior against a live GLFW window handle.
  */
-class MainLoopPolicyTest extends EngineTestHarness {
+class MainLoopPolicyIT extends EngineTestHarness {
 
     @Test
     @DisplayName("frames() policy should continue for the specified number of frames")

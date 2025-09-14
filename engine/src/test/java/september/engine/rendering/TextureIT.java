@@ -12,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * Integration test for the Texture class, verifying its creation via the AssetLoader in a live OpenGL context.
  */
-class TextureTest extends EngineTestHarness {
+class TextureIT extends EngineTestHarness {
 
     @Test
     @DisplayName("AssetLoader.loadTexture should create a valid texture from a real image file")

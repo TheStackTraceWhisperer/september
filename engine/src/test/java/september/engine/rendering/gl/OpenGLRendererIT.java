@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
  * This test verifies that the renderer can execute a full scene lifecycle with live GPU resources
  * without causing any errors.
  */
-class OpenGLRendererTest extends EngineTestHarness {
+class OpenGLRendererIT extends EngineTestHarness {
 
     private Renderer renderer;
 

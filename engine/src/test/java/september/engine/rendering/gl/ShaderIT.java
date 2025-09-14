@@ -12,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * Integration test for the Shader class, verifying its compilation and lifecycle in a live OpenGL context.
  */
-class ShaderTest extends EngineTestHarness {
+class ShaderIT extends EngineTestHarness {
 
     @Test
     @DisplayName("AssetLoader.loadShader should create a valid shader from real GLSL files")

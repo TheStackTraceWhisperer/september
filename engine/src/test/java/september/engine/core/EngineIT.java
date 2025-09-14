@@ -8,7 +8,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Integration test to validate the basic initialization of the Engine via the EngineTestHarness.
  */
-class EngineTest extends EngineTestHarness {
+class EngineIT extends EngineTestHarness {
 
     @Test
     void harness_correctly_initializes_engine_and_services() {
