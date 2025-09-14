@@ -28,8 +28,15 @@ jobs:
 
     - name: Build and Test with Docker
       run: |
-        # Build the Docker image that contains all dependencies and the correct environment
-        docker build -t september-ci .
+        # Enable Docker BuildKit for better caching support
+        export DOCKER_BUILDKIT=1
+        
+        # Build the Docker image with caching support
+        # Use GitHub Actions cache for Docker layers
+        docker build \
+          --cache-from type=gha \
+          --cache-to type=gha,mode=max \
+          -t september-ci .
 
         # Run the tests inside the container and copy results back
         # This avoids volume mount permission issues

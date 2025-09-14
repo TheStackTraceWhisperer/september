@@ -1,9 +1,15 @@
-# This Dockerfile sets up a Java 21 and Maven environment on Ubuntu 24.04
-# with Xvfb for headless OpenGL rendering.
+# Multi-stage Dockerfile for September Engine CI
+# This Dockerfile is optimized for Docker layer caching to reduce build times.
 
-FROM ubuntu:24.04
+# =============================================================================
+# Stage 1: Base System Dependencies  
+# This stage installs system packages and creates the runtime environment.
+# This layer will be cached unless system dependencies change.
+# =============================================================================
+FROM ubuntu:24.04 AS base
 ARG DEBIAN_FRONTEND=noninteractive
 
+# Install system dependencies in a single layer for optimal caching
 RUN apt-get update && apt-get install -y --no-install-recommends \
     xvfb \
     mesa-utils \
@@ -14,32 +20,65 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-
+# Configure system settings that rarely change
 # Directly overwrite the system's default 'inet' file to prevent "Could not resolve keysym" warnings from xkbcomp.
-RUN \
-    cat <<'EOF' > /usr/share/X11/xkb/symbols/inet
+RUN cat <<'EOF' > /usr/share/X11/xkb/symbols/inet
 default partial alphanumeric_keys
 xkb_symbols "evdev" {
 };
 EOF
 
-# Set Java security properties to handle SSL properly
+# Set environment variables for Java and graphics
 ENV JAVA_OPTS="-Dcom.sun.net.ssl.checkRevocation=false"
-
-# Set the OpenGL version override. This forces Mesa to report 4.6, though the
-# underlying GLSL support may be lower. This is necessary for context creation.
 ENV MESA_GL_VERSION_OVERRIDE=4.6
 ENV MESA_GLSL_VERSION_OVERRIDE=460
-
-# Configure OpenAL to use null backend for headless audio testing.
-# This provides full OpenAL API compatibility while discarding audio output,
-# similar to how Xvfb provides headless graphics testing.
 ENV ALSOFT_DRIVERS=null
 
-COPY . /workspace
+# =============================================================================
+# Stage 2: Maven Dependencies Cache
+# This stage downloads and caches Maven dependencies.
+# This layer will be cached unless pom.xml changes.
+# =============================================================================
+FROM base AS dependencies
+
 WORKDIR /workspace
 
-# Copy in the robust entrypoint script that sets up the virtual display.
+# Copy pom.xml to leverage Docker layer caching for dependencies
+COPY pom.xml ./
+
+# Create a minimal Java file to enable compilation and dependency resolution
+RUN mkdir -p src/main/java/temp && \
+    echo 'package temp; public class Temp {}' > src/main/java/temp/Temp.java
+
+# Download and cache all Maven dependencies by attempting to compile
+# This forces Maven to download all plugin and dependency JARs
+RUN export MAVEN_OPTS="-Dcom.sun.net.ssl.checkRevocation=false -Dmaven.wagon.http.ssl.insecure=true -Dmaven.wagon.http.ssl.allowall=true" && \
+    mvn compile -B -ntp || true
+
+# Clean up the temporary file
+RUN rm -rf src/
+
+# =============================================================================  
+# Stage 3: Application Build
+# This stage copies source code and builds the application.
+# This layer will be rebuilt whenever source code changes.
+# =============================================================================
+FROM dependencies AS builder
+
+# Copy all source code (this layer will be rebuilt when source changes)
+COPY src/ ./src/
+
+# Build the application (dependencies are already cached from previous stage)
+RUN export MAVEN_OPTS="-Dcom.sun.net.ssl.checkRevocation=false -Dmaven.wagon.http.ssl.insecure=true -Dmaven.wagon.http.ssl.allowall=true" && \
+    mvn compile -B -ntp
+
+# =============================================================================
+# Stage 4: Runtime Image  
+# This stage creates the final runtime image with the entrypoint script.
+# =============================================================================
+FROM builder AS runtime
+
+# Create the robust entrypoint script that sets up the virtual display
 RUN cat <<'EOF' > /usr/local/bin/entrypoint.sh && \
     chmod +x /usr/local/bin/entrypoint.sh
 #!/bin/bash
@@ -47,12 +86,6 @@ set -e
 
 # Set the display variable for the virtual framebuffer
 export DISPLAY=:99
-
-#export XKB_LOG_LEVEL=0
-#export XKB_LOG_VERBOSITY=0
-#export LC_ALL=C
-#export XMODIFIERS=""
-#export QT_QPA_PLATFORM=xcb
 
 # Set Maven options for SSL
 export MAVEN_OPTS="-Dcom.sun.net.ssl.checkRevocation=false -Dmaven.wagon.http.ssl.insecure=true -Dmaven.wagon.http.ssl.allowall=true"
@@ -76,8 +109,6 @@ fi
 exec "$@"
 EOF
 
-# Set the new script as the main executable
+# Set the entrypoint and default command
 ENTRYPOINT ["entrypoint.sh"]
-
-# Set the default command to run. Use batch mode for better CI output.
 CMD ["mvn", "-B", "-ntp", "verify"]
