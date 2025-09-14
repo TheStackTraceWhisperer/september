@@ -68,14 +68,23 @@ jobs:
         title: 'JaCoCo Coverage Report'
         update-comment: true
 
-    - name: Publish Test Report
+    - name: Publish Unit Test Report
       uses: mikepenz/action-junit-report@v4
       if: always()
       with:
-        report_paths: |
-          target/surefire-reports/TEST-*.xml
-          target/failsafe-reports/TEST-*.xml
-        check_name: 'Test Results'
+        report_paths: 'target/surefire-reports/TEST-*.xml'
+        check_name: 'Unit Tests'
+        fail_on_failure: false
+        job_summary: true
+        include_passed: true
+        require_tests: false
+
+    - name: Publish Integration Test Report
+      uses: mikepenz/action-junit-report@v4
+      if: always()
+      with:
+        report_paths: 'target/failsafe-reports/TEST-*.xml'
+        check_name: 'Integration Tests'
         fail_on_failure: false
         job_summary: true
         include_passed: true
