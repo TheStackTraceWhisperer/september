@@ -64,5 +64,5 @@ EOF
 # Set the new script as the main executable
 ENTRYPOINT ["entrypoint.sh"]
 
-# Set the default command to run, filtering for a specific test class.
-CMD ["mvn", "-ntp", "verify"]
+# Set the default command to run. Use batch mode for better CI output.
+CMD ["mvn", "-B", "-ntp", "verify"]

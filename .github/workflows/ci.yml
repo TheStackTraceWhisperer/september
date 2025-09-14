@@ -31,14 +31,30 @@ jobs:
         # Build the Docker image that contains all dependencies and the correct environment
         docker build -t september-ci .
 
-        # Create target directory for volume mounting
-        mkdir -p ./target
+        # Run the tests inside the container and copy results back
+        # This avoids volume mount permission issues
+        # Note: Container may exit with failure due to test errors, but files should still be generated
+        docker run --name september-test september-ci
 
-        # Run the tests inside the container with volume mount to preserve artifacts
-        docker run --rm -v ${{ github.workspace }}/target:/workspace/target september-ci
+        # Create target directory structure and copy test results and artifacts out of the container
+        mkdir -p ./target
+        docker cp september-test:/workspace/target/. ./target/ || echo "Warning: Could not copy all files from container"
+
+        # Clean up the container
+        docker rm september-test
 
         # Fix permissions on generated files so the GitHub Actions runner can read them
         sudo chown -R runner:runner ./target
+
+        # Debug: List what files were actually copied
+        echo "Files copied from container:"
+        find ./target -name "*.xml" -path "*/surefire-reports/*" | head -10 || echo "No surefire XML files found"
+        find ./target -name "*.xml" -path "*/failsafe-reports/*" | head -10 || echo "No failsafe XML files found"
+        
+        # Additional debugging: Show exact paths for mikepenz action
+        echo "Exact paths for test report action:"
+        ls -la target/surefire-reports/TEST-*.xml 2>/dev/null || echo "No surefire TEST-*.xml files"
+        ls -la target/failsafe-reports/TEST-*.xml 2>/dev/null || echo "No failsafe TEST-*.xml files"
 
     - name: Add coverage to PR
       id: jacoco
@@ -52,13 +68,27 @@ jobs:
         title: 'JaCoCo Coverage Report'
         update-comment: true
 
-    - name: Publish Test Report
+    - name: Publish Unit Test Report
       uses: mikepenz/action-junit-report@v4
       if: always()
       with:
-        report_paths: '**/target/surefire-reports/TEST-*.xml,**/target/failsafe-reports/TEST-*.xml'
-        check_name: 'Test Results'
+        report_paths: 'target/surefire-reports/TEST-*.xml'
+        check_name: 'Unit Tests'
         fail_on_failure: false
+        job_summary: true
+        include_passed: true
+        require_tests: false
+
+    - name: Publish Integration Test Report
+      uses: mikepenz/action-junit-report@v4
+      if: always()
+      with:
+        report_paths: 'target/failsafe-reports/TEST-*.xml'
+        check_name: 'Integration Tests'
+        fail_on_failure: false
+        job_summary: true
+        include_passed: true
+        require_tests: false
 
     # Upload comprehensive test reports and coverage artifacts
     - name: Upload Test Reports
