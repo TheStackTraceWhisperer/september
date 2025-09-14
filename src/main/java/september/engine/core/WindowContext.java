@@ -17,10 +17,7 @@ public final class WindowContext implements AutoCloseable {
   private long handle = 0L;
 
   public WindowContext(int width, int height, String title) {
-    // Configure X11 environment if not already done
-    X11Configuration.configureForCleanOutput();
-    
-    // Single attempt: request OpenGL 4.6 core profile with minimal input setup
+    // Single attempt: request OpenGL 4.6 core profile
     GLFW.glfwDefaultWindowHints();
     GLFW.glfwWindowHint(GLFW.GLFW_CLIENT_API, GLFW.GLFW_OPENGL_API);
     GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -28,10 +25,6 @@ public final class WindowContext implements AutoCloseable {
     GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_CORE_PROFILE);
     GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, GLFW.GLFW_TRUE); // Added for resize support
     GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE); // Create hidden, show after setup
-    
-    // Hints to minimize input initialization that can trigger XKB warnings
-    GLFW.glfwWindowHint(GLFW.GLFW_FOCUSED, GLFW.GLFW_FALSE); // Don't grab focus immediately
-    GLFW.glfwWindowHint(GLFW.GLFW_AUTO_ICONIFY, GLFW.GLFW_FALSE); // Prevent iconify behavior
 
     log.info("Creating GLFW window with OpenGL 4.6 core profile");
     long window = GLFW.glfwCreateWindow(width, height, title, 0L, 0L);
