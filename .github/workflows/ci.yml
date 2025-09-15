@@ -31,11 +31,11 @@ jobs:
         # Enable Docker BuildKit for better caching support
         export DOCKER_BUILDKIT=1
         
-        # Build the Docker image with caching support
-        # Use GitHub Actions cache for Docker layers
+        # Build the Docker image with more reliable caching strategy
+        # Use GitHub Actions cache with scoped keys to avoid conflicts
         docker build \
-          --cache-from type=gha \
-          --cache-to type=gha,mode=max \
+          --cache-from type=gha,scope=september-build \
+          --cache-to type=gha,mode=min,scope=september-build \
           -t september-ci .
 
         # Run the tests inside the container and copy results back
