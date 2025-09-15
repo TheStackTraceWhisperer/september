@@ -1,0 +1,31 @@
+name: 🤖 Copilot Agent Issue
+description: Issue created by Copilot agent
+title: "[COPILOT] "
+labels: ["copilot-agent"]
+assignees: []
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Issue Description
+      description: Details about the issue
+      placeholder: Describe the issue or request
+    validations:
+      required: true
+      
+  - type: input
+    id: location
+    attributes:
+      label: Location
+      description: Where the issue was found (optional)
+      placeholder: e.g., src/main/java/MyClass.java:42
+      
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - Low
+        - Medium
+        - High
+      default: 1
