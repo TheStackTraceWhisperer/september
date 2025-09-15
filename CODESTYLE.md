@@ -201,10 +201,10 @@ Our testing philosophy is based on high-value integration tests. See `TESTING.md
 ## 15. Workflow
 | Step | Command |
 |------|---------|
-| Test | `mvn -q test` |
+| Test | `mvn -q test -Dtest="!*Harness"` |
 | Format | `mvn spotless:apply` |
 | Lint | `mvn checkstyle:check` |
-| Full | `mvn verify` |
+| Full | `xvfb-run -a mvn verify` |
 
 ---
 ## 16. References

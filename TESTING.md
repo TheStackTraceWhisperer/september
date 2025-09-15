@@ -85,5 +85,5 @@ There are three primary types of tests in this project, each with a specific pur
 - **Test Data**: All test resources (shaders, textures) are located in `/src/test/resources` and loaded via the classpath.
 - **CI Environment**: Integration tests run in a headless environment using a virtual framebuffer (Xvfb). The provided `Dockerfile` simulates this environment.
 - **Local Execution**:
-  - To run fast, harness-free tests: `mvn test`
-  - To run all tests, including harness-based integration tests: `mvn verify`
+  - To run fast, harness-free tests: `mvn test -Dtest="!*Harness"`
+  - To run all tests, including harness-based integration tests: `xvfb-run -a mvn verify`
