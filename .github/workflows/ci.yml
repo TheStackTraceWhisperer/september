@@ -39,85 +39,145 @@ jobs:
         # Create target directory structure and copy test results and artifacts out of the container
         mkdir -p ./target
         docker cp september-test:/workspace/target/. ./target/ || echo "Warning: Could not copy all files from container"
+        docker cp september-test:/workspace/engine/target/. ./engine/target/ || echo "Warning: Could not copy engine files from container"
+        docker cp september-test:/workspace/game/target/. ./game/target/ || echo "Warning: Could not copy game files from container"
 
         # Clean up the container
         docker rm september-test
 
         # Fix permissions on generated files so the GitHub Actions runner can read them
-        sudo chown -R runner:runner ./target
+        sudo chown -R runner:runner ./target ./engine ./game
 
         # Debug: List what files were actually copied
         echo "Files copied from container:"
-        find ./target -name "*.xml" -path "*/surefire-reports/*" | head -10 || echo "No surefire XML files found"
-        find ./target -name "*.xml" -path "*/failsafe-reports/*" | head -10 || echo "No failsafe XML files found"
+        find . -name "*.xml" -path "*/surefire-reports/*" | head -20 || echo "No surefire XML files found"
+        find . -name "*.xml" -path "*/failsafe-reports/*" | head -20 || echo "No failsafe XML files found"
         
         # Additional debugging: Show exact paths for mikepenz action
         echo "Exact paths for test report action:"
-        ls -la target/surefire-reports/TEST-*.xml 2>/dev/null || echo "No surefire TEST-*.xml files"
-        ls -la target/failsafe-reports/TEST-*.xml 2>/dev/null || echo "No failsafe TEST-*.xml files"
+        find . -name "TEST-*.xml" -path "*/surefire-reports/*" | head -10 || echo "No surefire TEST-*.xml files"
+        find . -name "TEST-*.xml" -path "*/failsafe-reports/*" | head -10 || echo "No failsafe TEST-*.xml files"
 
     - name: Add coverage to PR
       id: jacoco
       uses: madrapps/jacoco-report@v1.6.1
-      if: github.event_name == 'pull_request' && always()
+      if: |
+        github.event_name == 'pull_request' && always() &&
+        (hashFiles('engine/target/site/jacoco/jacoco.xml') != '' || 
+         hashFiles('game/target/site/jacoco/jacoco.xml') != '')
       with:
-        paths: ${{ github.workspace }}/target/site/jacoco/jacoco.xml
+        paths: |
+          ${{ github.workspace }}/engine/target/site/jacoco/jacoco.xml
+          ${{ github.workspace }}/game/target/site/jacoco/jacoco.xml
         token: ${{ secrets.GITHUB_TOKEN }}
         min-coverage-overall: 40
         min-coverage-changed-files: 60
         title: 'JaCoCo Coverage Report'
         update-comment: true
 
-    - name: Publish Unit Test Report
+    - name: Publish Engine Unit Test Report
       uses: mikepenz/action-junit-report@v4
       if: always()
       with:
-        report_paths: 'target/surefire-reports/TEST-*.xml'
-        check_name: 'Unit Tests'
+        report_paths: 'engine/target/surefire-reports/TEST-*.xml'
+        check_name: 'Engine Unit Tests'
         fail_on_failure: false
         job_summary: true
         include_passed: true
         require_tests: false
 
-    - name: Publish Integration Test Report
+    - name: Publish Game Unit Test Report
       uses: mikepenz/action-junit-report@v4
       if: always()
       with:
-        report_paths: 'target/failsafe-reports/TEST-*.xml'
-        check_name: 'Integration Tests'
+        report_paths: 'game/target/surefire-reports/TEST-*.xml'
+        check_name: 'Game Unit Tests'
         fail_on_failure: false
         job_summary: true
         include_passed: true
         require_tests: false
 
-    # Upload comprehensive test reports and coverage artifacts
-    - name: Upload Test Reports
+    - name: Publish Engine Integration Test Report
+      uses: mikepenz/action-junit-report@v4
+      if: always()
+      with:
+        report_paths: 'engine/target/failsafe-reports/TEST-*.xml'
+        check_name: 'Engine Integration Tests'
+        fail_on_failure: false
+        job_summary: true
+        include_passed: true
+        require_tests: false
+
+    - name: Publish Game Integration Test Report
+      uses: mikepenz/action-junit-report@v4
+      if: always()
+      with:
+        report_paths: 'game/target/failsafe-reports/TEST-*.xml'
+        check_name: 'Game Integration Tests'
+        fail_on_failure: false
+        job_summary: true
+        include_passed: true
+        require_tests: false
+
+    # Upload comprehensive test reports and coverage artifacts by module
+    - name: Upload Engine Test Reports
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: test-reports
+        name: Engine Test Reports
         path: |
-          target/surefire-reports/
-          target/failsafe-reports/
+          engine/target/surefire-reports/
+          engine/target/failsafe-reports/
         retention-days: 30
 
-    - name: Upload JaCoCo Coverage Reports
+    - name: Upload Game Test Reports
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: coverage-reports
+        name: Game Test Reports
         path: |
-          target/site/jacoco/
-          target/site/jacoco-ut/
-          target/site/jacoco-it/
+          game/target/surefire-reports/
+          game/target/failsafe-reports/
         retention-days: 30
 
-    - name: Upload Build Artifacts
+    - name: Upload Engine Coverage Reports
+      uses: actions/upload-artifact@v4
+      if: always() && (hashFiles('engine/target/site/jacoco/jacoco.xml') != '')
+      with:
+        name: Engine Coverage Reports
+        path: |
+          engine/target/site/jacoco/
+          engine/target/site/jacoco-ut/
+          engine/target/site/jacoco-it/
+        retention-days: 30
+
+    - name: Upload Game Coverage Reports
+      uses: actions/upload-artifact@v4
+      if: always() && (hashFiles('game/target/site/jacoco/jacoco.xml') != '')
+      with:
+        name: Game Coverage Reports
+        path: |
+          game/target/site/jacoco/
+          game/target/site/jacoco-ut/
+          game/target/site/jacoco-it/
+        retention-days: 30
+
+    - name: Upload Engine Build Artifacts
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: september-linux-artifacts
-        path: target/september-*.jar
+        name: Engine Build Artifacts
+        path: |
+          engine/target/engine-*.jar
+        retention-days: 30
+
+    - name: Upload Game Build Artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: Game Build Artifacts
+        path: |
+          game/target/game-*.jar
         retention-days: 30
 
   publish:
@@ -159,7 +219,9 @@ jobs:
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
-        files: artifacts/september-linux-artifacts/*.jar
+        files: |
+          artifacts/Engine Build Artifacts/*.jar
+          artifacts/Game Build Artifacts/*.jar
         generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
