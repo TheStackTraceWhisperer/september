@@ -28,11 +28,7 @@ jobs:
 
     - name: Build and Test with Docker
       run: |
-        # Enable Docker BuildKit for better caching support
-        export DOCKER_BUILDKIT=1
-        
-        # Build the Docker image using built-in layer caching only
-        # Multi-stage Dockerfile provides excellent caching without external dependencies
+        # Build the Docker image that contains all dependencies and the correct environment
         docker build -t september-ci .
 
         # Run the tests inside the container and copy results back
