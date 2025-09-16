@@ -66,7 +66,22 @@ RUN rm -rf src/
 FROM dependencies AS builder
 
 # Copy all source code (this layer will be rebuilt when source changes)
-COPY src/ ./src/
+# Copy the source structure - either src/ or engine/+game/ directories
+COPY . ./temp-sources/
+RUN if [ -d "./temp-sources/src" ]; then \
+        echo "Using traditional src/ structure" && \
+        cp -r ./temp-sources/src ./src/; \
+    elif [ -d "./temp-sources/engine" ] && [ -d "./temp-sources/game" ]; then \
+        echo "Using modular engine/game structure" && \
+        cp -r ./temp-sources/engine ./engine/ && \
+        cp -r ./temp-sources/game ./game/; \
+    else \
+        echo "ERROR: Neither src/ nor engine/+game/ directories found" && \
+        exit 1; \
+    fi && \
+    # Clean up temp directory but keep only essential files  
+    find ./temp-sources -name "pom.xml" -exec cp {} ./ \; && \
+    rm -rf ./temp-sources
 
 # Build the application (dependencies are already cached from previous stage)
 RUN export MAVEN_OPTS="-Dcom.sun.net.ssl.checkRevocation=false -Dmaven.wagon.http.ssl.insecure=true -Dmaven.wagon.http.ssl.allowall=true" && \

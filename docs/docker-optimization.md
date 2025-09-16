@@ -28,8 +28,10 @@ FROM base AS dependencies
 ```dockerfile
 FROM dependencies AS builder
 ```
-- Copies source code and compiles the application
-- Benefits from cached dependencies from previous stage
+- Automatically detects and copies source code from either structure:
+  - Traditional: `src/main/java/...`
+  - Modular: `engine/src/main/java/...` + `game/src/main/java/...`
+- Compiles the application using cached dependencies
 - **Rebuilt when:** Source code changes (frequent)
 
 ### Stage 4: Runtime Image
@@ -100,7 +102,7 @@ The GitHub Actions workflow uses Docker BuildKit for optimal performance:
 ### Layer Caching Strategy
 1. **System packages:** Cached until Dockerfile changes
 2. **Maven dependencies:** Cached until `pom.xml` changes  
-3. **Source compilation:** Rebuilt on every source change
+3. **Source compilation:** Rebuilt on every source change (supports both traditional `src/` and modular `engine/`+`game/` structures)
 4. **Runtime setup:** Cached unless entrypoint script changes
 
 ### Environment Variables
