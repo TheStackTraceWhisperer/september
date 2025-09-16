@@ -16,6 +16,8 @@ import september.engine.ecs.SystemManager;
 import september.engine.rendering.Camera;
 import september.engine.rendering.Renderer;
 import september.engine.rendering.gl.OpenGLRenderer;
+import september.engine.state.GameState;
+import september.engine.state.GameStateManager;
 import september.engine.systems.RenderSystem;
 
 public final class Engine implements Runnable {
@@ -36,6 +38,8 @@ public final class Engine implements Runnable {
   private WindowContext window;
   private Renderer renderer;
   private SystemManager systemManager;
+  private GameStateManager gameStateManager;
+  private EngineServices services;
 
   public Engine(Game game, MainLoopPolicy loopPolicy) {
     this.game = game;
@@ -47,6 +51,7 @@ public final class Engine implements Runnable {
       // --- INITIALIZE ALL CORE ENGINE SERVICES ---
       world = new september.engine.ecs.World();
       systemManager = new SystemManager();
+      gameStateManager = new GameStateManager();
       timeService = new SystemTimer();
       resourceManager = new ResourceManager();
       inputService = new GlfwInputService();
@@ -56,10 +61,13 @@ public final class Engine implements Runnable {
       glfwContext = new GlfwContext();
       window = new WindowContext(800, 600, "September Engine");
       renderer = new OpenGLRenderer();
-
       camera = new Camera(800.0f, 600.0f);
       camera.setPerspective(45.0f, 800.0f / 600.0f, 0.1f, 100.0f);
 
+      // --- CREATE THE FINAL SERVICES OBJECT ---
+      this.services = new EngineServices(world, systemManager, gameStateManager, resourceManager,
+        inputService, gamepadService, timeService, audioManager, preferencesService,
+        camera, renderer, window);
 
       // --- SET UP CALLBACKS ---
       window.setResizeListener(camera::resize);
@@ -68,18 +76,9 @@ public final class Engine implements Runnable {
       }
       audioManager.initialize();
 
-      // --- CREATE THE SERVICES OBJECT ---
-      var services = new EngineServices(world, systemManager, resourceManager, inputService, gamepadService,
-        timeService, audioManager, preferencesService, camera, renderer, window);
-
-      // --- INITIALIZE THE GAME LOGIC ---
-      game.init(services);
-
-      // --- REGISTER ALL SYSTEMS ---
-      systemManager.register(new RenderSystem(world, renderer, resourceManager, camera));
-      for (ISystem system : game.getSystems()) {
-        systemManager.register(system);
-      }
+      // --- INITIALIZE THE GAME AND SET THE INITIAL STATE ---
+      GameState initialState = game.getInitialState(services);
+      gameStateManager.pushState(initialState, services);
 
     } catch (Exception e) {
       shutdown();
@@ -89,20 +88,19 @@ public final class Engine implements Runnable {
 
   private void mainLoop() {
     int frames = 0;
-    while (loopPolicy.continueRunning(frames, window.handle())) {
+    while (loopPolicy.continueRunning(frames, window.handle()) && !gameStateManager.isEmpty()) {
       window.pollEvents();
       timeService.update();
       float dt = timeService.getDeltaTime();
-      systemManager.updateAll(dt);
+      gameStateManager.update(services, dt);
       window.swapBuffers();
       frames++;
     }
   }
 
   public void shutdown() {
-    if (game != null) {
-      game.shutdown();
-    }
+    // Game shutdown is now handled by the states' onExit methods.
+    // We just need to clean up engine resources.
 
     if (audioManager != null) {
       audioManager.close();

@@ -14,7 +14,7 @@ class MainIntegrationTest {
   @DisplayName("Engine should run a single frame of the Game without throwing an exception")
   void engine_runs_game_without_error() {
     // Arrange: Create an instance of our Game implementation with a policy to run only one frame.
-    Game game = new Main(MainLoopPolicy.frames(1));
+    Game game = new Main();
 
     // Act & Assert: The test now correctly creates an Engine, gives it the Game to run,
     // and invokes the engine's run loop.

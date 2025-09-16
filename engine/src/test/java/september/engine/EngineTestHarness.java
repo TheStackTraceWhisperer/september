@@ -8,13 +8,10 @@ import september.engine.core.Engine;
 import september.engine.core.EngineServices;
 import september.engine.core.Game;
 import september.engine.core.MainLoopPolicy;
-import september.engine.ecs.ISystem;
 import september.engine.ecs.IWorld;
 import september.engine.ecs.SystemManager;
 import september.engine.rendering.Camera;
-
-import java.util.Collection;
-import java.util.Collections;
+import september.engine.state.GameState;
 
 /**
  * A JUnit 5 test harness that bootstraps a live game engine with a valid OpenGL context and audio system before each test.
@@ -33,14 +30,13 @@ public abstract class EngineTestHarness {
   protected SystemManager systemManager;
 
   /**
-   * A minimal, do-nothing implementation of the Game interface for testing purposes.
-   * It allows the engine to initialize without needing a full game implementation.
+   * A minimal GameState implementation for the test harness.
+   * Its only job is to load the essential assets that integration tests rely on.
    */
-  private static class TestGame implements Game {
+  private static class TestGameState implements GameState {
     @Override
-    public void init(EngineServices services) {
+    public void onEnter(EngineServices services) {
       // Load essential engine assets that systems rely on.
-      // This mirrors the asset loading that would happen in a real Game's init.
       float[] vertices = {
         0.5f, 0.5f, 0.0f, 1.0f, 1.0f,
         0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
@@ -54,13 +50,23 @@ public abstract class EngineTestHarness {
     }
 
     @Override
-    public Collection<ISystem> getSystems() {
-      return Collections.emptyList();
+    public void onUpdate(EngineServices services, float deltaTime) {
+      // No-op for the harness.
     }
 
     @Override
-    public void shutdown() {
-      // No-op.
+    public void onExit() {
+      // No-op for the harness.
+    }
+  }
+
+  /**
+   * A minimal Game implementation that provides the TestGameState as the entry point.
+   */
+  private static class TestGame implements Game {
+    @Override
+    public GameState getInitialState(EngineServices services) {
+      return new TestGameState();
     }
   }
 
@@ -75,7 +81,7 @@ public abstract class EngineTestHarness {
     resourceManager = engine.getResourceManager();
     camera = engine.getCamera();
     audioManager = engine.getAudioManager();
-    systemManager = engine.getSystemManager(); // Add this line
+    systemManager = engine.getSystemManager();
   }
 
   @AfterEach

@@ -14,28 +14,28 @@ public interface MainLoopPolicy {
   /**
    * Continue until the window signals it should close.
    */
-  static MainLoopPolicy standard() {
+  public static MainLoopPolicy standard() {
     return (f, h) -> !GLFW.glfwWindowShouldClose(h);
   }
 
   /**
    * Limit by frame count (0 => no frames). Negative values yield zero frames (f < negative is false initially).
    */
-  static MainLoopPolicy frames(int maxFrames) {
+  public static MainLoopPolicy frames(int maxFrames) {
     return (f, h) -> f < maxFrames;
   }
 
   /**
    * Alias for frames(0).
    */
-  static MainLoopPolicy skip() {
+  public static MainLoopPolicy skip() {
     return frames(0);
   }
 
   /**
    * Time limited & window-open requirement. Null duration => NPE. Negative treated naturally via toNanos (still compares).
    */
-  static MainLoopPolicy timed(Duration duration) {
+  public static MainLoopPolicy timed(Duration duration) {
     final long limitNanos = duration.toNanos();
     final long start = System.nanoTime();
     if (limitNanos == 0L) {
@@ -47,7 +47,7 @@ public interface MainLoopPolicy {
   /**
    * Logical AND. Empty => true (vacuous truth).
    */
-  static MainLoopPolicy all(MainLoopPolicy... policies) {
+  public static MainLoopPolicy all(MainLoopPolicy... policies) {
     return (f, h) -> {
       for (MainLoopPolicy p : policies)
         if (!p.continueRunning(f, h)) {
@@ -60,7 +60,7 @@ public interface MainLoopPolicy {
   /**
    * Logical OR. Empty => false.
    */
-  static MainLoopPolicy any(MainLoopPolicy... policies) {
+  public static MainLoopPolicy any(MainLoopPolicy... policies) {
     return (f, h) -> {
       for (MainLoopPolicy p : policies)
         if (p.continueRunning(f, h)) {
