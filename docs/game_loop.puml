@@ -1,0 +1,27 @@
+@startuml
+title Game Loop
+
+participant Engine
+participant Window
+participant TimeService
+participant GameStateManager
+
+Engine -> Engine: run()
+activate Engine
+
+Engine -> Engine: init()
+note right: Initialize all engine services
+
+loop while loopPolicy.continueRunning() and !gameStateManager.isEmpty()
+    Engine -> Window: pollEvents()
+    Engine -> TimeService: update()
+    Engine -> GameStateManager: update(services, dt)
+    Engine -> Window: swapBuffers()
+end
+
+Engine -> Engine: shutdown()
+note right: Cleanup all engine resources
+
+deactivate Engine
+
+@enduml

@@ -1,0 +1,14 @@
+@startuml
+title Engine Package Structure
+
+package "september.engine" {
+  package "core"
+  package "ecs"
+  package "assets"
+  package "audio"
+  package "rendering"
+  package "state"
+  package "systems"
+}
+
+@enduml

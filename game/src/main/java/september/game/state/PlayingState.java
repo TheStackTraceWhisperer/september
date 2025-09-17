@@ -6,8 +6,9 @@ import september.engine.ecs.components.ControllableComponent;
 import september.engine.ecs.components.MovementStatsComponent;
 import september.engine.ecs.components.SpriteComponent;
 import september.engine.ecs.components.TransformComponent;
-import september.engine.systems.MovementSystem;
 import september.engine.state.GameState;
+import september.engine.systems.MovementSystem;
+import september.engine.systems.RenderSystem;
 import september.game.components.EnemyComponent;
 import september.game.components.PlayerComponent;
 import september.game.input.InputMappingService;
@@ -51,11 +52,16 @@ public class PlayingState implements GameState {
     systemManager.register(new PlayerInputSystem(world, mappingService));
     systemManager.register(new MovementSystem(world));
     systemManager.register(new EnemyAISystem(world, services.timeService()));
+    // The RenderSystem is crucial for drawing anything.
+    systemManager.register(new RenderSystem(services.world(), services.renderer(), services.resourceManager(), services.camera()));
   }
 
   @Override
   public void onUpdate(EngineServices services, float deltaTime) {
-    // The Engine automatically calls systemManager.updateAll(), so this can be empty for now.
+    // This is the core of the game logic for this state.
+    // We update all registered systems each frame.
+    services.systemManager().updateAll(deltaTime);
+
     // Later, this is where we would check for win/loss conditions or transitions.
   }
 

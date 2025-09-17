@@ -8,10 +8,13 @@ import september.engine.core.Engine;
 import september.engine.core.EngineServices;
 import september.engine.core.Game;
 import september.engine.core.MainLoopPolicy;
+import september.engine.ecs.Component;
 import september.engine.ecs.IWorld;
 import september.engine.ecs.SystemManager;
 import september.engine.rendering.Camera;
 import september.engine.state.GameState;
+
+import java.util.Map;
 
 /**
  * A JUnit 5 test harness that bootstraps a live game engine with a valid OpenGL context and audio system before each test.
@@ -67,6 +70,11 @@ public abstract class EngineTestHarness {
     @Override
     public GameState getInitialState(EngineServices services) {
       return new TestGameState();
+    }
+
+    @Override
+    public Map<String, Class<? extends Component>> getComponentRegistry() {
+      return Map.of();
     }
   }
 

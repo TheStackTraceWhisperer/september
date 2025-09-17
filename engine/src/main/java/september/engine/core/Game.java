@@ -1,6 +1,9 @@
 package september.engine.core;
 
+import september.engine.ecs.Component;
 import september.engine.state.GameState;
+
+import java.util.Map;
 
 /**
  * Defines the contract for a game that can be run by the Engine.
@@ -15,4 +18,12 @@ public interface Game {
    * @return The first GameState that the engine should run.
    */
   GameState getInitialState(EngineServices services);
+
+
+  /**
+   * Gets the mapping of component names (as used in scene files) to their
+   * concrete Class objects. This allows the SceneManager to deserialize scenes.
+   * @return A map of component names to component classes.
+   */
+  Map<String, Class<? extends Component>> getComponentRegistry();
 }

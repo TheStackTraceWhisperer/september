@@ -16,6 +16,7 @@ import september.engine.ecs.SystemManager;
 import september.engine.rendering.Camera;
 import september.engine.rendering.Renderer;
 import september.engine.rendering.gl.OpenGLRenderer;
+import september.engine.scene.SceneManager;
 import september.engine.state.GameState;
 import september.engine.state.GameStateManager;
 import september.engine.systems.RenderSystem;
@@ -39,6 +40,7 @@ public final class Engine implements Runnable {
   private Renderer renderer;
   private SystemManager systemManager;
   private GameStateManager gameStateManager;
+  private SceneManager sceneManager;
   private EngineServices services;
 
   public Engine(Game game, MainLoopPolicy loopPolicy) {
@@ -63,11 +65,12 @@ public final class Engine implements Runnable {
       renderer = new OpenGLRenderer();
       camera = new Camera(800.0f, 600.0f);
       camera.setPerspective(45.0f, 800.0f / 600.0f, 0.1f, 100.0f);
+      sceneManager = new SceneManager(game.getComponentRegistry());
 
       // --- CREATE THE FINAL SERVICES OBJECT ---
-      this.services = new EngineServices(world, systemManager, gameStateManager, resourceManager,
-        inputService, gamepadService, timeService, audioManager, preferencesService,
-        camera, renderer, window);
+      this.services = new EngineServices(world, systemManager, gameStateManager, sceneManager, // Add sceneManager
+        resourceManager, inputService, gamepadService, timeService, audioManager,
+        preferencesService, camera, renderer, window);
 
       // --- SET UP CALLBACKS ---
       window.setResizeListener(camera::resize);

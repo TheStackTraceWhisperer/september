@@ -1,0 +1,14 @@
+@startuml
+package september.game {
+  package input {
+  }
+  package state {
+  }
+  package systems {
+  }
+  package components {
+  }
+  package preferences {
+  }
+}
+@enduml

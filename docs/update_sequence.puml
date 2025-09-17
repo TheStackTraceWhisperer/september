@@ -1,0 +1,60 @@
+@startuml
+title Game Update Sequence
+
+participant Engine
+participant GameStateManager
+participant PlayingState
+participant SystemManager
+participant PlayerInputSystem
+participant MovementSystem
+participant EnemyAISystem
+participant RenderSystem
+participant Renderer
+
+activate Engine
+Engine -> GameStateManager: update(services, dt)
+activate GameStateManager
+
+GameStateManager -> PlayingState: onUpdate(services, dt)
+activate PlayingState
+
+PlayingState -> SystemManager: updateAll(dt)
+activate SystemManager
+
+SystemManager -> PlayerInputSystem: update(dt)
+activate PlayerInputSystem
+PlayerInputSystem --> SystemManager
+deactivate PlayerInputSystem
+
+SystemManager -> MovementSystem: update(dt)
+activate MovementSystem
+MovementSystem --> SystemManager
+deactivate MovementSystem
+
+SystemManager -> EnemyAISystem: update(dt)
+activate EnemyAISystem
+EnemyAISystem --> SystemManager
+deactivate EnemyAISystem
+
+SystemManager -> RenderSystem: update(dt)
+activate RenderSystem
+
+RenderSystem -> Renderer: beginScene(camera)
+activate Renderer
+RenderSystem -> Renderer: submit(...)
+RenderSystem -> Renderer: endScene()
+deactivate Renderer
+
+RenderSystem --> SystemManager
+deactivate RenderSystem
+
+SystemManager --> PlayingState
+deactivate SystemManager
+
+PlayingState --> GameStateManager
+deactivate PlayingState
+
+GameStateManager --> Engine
+deactivate GameStateManager
+
+@enduml

@@ -1,0 +1,12 @@
+@startuml
+title Application Startup
+
+actor User
+User -> Main: main(String[] args)
+Main -> Main: new()
+Main -> Engine: new(Game, MainLoopPolicy)
+Main -> Engine: run()
+Engine -> Game: getInitialState()
+Game --> Engine: PlayingState
+Engine -> Engine: mainLoop()
+@enduml
