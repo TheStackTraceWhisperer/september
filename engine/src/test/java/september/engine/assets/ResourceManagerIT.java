@@ -108,11 +108,6 @@ class ResourceManagerIT extends EngineTestHarness {
     @Test
     @DisplayName("loadAudioBuffer should cache audio buffers correctly")
     void loadAudioBuffer_cachesResource() {
-        // Skip this test if we're in headless audio mode where audio loading may not work
-        if ("true".equals(System.getProperty("september.headless.audio", "false"))) {
-            return; // Skip audio tests in headless mode
-        }
-        
         // Act: Load the same audio buffer twice
         AudioBuffer buffer1 = resourceManager.loadAudioBuffer("audio1", "audio/test-sound.ogg");
         AudioBuffer buffer2 = resourceManager.loadAudioBuffer("audio1", "audio/test-sound.ogg");
@@ -125,11 +120,6 @@ class ResourceManagerIT extends EngineTestHarness {
     @Test
     @DisplayName("loadAudioBuffer should cache different audio files separately")
     void loadAudioBuffer_withDifferentHandles_cachesSeperately() {
-        // Skip this test if we're in headless audio mode where audio loading may not work
-        if ("true".equals(System.getProperty("september.headless.audio", "false"))) {
-            return; // Skip audio tests in headless mode
-        }
-        
         // Act: Load different audio files
         AudioBuffer buffer1 = resourceManager.loadAudioBuffer("sound", "audio/test-sound.ogg");
         AudioBuffer buffer2 = resourceManager.loadAudioBuffer("music", "audio/test-music.ogg");
@@ -146,19 +136,15 @@ class ResourceManagerIT extends EngineTestHarness {
         // Arrange: Load one of each type of resource.
         Texture loadedTexture = resourceManager.loadTexture("tex1", "textures/player.png");
         Shader loadedShader = resourceManager.loadShader("shader1", "shaders/test.vert", "shaders/test.frag");
+        AudioBuffer loadedAudio = resourceManager.loadAudioBuffer("audio1", "audio/test-sound.ogg");
         resourceManager.loadProceduralMesh("mesh1", new float[]{}, new int[]{});
         Mesh loadedMesh = resourceManager.resolveMeshHandle("mesh1");
 
         // Act & Assert: Verify that resolving each handle returns the correct object.
         assertThat(resourceManager.resolveTextureHandle("tex1")).isSameAs(loadedTexture);
         assertThat(resourceManager.resolveShaderHandle("shader1")).isSameAs(loadedShader);
+        assertThat(resourceManager.resolveAudioBufferHandle("audio1")).isSameAs(loadedAudio);
         assertThat(resourceManager.resolveMeshHandle("mesh1")).isSameAs(loadedMesh);
-        
-        // Test audio buffer only if not in headless mode
-        if (!"true".equals(System.getProperty("september.headless.audio", "false"))) {
-            AudioBuffer loadedAudio = resourceManager.loadAudioBuffer("audio1", "audio/test-sound.ogg");
-            assertThat(resourceManager.resolveAudioBufferHandle("audio1")).isSameAs(loadedAudio);
-        }
     }
 
     @Test
@@ -180,14 +166,8 @@ class ResourceManagerIT extends EngineTestHarness {
         // Arrange: Load one of each resource type.
         resourceManager.loadTexture("tex1", "textures/player.png");
         resourceManager.loadShader("shader1", "shaders/test.vert", "shaders/test.frag");
+        resourceManager.loadAudioBuffer("audio1", "audio/test-sound.ogg");
         resourceManager.loadProceduralMesh("procMesh", new float[]{}, new int[]{});
-        
-        // Load audio only if not in headless mode
-        boolean audioLoaded = false;
-        if (!"true".equals(System.getProperty("september.headless.audio", "false"))) {
-            resourceManager.loadAudioBuffer("audio1", "audio/test-sound.ogg");
-            audioLoaded = true;
-        }
 
         // Act: Close the resource manager.
         resourceManager.close();
@@ -198,13 +178,10 @@ class ResourceManagerIT extends EngineTestHarness {
                 .isInstanceOf(NullPointerException.class);
         assertThatThrownBy(() -> resourceManager.resolveShaderHandle("shader1"))
                 .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> resourceManager.resolveAudioBufferHandle("audio1"))
+                .isInstanceOf(NullPointerException.class);
         assertThatThrownBy(() -> resourceManager.resolveMeshHandle("procMesh"))
                 .isInstanceOf(NullPointerException.class);
-        
-        if (audioLoaded) {
-            assertThatThrownBy(() -> resourceManager.resolveAudioBufferHandle("audio1"))
-                    .isInstanceOf(NullPointerException.class);
-        }
     }
 
     @Test
@@ -244,10 +221,8 @@ class ResourceManagerIT extends EngineTestHarness {
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Failed to read resource");
 
-        // Test audio buffer loading with invalid file only if audio is enabled
-        if (!"true".equals(System.getProperty("september.headless.audio", "false"))) {
-            assertThatThrownBy(() -> resourceManager.loadAudioBuffer("badAudio", "non/existent/audio.ogg"))
-                    .isInstanceOf(RuntimeException.class);
-        }
+        // Test audio buffer loading with invalid file
+        assertThatThrownBy(() -> resourceManager.loadAudioBuffer("badAudio", "non/existent/audio.ogg"))
+                .isInstanceOf(RuntimeException.class);
     }
 }

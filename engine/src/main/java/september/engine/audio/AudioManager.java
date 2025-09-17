@@ -32,12 +32,6 @@ public final class AudioManager implements AutoCloseable {
       throw new IllegalStateException("AudioManager is already initialized");
     }
 
-    // Check if we're in a headless test environment and should skip audio initialization
-    if ("true".equals(System.getProperty("september.headless.audio", "false"))) {
-      initialized = true;
-      return;
-    }
-
     // Open the default audio device
     device = alcOpenDevice((CharSequence) null);
     if (device == 0) {
@@ -84,11 +78,6 @@ public final class AudioManager implements AutoCloseable {
       throw new IllegalStateException("AudioManager is not initialized");
     }
     
-    // Skip audio operations in headless mode
-    if (device == 0) {
-      return;
-    }
-    
     alListenerf(AL_GAIN, Math.max(0.0f, volume));
   }
 
@@ -100,11 +89,6 @@ public final class AudioManager implements AutoCloseable {
   public float getMasterVolume() {
     if (!initialized) {
       throw new IllegalStateException("AudioManager is not initialized");
-    }
-    
-    // Return default volume in headless mode
-    if (device == 0) {
-      return 1.0f;
     }
     
     return alGetListenerf(AL_GAIN);
@@ -120,11 +104,6 @@ public final class AudioManager implements AutoCloseable {
   public void setListenerPosition(float x, float y, float z) {
     if (!initialized) {
       throw new IllegalStateException("AudioManager is not initialized");
-    }
-    
-    // Skip audio operations in headless mode
-    if (device == 0) {
-      return;
     }
     
     alListener3f(AL_POSITION, x, y, z);
@@ -144,11 +123,6 @@ public final class AudioManager implements AutoCloseable {
                                      float upX, float upY, float upZ) {
     if (!initialized) {
       throw new IllegalStateException("AudioManager is not initialized");
-    }
-    
-    // Skip audio operations in headless mode
-    if (device == 0) {
-      return;
     }
     
     float[] orientation = {forwardX, forwardY, forwardZ, upX, upY, upZ};
@@ -213,13 +187,10 @@ public final class AudioManager implements AutoCloseable {
   @Override
   public void close() {
     if (initialized) {
-      // Skip audio cleanup in headless mode
-      if (device != 0) {
-        // Clean up OpenAL context
-        alcMakeContextCurrent(0);
-        alcDestroyContext(context);
-        alcCloseDevice(device);
-      }
+      // Clean up OpenAL context
+      alcMakeContextCurrent(0);
+      alcDestroyContext(context);
+      alcCloseDevice(device);
       
       initialized = false;
     }
