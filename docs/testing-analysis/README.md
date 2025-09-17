@@ -43,13 +43,24 @@ The analysis follows the project's testing standards:
 
 ## Creating GitHub Issues
 
-To convert these documents into GitHub issues:
+To convert these documents into GitHub issues, use the generated GitHub-ready files:
 
-1. Copy the content from each `issue-XX-*.md` file
-2. Create a new GitHub issue with an appropriate title
-3. Paste the markdown content as the issue description
-4. Add appropriate labels (e.g., `testing`, `priority:critical`, `type:enhancement`)
-5. Assign to relevant contributors or teams
+### Option 1: Automated Creation (Recommended)
+```bash
+cd docs/testing-analysis/github-issues
+./create-issues.sh
+```
+
+### Option 2: Manual Creation
+1. Navigate to `docs/testing-analysis/github-issues/`
+2. Copy content from each `*-github.md` file  
+3. Create new GitHub issues with the provided titles and labels
+4. Assign to relevant contributors or teams
+
+### Generated Files
+- **`github-issues/`** directory contains all GitHub-ready issue files
+- **`create-issues.sh`** script for automated bulk creation
+- Each issue includes proper labels, formatting, and coordination information
 
 ## Target Goals
 
