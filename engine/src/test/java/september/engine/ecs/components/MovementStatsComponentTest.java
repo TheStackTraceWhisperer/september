@@ -17,6 +17,6 @@ class MovementStatsComponentTest {
         MovementStatsComponent component = new MovementStatsComponent(expectedSpeed);
 
         // Assert: Verify that the public speed field is set to the value provided at construction.
-        assertThat(component.speed).isEqualTo(expectedSpeed);
+        assertThat(component.speed()).isEqualTo(expectedSpeed);
     }
 }

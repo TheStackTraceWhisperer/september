@@ -47,7 +47,7 @@ public class RenderSystem implements ISystem {
       SpriteComponent sprite = world.getComponent(entityId, SpriteComponent.class);
 
       // Use the handle from the SpriteComponent to get the actual Texture resource
-      Texture texture = resourceManager.resolveTextureHandle(sprite.textureHandle);
+      Texture texture = resourceManager.resolveTextureHandle(sprite.textureHandle());
 
       // Submit the quad mesh, the specific texture, and the transform to the renderer.
       renderer.submit(quadMesh, texture, transform.getTransformMatrix());

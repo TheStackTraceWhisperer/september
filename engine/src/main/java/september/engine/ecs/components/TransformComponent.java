@@ -1,5 +1,6 @@
 package september.engine.ecs.components;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -16,6 +17,7 @@ public class TransformComponent implements Component {
   public final Quaternionf rotation; // Using quaternions is more robust than Euler angles for rotation
   public final Vector3f scale;
 
+  @JsonIgnore // This is the crucial fix. It tells Jackson to completely ignore this field.
   private final Matrix4f transformMatrix;
 
   public TransformComponent() {

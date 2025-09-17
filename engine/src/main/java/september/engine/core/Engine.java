@@ -16,6 +16,7 @@ import september.engine.ecs.SystemManager;
 import september.engine.rendering.Camera;
 import september.engine.rendering.Renderer;
 import september.engine.rendering.gl.OpenGLRenderer;
+import september.engine.scene.SceneManager;
 import september.engine.state.GameState;
 import september.engine.state.GameStateManager;
 import september.engine.systems.RenderSystem;
@@ -40,6 +41,7 @@ public final class Engine implements Runnable {
   private SystemManager systemManager;
   private GameStateManager gameStateManager;
   private EngineServices services;
+  private SceneManager sceneManager;
 
   public Engine(Game game, MainLoopPolicy loopPolicy) {
     this.game = game;
@@ -66,7 +68,7 @@ public final class Engine implements Runnable {
 
       // --- CREATE THE FINAL SERVICES OBJECT ---
       this.services = new EngineServices(world, systemManager, gameStateManager,
-        resourceManager, inputService, gamepadService, timeService, audioManager,
+        resourceManager, sceneManager, inputService, gamepadService, timeService, audioManager,
         preferencesService, camera, renderer, window);
 
       // --- SET UP CALLBACKS ---

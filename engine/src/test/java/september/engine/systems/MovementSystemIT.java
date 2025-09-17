@@ -47,7 +47,7 @@ class MovementSystemIT extends EngineTestHarness {
         assertThat(transform.previousPosition).isEqualTo(initialPosition);
 
         Vector3f direction = new Vector3f(-1.0f, 1.0f, 0.0f).normalize();
-        float distance = stats.speed * deltaTime;
+        float distance = stats.speed() * deltaTime;
         Vector3f expectedPosition = new Vector3f(initialPosition).add(direction.mul(distance));
 
         assertThat(transform.position.x()).as("X position").isCloseTo(expectedPosition.x, org.assertj.core.data.Offset.offset(0.001f));
@@ -75,7 +75,7 @@ class MovementSystemIT extends EngineTestHarness {
         assertThat(transform.position).isNotEqualTo(initialPosition);
         assertThat(transform.previousPosition).isEqualTo(initialPosition);
 
-        float distance = stats.speed * deltaTime; // 50.0 * 0.1 = 5.0
+        float distance = stats.speed() * deltaTime; // 50.0 * 0.1 = 5.0
         Vector3f expectedPosition = new Vector3f(initialPosition).add(distance, 0, 0);
 
         assertThat(transform.position).usingRecursiveComparison().isEqualTo(expectedPosition);

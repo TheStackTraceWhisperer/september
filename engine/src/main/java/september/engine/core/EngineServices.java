@@ -9,6 +9,7 @@ import september.engine.ecs.IWorld;
 import september.engine.ecs.SystemManager;
 import september.engine.rendering.Camera;
 import september.engine.rendering.Renderer;
+import september.engine.scene.SceneManager;
 import september.engine.state.GameStateManager;
 
 public record EngineServices(
@@ -16,6 +17,7 @@ public record EngineServices(
   SystemManager systemManager,
   GameStateManager gameStateManager,
   ResourceManager resourceManager,
+  SceneManager sceneManager,
   InputService inputService,
   GamepadService gamepadService,
   TimeService timeService,

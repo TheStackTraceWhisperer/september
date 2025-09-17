@@ -61,7 +61,7 @@ public class MovementSystem implements ISystem {
       }
 
       // Apply speed and delta time to calculate the final movement for this frame
-      velocity.mul(stats.speed * deltaTime);
+      velocity.mul(stats.speed() * deltaTime);
 
       // Add the final movement vector to the entity's current position
       transform.position.add(velocity);

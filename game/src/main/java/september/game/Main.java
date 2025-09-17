@@ -15,6 +15,7 @@ import september.engine.state.GameState;
 import september.game.components.EnemyComponent;
 import september.game.components.HealthComponent;
 import september.game.components.PlayerComponent;
+import september.game.state.MainMenuState;
 import september.game.state.PlayingState;
 
 import java.util.HashMap;
@@ -27,7 +28,7 @@ public final class Main implements Game {
   public GameState getInitialState(EngineServices services) {
     // The game starts directly in the "Playing" state for this simple implementation.
     // A full game would return a new MainMenuState() here.
-    return new PlayingState();
+    return new MainMenuState();
   }
 
   @Override
