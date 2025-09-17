@@ -1,6 +1,6 @@
-#version 450 core
+#version 460 core
 
-// Use the #include directive, a GLSL 4.50 feature.
+// Use the #include directive, a GLSL 4.60 feature.
 #include "shared.glsl"
 
 layout (location = 0) in vec3 aPos;
