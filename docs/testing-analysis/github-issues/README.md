@@ -1,62 +1,64 @@
-# GitHub Issues Summary
+# GitHub Issues Summary - REVISED ANALYSIS
 
-Generated 7 GitHub issues from testing analysis documentation.
+**IMPORTANT**: This analysis has been updated to reflect that many comprehensive tests already exist but are failing due to environment setup issues.
 
-## Issues Created
+Generated 7 GitHub issues from revised testing analysis documentation.
+
+## Key Finding
+The original analysis was partly outdated because:
+- Comprehensive integration tests exist for core systems (MovementSystemIT, RenderSystemIT, AudioSystemIT)
+- Coverage shows 0% because tests fail to execute, not because tests don't exist
+- Main issue is EngineTestHarness OpenGL/OpenAL context initialization in CI
+
+## Issues Created (Revised)
 
 ### 🔴 Engine Systems Testing - Critical Priority
 - **Priority**: Critical
-- **Labels**: priority:critical, testing, type:enhancement, component:systems
+- **Focus**: Fix existing test execution
+- **Labels**: priority:critical, testing, type:bug, type:enhancement, component:systems
 - **Source**: issue-01-engine-systems-testing.md
-- **GitHub File**: issue-01-engine-systems-testing-github.md
 
 ### 🟡 Audio Package Testing - High Priority
 - **Priority**: High
-- **Labels**: priority:high, testing, type:enhancement, component:audio
+- **Focus**: Add missing tests + fix environment
+- **Labels**: priority:high, testing, type:bug, type:enhancement, component:audio
 - **Source**: issue-02-audio-package-testing.md
-- **GitHub File**: issue-02-audio-package-testing-github.md
 
 ### 🟡 Input System Testing - High Priority
 - **Priority**: High
-- **Labels**: priority:high, testing, type:enhancement, component:input
+- **Focus**: Add missing tests + fix environment
+- **Labels**: priority:high, testing, type:bug, type:enhancement, component:input
 - **Source**: issue-03-input-system-testing.md
-- **GitHub File**: issue-03-input-system-testing-github.md
 
 ### 🟢 Asset Management Testing - Medium Priority
 - **Priority**: Medium
+- **Focus**: Add missing tests + fix environment
 - **Labels**: priority:medium, testing, type:enhancement, component:assets
 - **Source**: issue-04-asset-management-testing.md
-- **GitHub File**: issue-04-asset-management-testing-github.md
 
 ### 🟢 State Management Testing - Medium Priority
 - **Priority**: Medium
+- **Focus**: Add missing tests + fix environment
 - **Labels**: priority:medium, testing, type:enhancement, component:state
 - **Source**: issue-05-state-management-testing.md
-- **GitHub File**: issue-05-state-management-testing-github.md
 
 ### 🟢 Core Engine Services Testing - Medium Priority
 - **Priority**: Medium
+- **Focus**: Add missing tests + fix environment
 - **Labels**: priority:medium, testing, type:enhancement, component:core
 - **Source**: issue-06-core-services-testing.md
-- **GitHub File**: issue-06-core-services-testing-github.md
 
 ### 🔵 Advanced Rendering Components Testing - Low Priority
 - **Priority**: Low
+- **Focus**: Add missing tests + fix environment
 - **Labels**: priority:low, testing, type:enhancement, component:rendering
 - **Source**: issue-07-advanced-rendering-testing.md
-- **GitHub File**: issue-07-advanced-rendering-testing-github.md
 
 
-## Usage
+## Revised Implementation Strategy
 
-1. **Manual Creation**: Copy content from individual `-github.md` files to create issues
-2. **Automated Creation**: Run `./create-issues.sh` (requires GitHub CLI)
-3. **Bulk Operations**: Use GitHub CLI bulk operations with the generated files
+1. **Priority 1 (Critical)**: Fix EngineTestHarness and CI environment to enable existing tests
+2. **Priority 2 (High/Medium)**: Add missing unit tests and enhance coverage
+3. **Priority 3 (Low)**: Advanced features and optimization
 
-## Files Generated
-
-- `create-issues.sh` - Automated issue creation script
-- `*-github.md` - GitHub-formatted issue bodies
-- `README.md` - This summary file
-
-Total files: 9 (issues + script + summary)
+The focus has shifted from "create all tests" to "fix test execution + fill specific gaps".

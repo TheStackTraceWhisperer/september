@@ -1,7 +1,10 @@
-<!-- This issue was generated from testing analysis documentation -->
+<!-- This issue was generated from REVISED testing analysis documentation -->
 <!-- Source: docs/testing-analysis/ -->
+<!-- IMPORTANT: Analysis updated to reflect that many tests exist but fail due to environment issues -->
 
-> **Note**: This is part of the September Engine Testing Task Force initiative to improve code coverage through parallel development. See [Testing Analysis Documentation](../docs/testing-analysis/) for coordination details.
+> **⚠️ REVISED ANALYSIS**: This issue has been updated to reflect the current reality that substantial test infrastructure already exists but is failing to execute due to environment setup issues.
+
+> **Note**: This is part of the September Engine Testing Task Force initiative. See [Testing Analysis Documentation](../docs/testing-analysis/) for coordination details.
 
 
 ## Summary  
@@ -156,18 +159,19 @@ Tests should be designed to:
 ## 🚀 Implementation Coordination
 
 **Task Force Assignment**: Available for assignment
-**Dependencies**: EngineTestHarness, project testing infrastructure
-**Estimated Effort**: Medium (2-4 weeks for experienced contributor)
+**Dependencies**: Working CI environment, EngineTestHarness fixes
+**Estimated Effort**: Medium (2-4 weeks)
 
 ### 📋 Getting Started
 1. Read the [project testing guidelines](../TESTING.md)
 2. Set up development environment with OpenGL/OpenAL support
-3. Review existing test patterns in the codebase
-4. Coordinate with other task forces for shared resources
+3. Investigate EngineTestHarness initialization issues
+4. Review existing test code before adding new tests
 
 ### 🔗 Related Task Forces
 - Check [Testing Task Force Summary](../docs/testing-analysis/task-force-summary.md) for coordination
-- See other testing issues for shared patterns and dependencies
+- Many issues share the same EngineTestHarness root cause
 
 **Environment Setup**: `sudo apt-get install -y openjdk-21-jdk maven xvfb mesa-utils`
 **Build Command**: `export MESA_GL_VERSION_OVERRIDE=4.6 && xvfb-run -a mvn verify`
+**Current Issue**: Integration tests fail with "Engine initialization failed"

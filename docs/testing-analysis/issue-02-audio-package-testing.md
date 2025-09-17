@@ -9,12 +9,25 @@ The `september.engine.audio` package has **1% test coverage**, with all three co
 - `AudioManager` - 4% coverage (227 missed instructions, 25 missed branches)
 
 ## Current State
-- ❌ No unit tests for audio data management
-- ❌ No integration tests for audio playback
-- ❌ Audio resource lifecycle untested
-- ❌ OpenAL integration completely unverified
+- ✅ Comprehensive AudioSystemIT exists with detailed test scenarios
+- ❌ AudioSystemIT fails to execute due to OpenAL context initialization issues
+- ❌ No unit tests for AudioBuffer, AudioSource, AudioManager core logic
+- ❌ Coverage shows 1% only because integration tests cannot run
 
 ## Required Testing Strategy
+
+### Fix Existing Integration Tests (Priority 1)
+**AudioSystemIT.java already exists** with comprehensive test coverage:
+- Audio component lifecycle management
+- Music vs sound effect handling  
+- Audio source creation and cleanup
+- Volume and pitch controls
+- 3D positioning and attenuation
+- Background music state management
+
+**Main Issue**: Tests fail due to OpenAL context initialization in CI environment
+
+### Add Missing Unit Tests (Priority 2)
 
 ### Test Types Needed
 
@@ -70,12 +83,14 @@ class AudioManagerIT extends EngineTestHarness {
 - Verify OpenAL state changes where observable
 
 ## Acceptance Criteria
-- [ ] AudioBuffer has comprehensive unit test suite
-- [ ] AudioSource has integration tests covering all public methods
-- [ ] AudioManager has integration tests for lifecycle management
-- [ ] Test coverage >70% for audio package
+- [ ] AudioSystemIT executes successfully in CI environment
+- [ ] EngineTestHarness properly initializes OpenAL context for audio tests
+- [ ] AudioBuffer has comprehensive unit test suite (new)
+- [ ] AudioSource has unit tests for core logic (new)
+- [ ] AudioManager has unit tests for resource management (new)
+- [ ] Test coverage >70% for audio package (currently 1% due to execution failures)
 - [ ] Tests verify proper resource cleanup
-- [ ] Tests pass in headless CI environment
+- [ ] Tests pass in headless CI environment with proper audio context
 
 ## Dependencies
 - Requires working `EngineTestHarness` for integration tests

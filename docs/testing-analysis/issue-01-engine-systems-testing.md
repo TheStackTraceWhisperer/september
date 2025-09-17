@@ -9,40 +9,38 @@ The `september.engine.systems` package has **0% test coverage** across all three
 - `RenderSystem` - 0% coverage (82 missed instructions, 2 missed branches)
 
 ## Current State
-- ❌ No unit tests exist for any system class
-- ❌ Integration tests fail due to engine initialization issues
-- ❌ System behavior completely unverified
+- ✅ Integration tests exist for all three systems (MovementSystemIT, RenderSystemIT, AudioSystemIT)
+- ❌ Integration tests fail due to OpenGL/OpenAL context initialization issues in CI
+- ❌ Tests show 0% coverage because they cannot execute, not because they don't exist
+- ✅ Test code is comprehensive and well-written
 
 ## Required Testing Strategy
 
-### Integration Tests (Primary)
-All systems require `EngineTestHarness`-based integration tests as they interact with:
-- OpenGL context (RenderSystem)
-- OpenAL context (AudioSystem)  
-- ECS World (all systems)
+### Fix Test Execution Environment (Primary)
+The main issue is that comprehensive integration tests exist but fail to execute:
+- Fix OpenGL context initialization in CI environment
+- Resolve OpenAL context setup issues
+- Ensure `EngineTestHarness` works properly in headless mode
+
+### Existing Test Coverage
+**Tests that exist but fail to run:**
+- `MovementSystemIT.java` - Tests entity movement with diagonal and straight-line input
+- `RenderSystemIT.java` - Tests sprite rendering without errors
+- `AudioSystemIT.java` - Comprehensive audio component testing
 
 ### Test Scenarios Needed
 
-#### AudioSystem
-- [ ] Audio component lifecycle management
-- [ ] Music vs sound effect handling
-- [ ] Audio source creation and cleanup
-- [ ] Background music state management
-- [ ] Multiple sound effect playback
+#### Fix Existing Tests (Priority 1)
+- [ ] Resolve EngineTestHarness OpenGL context initialization
+- [ ] Fix CI environment compatibility for graphics tests
+- [ ] Ensure AudioSystemIT can run in headless mode
+- [ ] Debug and fix MovementSystemIT execution
+- [ ] Debug and fix RenderSystemIT execution
 
-#### MovementSystem  
-- [ ] Entity movement with diagonal input
-- [ ] Entity movement with straight-line input
-- [ ] No movement when no input provided
-- [ ] Previous position tracking
-- [ ] Movement speed calculations
-
-#### RenderSystem
-- [ ] Sprite rendering with transforms
-- [ ] Mesh rendering with materials
-- [ ] Camera projection and view matrices
-- [ ] Multiple entity rendering
-- [ ] Resource cleanup on system shutdown
+#### Additional Test Coverage (Priority 2)  
+- [ ] Unit tests for system logic that doesn't require graphics context
+- [ ] Edge case testing for each system
+- [ ] Performance testing for system update loops
 
 ## Implementation Notes
 - Follow existing patterns in `MovementSystemIT.java` template
@@ -51,10 +49,12 @@ All systems require `EngineTestHarness`-based integration tests as they interact
 - Test both positive flows and edge cases
 
 ## Acceptance Criteria
-- [ ] Each system has comprehensive integration test suite
-- [ ] Test coverage >80% for all three system classes
-- [ ] Tests pass in CI environment with `xvfb-run`
-- [ ] Tests follow project's testing philosophy (behavior over implementation)
+- [ ] All existing integration tests execute successfully in CI environment
+- [ ] EngineTestHarness properly initializes OpenGL/OpenAL contexts
+- [ ] Test coverage >80% for all three system classes (currently 0% due to execution failures)
+- [ ] Tests pass reliably with `xvfb-run -a mvn verify`
+- [ ] Any additional unit tests follow project's testing philosophy
+- [ ] Fix root cause of "Engine initialization failed" errors
 
 ## Related Files
 - `engine/src/main/java/september/engine/systems/`
