@@ -17,19 +17,19 @@ public final class WindowContext implements AutoCloseable {
   private long handle = 0L;
 
   public WindowContext(int width, int height, String title) {
-    // Single attempt: request OpenGL 4.5 core profile (compatible with CI environment)
+    // Single attempt: request OpenGL 4.6 core profile
     GLFW.glfwDefaultWindowHints();
     GLFW.glfwWindowHint(GLFW.GLFW_CLIENT_API, GLFW.GLFW_OPENGL_API);
     GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 4);
-    GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 5);
+    GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 6);
     GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_CORE_PROFILE);
     GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, GLFW.GLFW_TRUE); // Added for resize support
     GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE); // Create hidden, show after setup
 
-    log.info("Creating GLFW window with OpenGL 4.5 core profile");
+    log.info("Creating GLFW window with OpenGL 4.6 core profile");
     long window = GLFW.glfwCreateWindow(width, height, title, 0L, 0L);
     if (window == 0L) {
-      throw new IllegalStateException("Unable to create GLFW window (requested OpenGL 4.5 core profile)");
+      throw new IllegalStateException("Unable to create GLFW window (requested OpenGL 4.6 core profile)");
     }
 
     this.handle = window;
