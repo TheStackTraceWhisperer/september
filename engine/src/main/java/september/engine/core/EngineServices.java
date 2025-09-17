@@ -15,7 +15,7 @@ public record EngineServices(
   IWorld world,
   SystemManager systemManager,
   GameStateManager gameStateManager,
-  september.engine.scene.SceneManager sceneManager, ResourceManager resourceManager,
+  ResourceManager resourceManager,
   InputService inputService,
   GamepadService gamepadService,
   TimeService timeService,

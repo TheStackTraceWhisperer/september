@@ -33,9 +33,9 @@ public class GameStateManager {
   /**
    * Removes the current state from the stack, returning to the previous state.
    */
-  public void popState() {
+  public void popState(EngineServices services) {
     if (!stateStack.isEmpty()) {
-      stateStack.pop().onExit();
+      stateStack.pop().onExit(services);
     }
   }
 
@@ -46,7 +46,7 @@ public class GameStateManager {
    */
   public void changeState(GameState state, EngineServices services) {
     if (!stateStack.isEmpty()) {
-      stateStack.pop().onExit();
+      stateStack.pop().onExit(services);
     }
     stateStack.push(state);
     state.onEnter(services);

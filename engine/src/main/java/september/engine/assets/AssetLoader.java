@@ -84,8 +84,9 @@ public final class AssetLoader {
    * @param filePath The classpath resource path.
    * @return The contents of the file as a string.
    */
-  private static String readResourceToString(String filePath) {
-    try (InputStream is = AssetLoader.class.getClassLoader().getResourceAsStream(filePath)) {
+  public static String readResourceToString(String filePath) {
+    String correctedPath = filePath.startsWith("/") ? filePath.substring(1) : filePath;
+    try (InputStream is = AssetLoader.class.getClassLoader().getResourceAsStream(correctedPath)) {
       if (is == null) {
         throw new IOException("Resource not found: " + filePath);
       }
@@ -109,7 +110,8 @@ public final class AssetLoader {
    * @return A ByteBuffer containing the file data.
    */
   public static ByteBuffer readResourceToByteBuffer(String filePath) throws IOException {
-    InputStream source = AssetLoader.class.getClassLoader().getResourceAsStream(filePath);
+    String correctedPath = filePath.startsWith("/") ? filePath.substring(1) : filePath;
+    InputStream source = AssetLoader.class.getClassLoader().getResourceAsStream(correctedPath);
     if (source == null) {
         throw new IOException("Resource not found: " + filePath);
     }

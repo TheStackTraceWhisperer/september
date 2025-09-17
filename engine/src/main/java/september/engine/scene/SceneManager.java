@@ -1,54 +1,59 @@
 package september.engine.scene;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.extern.slf4j.Slf4j;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import september.engine.assets.AssetLoader;
 import september.engine.ecs.Component;
+import september.engine.ecs.ComponentRegistry;
 import september.engine.ecs.IWorld;
+import september.engine.scene.mixin.JomlMixins;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Map;
 
-@Slf4j
 public class SceneManager {
-  private static final ObjectMapper MAPPER = new ObjectMapper();
-  private final Map<String, Class<? extends Component>> componentRegistry;
+    private static final Logger log = LoggerFactory.getLogger(SceneManager.class);
+    private final IWorld world;
+    private final ComponentRegistry componentRegistry;
+    private final ObjectMapper objectMapper;
 
-  public SceneManager(Map<String, Class<? extends Component>> componentRegistry) {
-    this.componentRegistry = componentRegistry;
-  }
-
-  public void load(String path, IWorld world) {
-    log.info("Loading scene: {}", path);
-
-    world.getEntitiesWith().forEach(world::destroyEntity);
-
-    try(InputStream sceneStream = SceneManager.class.getResourceAsStream(path)) {
-      if(sceneStream == null) {
-        throw new IOException("Scene file not found: " + path);
-      }
-      Scene scene = MAPPER.readValue(sceneStream, Scene.class);
-      log.info("Successfully parsed scene: {}", scene.name());
-
-      for(EntityTemplate template : scene.entities()) {
-        int entity = world.createEntity();
-        log.info("creating entity {} with id {}", template.name(), entity);
-
-        for(Map.Entry<String, Object> componentEntity : template.components().entrySet()) {
-          String componentName = componentEntity.getKey();
-          Class<? extends Component> componentClass = componentRegistry.get(componentName);
-
-          if(componentClass != null) {
-            Component component = MAPPER.convertValue(componentEntity.getValue(), componentClass);
-            world.addComponent(entity, component);
-          } else {
-            log.warn("Unknown component type '{}' for entity '{}'", componentName, template.name());
-          }
-        }
-      }
-    } catch (Exception e) {
-      log.error("Failed to load scene {}", path, e);
+    public SceneManager(IWorld world, ComponentRegistry componentRegistry) {
+        this.world = world;
+        this.componentRegistry = componentRegistry;
+        this.objectMapper = new ObjectMapper();
+        // Register the mix-ins to teach Jackson how to handle JOML types
+        this.objectMapper.addMixIn(Matrix4f.class, JomlMixins.Matrix4fMixin.class);
+        this.objectMapper.addMixIn(Vector3f.class, JomlMixins.Vector3fMixin.class);
     }
-  }
 
+    public void load(String scenePath) {
+        try {
+            log.info("Loading scene: {}", scenePath);
+            String jsonContent = AssetLoader.readResourceToString(scenePath);
+            Scene scene = objectMapper.readValue(jsonContent, Scene.class);
+            log.info("Successfully parsed scene: {}", scene.name());
+
+            for (var entityDef : scene.entities()) {
+                int entityId = world.createEntity();
+                log.info("Created entity '{}' with id {}", entityDef.name(), entityId);
+                for (Map.Entry<String, Object> componentEntry : entityDef.components().entrySet()) {
+                    try {
+                        // Get the class from the registry instead of hardcoding the path
+                        Class<?> componentClass = componentRegistry.getClassFor(componentEntry.getKey());
+                        // Convert the map data to a component instance
+                        Object component = objectMapper.convertValue(componentEntry.getValue(), componentClass);
+                        world.addComponent(entityId, (Component) component);
+                    } catch (IllegalArgumentException e) {
+                        log.error("Component type '{}' not registered. Skipping.", componentEntry.getKey(), e);
+                    } catch (Exception e) {
+                        log.error("Failed to add component {} to entity {}", componentEntry.getKey(), entityDef.name(), e);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Failed to load scene {}", scenePath, e);
+        }
+    }
 }

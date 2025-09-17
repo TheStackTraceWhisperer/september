@@ -27,7 +27,7 @@ public interface GameState {
    * Called when the state is about to be exited.
    * Use this for cleanup before transitioning to a new state.
    */
-  void onExit();
+  void onExit(EngineServices services);
 
   // Future methods to be added for a stack-based FSM:
   // void onSuspend();

@@ -58,9 +58,10 @@ public abstract class EngineTestHarness {
     }
 
     @Override
-    public void onExit() {
-      // No-op for the harness.
+    public void onExit(EngineServices services) {
+
     }
+
   }
 
   /**

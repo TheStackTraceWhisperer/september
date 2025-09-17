@@ -1,0 +1,32 @@
+{
+  "name": "Default Playing Scene",
+  "entities": [
+    {
+      "name": "Player",
+      "components": {
+        "TransformComponent": {},
+        "SpriteComponent": {
+          "textureHandle": "player_texture"
+        },
+        "ControllableComponent": {},
+        "MovementStatsComponent": {
+          "speed": 2.5
+        },
+        "PlayerComponent": {}
+      }
+    },
+    {
+      "name": "Enemy",
+      "components": {
+        "TransformComponent": {},
+        "SpriteComponent": {
+          "textureHandle": "enemy_texture"
+        },
+        "MovementStatsComponent": {
+          "speed": 2.5
+        },
+        "EnemyComponent": {}
+      }
+    }
+  ]
+}
