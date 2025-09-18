@@ -78,7 +78,10 @@ public final class AudioBuffer implements AutoCloseable {
    * This follows the same pattern used elsewhere in the engine for asset loading.
    */
   private static ByteBuffer loadResourceAsBuffer(String resourcePath) {
-    try (var inputStream = AudioBuffer.class.getResourceAsStream(resourcePath)) {
+    // Ensure the resource path starts with / for classpath lookup
+    String correctedPath = resourcePath.startsWith("/") ? resourcePath : "/" + resourcePath;
+    
+    try (var inputStream = AudioBuffer.class.getResourceAsStream(correctedPath)) {
       if (inputStream == null) {
         return null;
       }
