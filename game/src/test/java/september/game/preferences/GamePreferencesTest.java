@@ -4,7 +4,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.AfterEach;
 import september.engine.core.preferences.PreferencesService;
-import september.engine.core.preferences.PreferencesServiceImpl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -16,7 +15,7 @@ class GamePreferencesTest {
     @BeforeEach
     void setUp() {
         String testNodeName = "test-game-prefs-" + System.currentTimeMillis();
-        preferencesService = new PreferencesServiceImpl(testNodeName);
+        preferencesService = new PreferencesService(testNodeName);
         gamePreferences = new GamePreferences(preferencesService);
     }
 
@@ -146,9 +145,9 @@ class GamePreferencesTest {
 
         // When - save and create new instance
         preferencesService.flush();
-        String testNodeName = ((PreferencesServiceImpl) preferencesService).getNodeName();
+        String testNodeName = ((PreferencesService) preferencesService).getNodeName();
 
-        try (PreferencesService newService = new PreferencesServiceImpl(testNodeName)) {
+        try (PreferencesService newService = new PreferencesService(testNodeName)) {
             GamePreferences newGamePrefs = new GamePreferences(newService);
 
             // Then - values should be persisted

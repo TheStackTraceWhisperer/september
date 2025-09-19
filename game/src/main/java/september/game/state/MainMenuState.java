@@ -3,6 +3,7 @@ package september.game.state;
 import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFW;
 import september.engine.core.EngineServices;
+import september.engine.events.StartNewGameEvent;
 import september.engine.state.GameState;
 import september.engine.systems.RenderSystem;
 
@@ -24,7 +25,7 @@ public class MainMenuState implements GameState {
   public void onUpdate(EngineServices services, float deltaTime) {
     // For now, we'll listen for the Enter key to transition to the playing state.
     if (services.inputService().isKeyPressed(GLFW.GLFW_KEY_ENTER)) {
-      services.gameStateManager().changeState(new PlayingState(), services);
+      services.eventBus().publish(new StartNewGameEvent());
     }
   }
 

@@ -7,7 +7,7 @@ import september.engine.audio.AudioManager;
 import september.engine.core.Engine;
 import september.engine.core.EngineServices;
 import september.engine.core.Game;
-import september.engine.core.MainLoopPolicy;
+import september.engine.core.ApplicationLoopPolicy;
 import september.engine.ecs.Component;
 import september.engine.ecs.IWorld;
 import september.engine.ecs.SystemManager;
@@ -68,6 +68,12 @@ public abstract class EngineTestHarness {
    * A minimal Game implementation that provides the TestGameState as the entry point.
    */
   private static class TestGame implements Game {
+
+    @Override
+    public void init(EngineServices services) {
+
+    }
+
     @Override
     public GameState getInitialState(EngineServices services) {
       return new TestGameState();
@@ -82,7 +88,7 @@ public abstract class EngineTestHarness {
   @BeforeEach
   void setUp() {
     Game testGame = new TestGame();
-    engine = new Engine(testGame, MainLoopPolicy.skip());
+    engine = new Engine(testGame, ApplicationLoopPolicy.skip());
     engine.init();
 
     // Retrieve all the live, initialized services from the engine instance.

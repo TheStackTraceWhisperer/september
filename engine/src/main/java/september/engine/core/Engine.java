@@ -9,22 +9,20 @@ import september.engine.core.input.GlfwInputService;
 import september.engine.core.input.InputService;
 import september.engine.core.input.GamepadService;
 import september.engine.core.preferences.PreferencesService;
-import september.engine.core.preferences.PreferencesServiceImpl;
-import september.engine.ecs.ISystem;
 import september.engine.ecs.IWorld;
 import september.engine.ecs.SystemManager;
+import september.engine.events.EventBus;
 import september.engine.rendering.Camera;
 import september.engine.rendering.Renderer;
 import september.engine.rendering.gl.OpenGLRenderer;
 import september.engine.scene.SceneManager;
 import september.engine.state.GameState;
 import september.engine.state.GameStateManager;
-import september.engine.systems.RenderSystem;
 
 public final class Engine implements Runnable {
   private static final Logger log = LoggerFactory.getLogger(Engine.class);
   private final Game game;
-  private final MainLoopPolicy loopPolicy;
+  private final ApplicationLoopPolicy loopPolicy;
 
   // Services managed by the Engine
   private IWorld world;
@@ -42,8 +40,9 @@ public final class Engine implements Runnable {
   private GameStateManager gameStateManager;
   private EngineServices services;
   private SceneManager sceneManager;
+  private EventBus eventBus;
 
-  public Engine(Game game, MainLoopPolicy loopPolicy) {
+  public Engine(Game game, ApplicationLoopPolicy loopPolicy) {
     this.game = game;
     this.loopPolicy = loopPolicy;
   }
@@ -54,13 +53,14 @@ public final class Engine implements Runnable {
       world = new september.engine.ecs.World();
       systemManager = new SystemManager();
       gameStateManager = new GameStateManager();
+      eventBus = new EventBus();
       timeService = new SystemTimer();
       resourceManager = new ResourceManager();
       inputService = new GlfwInputService();
       gamepadService = new GlfwGamepadService();
       audioManager = new AudioManager();
       sceneManager = new SceneManager(game.getComponentRegistry(), resourceManager);
-      preferencesService = new PreferencesServiceImpl("september-engine");
+      preferencesService = new PreferencesService("september-engine");
       glfwContext = new GlfwContext();
       window = new WindowContext(800, 600, "September Engine");
       renderer = new OpenGLRenderer();
@@ -69,7 +69,7 @@ public final class Engine implements Runnable {
 
       // --- CREATE THE FINAL SERVICES OBJECT ---
       this.services = new EngineServices(world, systemManager, gameStateManager,
-        resourceManager, sceneManager, inputService, gamepadService, timeService, audioManager,
+        resourceManager, sceneManager, eventBus, inputService, gamepadService, timeService, audioManager,
         preferencesService, camera, renderer, window);
 
       // --- SET UP CALLBACKS ---
@@ -80,6 +80,7 @@ public final class Engine implements Runnable {
       audioManager.initialize();
 
       // --- INITIALIZE THE GAME AND SET THE INITIAL STATE ---
+      game.init(this.services);
       GameState initialState = game.getInitialState(services);
       gameStateManager.pushState(initialState, services);
 

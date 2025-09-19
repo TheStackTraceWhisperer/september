@@ -1,59 +1,118 @@
 package september.engine.core.preferences;
 
+import java.util.Objects;
+import lombok.extern.slf4j.Slf4j;
+
 /**
- * Type-safe property wrapper that provides access to a preference value
- * with automatic serialization/deserialization and change tracking.
- *
- * @param <T> the type of the property value
+ * Implementation of Property interface that tracks changes and handles serialization.
  */
-public interface Property<T> {
-    
+@Slf4j
+public final class Property<T>{
+
+    private final String key;
+    private final T defaultValue;
+    private final PropertyType<T> type;
+    private final PreferencesService service;
+
+    private T currentValue;
+
+    Property(String key, T defaultValue, PropertyType<T> type, PreferencesService service) {
+        this.key = key;
+        this.defaultValue = defaultValue;
+        this.type = type;
+        this.service = service;
+
+        // Load initial value from preferences
+        this.currentValue = loadFromPreferences();
+    }
+
+    public T get() {
+        return currentValue;
+    }
+
+    public void set(T value) {
+        if (!Objects.equals(currentValue, value)) {
+            currentValue = value;
+            // Update the active properties in the service
+            String serializedValue = type.serialize(value);
+            service.setPropertyValue(key, serializedValue);
+        }
+    }
+
+    public T getDefault() {
+        return defaultValue;
+    }
+
+    public boolean isModified() {
+        return !Objects.equals(currentValue, defaultValue);
+    }
+
+    public boolean isDirty() {
+        // A property is dirty if its current value differs from the saved value
+        T savedValue = getSavedValue();
+        return !Objects.equals(currentValue, savedValue);
+    }
+
+    public void revert() {
+        if (isDirty()) {
+            T savedValue = getSavedValue();
+            currentValue = savedValue;
+            // Update the active properties to match the saved state for this key
+            if (savedValue != null) {
+                String serializedValue = type.serialize(savedValue);
+                service.setPropertyValue(key, serializedValue);
+            } else {
+                // Remove from active properties if no saved value exists
+                service.setPropertyValue(key, null);
+            }
+        }
+    }
+
+    public String getKey() {
+        return key;
+    }
+
     /**
-     * Gets the current value of the property.
-     * If no value has been set, returns the default value.
-     *
-     * @return the current property value
+     * Loads the value from preferences, returning the default if not found.
      */
-    T get();
-    
+    private T loadFromPreferences() {
+        String serializedValue = service.getPropertyValue(key);
+        if (serializedValue == null) {
+            return defaultValue;
+        }
+
+        try {
+            return type.deserialize(serializedValue);
+        } catch (Exception e) {
+            // If deserialization fails, return default and log error
+            log.error("Failed to deserialize preference '{}'", key, e);
+            return defaultValue;
+        }
+    }
+
     /**
-     * Sets the property value. The change will be saved according to
-     * the preferences service's debouncing policy.
-     *
-     * @param value the new value to set
+     * Gets the saved (baseline) value for this property.
      */
-    void set(T value);
-    
+    private T getSavedValue() {
+        String serializedValue = service.getSavedPropertyValue(key);
+        if (serializedValue == null) {
+            return defaultValue;
+        }
+
+        try {
+            return type.deserialize(serializedValue);
+        } catch (Exception e) {
+            // If deserialization fails, return default
+            return defaultValue;
+        }
+    }
+
     /**
-     * Gets the default value for this property.
-     *
-     * @return the default value
+     * Reloads the value from the current active state.
+     * Called during revert operations to sync with the service state.
      */
-    T getDefault();
-    
-    /**
-     * Returns true if the current value differs from the default.
-     *
-     * @return true if the value has been modified from default
-     */
-    boolean isModified();
-    
-    /**
-     * Returns true if there are unsaved changes to this property.
-     *
-     * @return true if changes are pending save
-     */
-    boolean isDirty();
-    
-    /**
-     * Reverts this property to its last saved value.
-     */
-    void revert();
-    
-    /**
-     * Gets the preference key for this property.
-     *
-     * @return the preference key
-     */
-    String getKey();
+    void reload() {
+        T reloadedValue = loadFromPreferences();
+        currentValue = reloadedValue;
+    }
 }

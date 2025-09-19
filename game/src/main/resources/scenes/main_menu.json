@@ -24,7 +24,9 @@
     {
       "name": "Background",
       "components": {
-        "TransformComponent": {},
+        "TransformComponent": {
+          "position": {"x": 0.0, "y": 0.0, "z": 0.0}
+        },
         "SpriteComponent": {
           "textureHandle": "main_menu_bg"
         }

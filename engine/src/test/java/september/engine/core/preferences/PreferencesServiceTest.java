@@ -6,8 +6,6 @@ import org.junit.jupiter.api.AfterEach;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.concurrent.TimeUnit;
-
 class PreferencesServiceTest {
 
     private PreferencesService preferencesService;
@@ -16,7 +14,7 @@ class PreferencesServiceTest {
     void setUp() {
         // Use a unique node name for each test to avoid interference
         String testNodeName = "test-" + System.currentTimeMillis();
-        preferencesService = new PreferencesServiceImpl(testNodeName); // Short debounce for testing
+        preferencesService = new PreferencesService(testNodeName); // Short debounce for testing
     }
 
     @AfterEach
@@ -72,8 +70,8 @@ class PreferencesServiceTest {
         assertThat(property.isDirty()).isFalse();
 
         // Create a new service with the same node to verify persistence
-        String testNodeName = ((PreferencesServiceImpl) preferencesService).getNodeName();
-        try (PreferencesService newService = new PreferencesServiceImpl(testNodeName)) {
+        String testNodeName = ((PreferencesService) preferencesService).getNodeName();
+        try (PreferencesService newService = new PreferencesService(testNodeName)) {
             Property<Integer> reloadedProperty = newService.createProperty("test.int", 42, PropertyType.INTEGER);
             assertThat(reloadedProperty.get()).isEqualTo(newValue);
         }

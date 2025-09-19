@@ -11,6 +11,13 @@ import java.util.Map;
  * state machine.
  */
 public interface Game {
+
+  /**
+   *
+   * @param services
+   */
+  void init(EngineServices services);
+
   /**
    * Called once by the Engine to get the initial state of the game.
    *

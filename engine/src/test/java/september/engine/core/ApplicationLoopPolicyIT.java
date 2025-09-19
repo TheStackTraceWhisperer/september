@@ -11,14 +11,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Integration test for MainLoopPolicy, verifying its behavior against a live GLFW window handle.
  */
-class MainLoopPolicyIT extends EngineTestHarness {
+class ApplicationLoopPolicyIT extends EngineTestHarness {
 
     @Test
     @DisplayName("frames() policy should continue for the specified number of frames")
     void frames_policy_continuesForCorrectFrameCount() {
         // Arrange
         final int frameCount = 5;
-        MainLoopPolicy policy = MainLoopPolicy.frames(frameCount);
+        ApplicationLoopPolicy policy = ApplicationLoopPolicy.frames(frameCount);
         long windowHandle = engine.getWindow().handle();
 
         // Act & Assert
@@ -37,7 +37,7 @@ class MainLoopPolicyIT extends EngineTestHarness {
     void timed_policy_stopsAfterDuration() throws InterruptedException {
         // Arrange
       Duration duration = Duration.ofMillis(100);
-      MainLoopPolicy policy = MainLoopPolicy.timed(duration);
+      ApplicationLoopPolicy policy = ApplicationLoopPolicy.timed(duration);
         long windowHandle = engine.getWindow().handle();
 
         // Act & Assert
@@ -57,7 +57,7 @@ class MainLoopPolicyIT extends EngineTestHarness {
     @DisplayName("standard() policy should continue as long as the window is open")
     void standard_policy_continuesWhenWindowIsOpen() {
         // Arrange
-        MainLoopPolicy policy = MainLoopPolicy.standard();
+        ApplicationLoopPolicy policy = ApplicationLoopPolicy.standard();
         long windowHandle = engine.getWindow().handle();
 
         // The harness ensures the window is open, so glfwWindowShouldClose should be false.
@@ -74,7 +74,7 @@ class MainLoopPolicyIT extends EngineTestHarness {
     @DisplayName("never() policy should always return false")
     void skip_policy_alwaysReturnsFalse() {
         // Arrange
-        MainLoopPolicy policy = MainLoopPolicy.skip();
+        ApplicationLoopPolicy policy = ApplicationLoopPolicy.skip();
         long windowHandle = engine.getWindow().handle();
 
         // Act & Assert

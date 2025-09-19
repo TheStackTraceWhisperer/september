@@ -4,14 +4,18 @@ import lombok.extern.slf4j.Slf4j;
 import september.engine.core.Engine;
 import september.engine.core.EngineServices;
 import september.engine.core.Game;
-import september.engine.core.MainLoopPolicy;
+import september.engine.core.ApplicationLoopPolicy;
 import september.engine.ecs.Component;
 import september.engine.ecs.components.ColliderComponent;
 import september.engine.ecs.components.ControllableComponent;
 import september.engine.ecs.components.MovementStatsComponent;
 import september.engine.ecs.components.SpriteComponent;
 import september.engine.ecs.components.TransformComponent;
+import september.engine.events.StartNewGameEvent;
 import september.engine.state.GameState;
+import september.engine.ui.components.UIButtonComponent;
+import september.engine.ui.components.UIImageComponent;
+import september.engine.ui.components.UITransformComponent;
 import september.game.components.EnemyComponent;
 import september.game.components.HealthComponent;
 import september.game.components.PlayerComponent;
@@ -23,6 +27,23 @@ import java.util.Map;
 
 @Slf4j
 public final class Main implements Game {
+  private EngineServices services;
+
+  @Override
+  public void init(EngineServices services) {
+    this.services = services;
+    // The Game implementation is responsible for its own event handling.
+    registerEventHandlers();
+  }
+
+  private void registerEventHandlers() {
+    services.eventBus().subscribe(StartNewGameEvent.class, this::onStartNewGame);
+  }
+
+  private void onStartNewGame(StartNewGameEvent event) {
+    log.info("StartNewGameEvent received, changing to PlayingState.");
+    services.gameStateManager().changeState(new PlayingState(), services);
+  }
 
   @Override
   public GameState getInitialState(EngineServices services) {
@@ -44,6 +65,11 @@ public final class Main implements Game {
     registry.put("PlayerComponent", PlayerComponent.class);
     registry.put("EnemyComponent", EnemyComponent.class);
     registry.put("HealthComponent", HealthComponent.class);
+
+    registry.put("UITransformComponent", UITransformComponent.class);
+    registry.put("UIImageComponent", UIImageComponent.class);
+    registry.put("UIButtonComponent", UIButtonComponent.class);
+
     return registry;
   }
 
@@ -51,7 +77,7 @@ public final class Main implements Game {
     try {
       Game myGame = new Main();
       // The Engine takes the Game object and a loop policy.
-      Engine gameEngine = new Engine(myGame, september.engine.core.MainLoopPolicy.standard());
+      Engine gameEngine = new Engine(myGame, ApplicationLoopPolicy.standard());
       gameEngine.run();
     } catch (Exception e) {
       log.error("A fatal error occurred.", e);
