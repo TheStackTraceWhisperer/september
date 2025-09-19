@@ -1,7 +1,7 @@
 package september.engine.systems;
 
 import org.joml.Matrix4f;
-import org.joml.Vector3f;
+import org.joml.Vector4f;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -9,12 +9,13 @@ import september.engine.EngineTestHarness;
 import september.engine.ecs.components.SpriteComponent;
 import september.engine.ecs.components.TransformComponent;
 
-import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
- * Integration test for the RenderSystem that runs against a live, engine-managed World
- * with real OpenGL rendering functionality.
+ * Integration smoke test for the RenderSystem.
+ * This test verifies that the system can successfully render a scene with a renderable entity
+ * using a live world, renderer, resource manager, and camera.
  */
 class RenderSystemIT extends EngineTestHarness {
 
@@ -36,7 +37,7 @@ class RenderSystemIT extends EngineTestHarness {
         // Create a renderable entity in the world.
         int entity = world.createEntity();
         world.addComponent(entity, new TransformComponent());
-        world.addComponent(entity, new SpriteComponent("player_texture")); // Use a pre-loaded texture
+        world.addComponent(entity, new SpriteComponent("player_texture", new Vector4f(1.0f, 0.0f, 0.0f, 1.0f))); // Use a pre-loaded texture
 
         // --- Act & Assert ---
         // The test passes if the entire rendering pipeline executes without any exceptions.
@@ -94,12 +95,12 @@ class RenderSystemIT extends EngineTestHarness {
         // --- Arrange ---
         int entity = world.createEntity();
         TransformComponent transform = new TransformComponent();
-        
+
         // Set up a complex transform
         transform.position.set(2.0f, 3.0f, 1.0f);
         transform.rotation.rotateZ((float) Math.toRadians(45)); // 45 degree rotation
         transform.scale.set(1.5f, 2.0f, 1.0f); // Non-uniform scaling
-        
+
         world.addComponent(entity, transform);
         world.addComponent(entity, new SpriteComponent("player_texture"));
 
@@ -115,7 +116,7 @@ class RenderSystemIT extends EngineTestHarness {
         // --- Arrange ---
         int entityWithoutSprite = world.createEntity();
         world.addComponent(entityWithoutSprite, new TransformComponent());
-        
+
         int entityWithSprite = world.createEntity();
         world.addComponent(entityWithSprite, new TransformComponent());
         world.addComponent(entityWithSprite, new SpriteComponent("player_texture"));
@@ -133,7 +134,7 @@ class RenderSystemIT extends EngineTestHarness {
         // --- Arrange ---
         int entityWithoutTransform = world.createEntity();
         world.addComponent(entityWithoutTransform, new SpriteComponent("player_texture"));
-        
+
         int entityWithBoth = world.createEntity();
         world.addComponent(entityWithBoth, new TransformComponent());
         world.addComponent(entityWithBoth, new SpriteComponent("player_texture"));
@@ -192,21 +193,21 @@ class RenderSystemIT extends EngineTestHarness {
         assertThatCode(() -> {
             // Render with initial entity
             renderSystem.update(0.016f);
-            
+
             // Add new entity
             int newEntity = world.createEntity();
             world.addComponent(newEntity, new TransformComponent());
             world.addComponent(newEntity, new SpriteComponent("player_texture"));
-            
+
             // Render with both entities
             renderSystem.update(0.016f);
-            
+
             // Remove the new entity
             world.destroyEntity(newEntity);
-            
+
             // Render with just the permanent entity
             renderSystem.update(0.016f);
-            
+
         }).as("RenderSystem should handle entity changes gracefully")
                 .doesNotThrowAnyException();
     }
@@ -217,21 +218,21 @@ class RenderSystemIT extends EngineTestHarness {
         // --- Arrange ---
         int entity = world.createEntity();
         TransformComponent transform = new TransformComponent();
-        
+
         // Set up a complex transform
         transform.position.set(2.0f, 3.0f, 1.0f);
         transform.rotation.rotateZ((float) Math.toRadians(45)); // 45 degree rotation
         transform.scale.set(1.5f, 2.0f, 1.0f); // Non-uniform scaling
-        
+
         world.addComponent(entity, transform);
-        world.addComponent(entity, new SpriteComponent("player_texture"));
+        world.addComponent(entity, new SpriteComponent("player_texture", new Vector4f(1.0f, 1.0f, 1.0f, 1.0f)));
 
         // --- Act & Assert ---
         // The key test is that the system can handle complex transforms without errors
         assertThatCode(() -> renderSystem.update(0.016f))
                 .as("RenderSystem should handle complex transforms without errors")
                 .doesNotThrowAnyException();
-                
+
         // Verify the transform matrix can be calculated
         Matrix4f transformMatrix = transform.getTransformMatrix();
         assertThat(transformMatrix).as("Transform matrix should not be null").isNotNull();

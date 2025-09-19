@@ -31,7 +31,8 @@ public class EnemyAISystem implements ISystem {
       // This creates a smooth back-and-forth movement.
       float horizontalPosition = (float) Math.sin(timeService.getTotalTime()) * travelDistance;
 
-      transform.position.x = horizontalPosition;
+      // We must use the vector's methods to modify it, not direct field access.
+      transform.position.set(horizontalPosition, transform.position.y(), transform.position.z());
     }
   }
 }

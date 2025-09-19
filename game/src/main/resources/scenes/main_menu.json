@@ -1,6 +1,6 @@
 {
-  "sceneName": "Main Menu",
-  "assetManifest": {
+  "name": "Main Menu",
+  "manifest": {
     "textures": [
       {
         "handle": "main_menu_bg",

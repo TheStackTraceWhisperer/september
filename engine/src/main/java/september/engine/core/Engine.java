@@ -59,6 +59,7 @@ public final class Engine implements Runnable {
       inputService = new GlfwInputService();
       gamepadService = new GlfwGamepadService();
       audioManager = new AudioManager();
+      sceneManager = new SceneManager(game.getComponentRegistry(), resourceManager);
       preferencesService = new PreferencesServiceImpl("september-engine");
       glfwContext = new GlfwContext();
       window = new WindowContext(800, 600, "September Engine");
@@ -95,6 +96,7 @@ public final class Engine implements Runnable {
       timeService.update();
       float dt = timeService.getDeltaTime();
       gameStateManager.update(services, dt);
+      systemManager.updateAll(dt);
       window.swapBuffers();
       frames++;
     }

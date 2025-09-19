@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import september.engine.assets.ResourceManager;
 import september.engine.ecs.Component;
 import september.engine.ecs.IWorld;
+import september.engine.scene.json.CustomJomlModule;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,7 +13,8 @@ import java.util.Map;
 
 @Slf4j
 public class SceneManager {
-  private static final ObjectMapper MAPPER = new ObjectMapper();
+  private static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new CustomJomlModule());
+
   private final Map<String, Class<? extends Component>> componentRegistry;
   private final ResourceManager resourceManager;
 

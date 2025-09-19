@@ -4,6 +4,7 @@ import org.joml.Vector3f;
 import september.engine.core.EngineServices;
 import september.engine.state.GameState;
 import september.engine.systems.MovementSystem;
+import september.engine.systems.RenderSystem;
 import september.game.input.InputMappingService;
 import september.game.input.MultiDeviceMappingService;
 import september.game.systems.EnemyAISystem;
@@ -26,6 +27,7 @@ public class PlayingState implements GameState {
     systemManager.register(new PlayerInputSystem(world, mappingService));
     systemManager.register(new MovementSystem(world));
     systemManager.register(new EnemyAISystem(world, services.timeService()));
+    systemManager.register(new RenderSystem(world, services.renderer(), services.resourceManager(), services.camera()));
   }
 
   @Override

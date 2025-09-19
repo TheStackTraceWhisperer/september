@@ -15,11 +15,13 @@ class SpriteComponentTest {
         String expectedHandle = "player_sprite";
 
         // Act
-        SpriteComponent component = new SpriteComponent(expectedHandle);
+        // We now test the compact constructor's logic by passing null for the color.
+        SpriteComponent component = new SpriteComponent(expectedHandle, null);
 
         // Assert
-        assertThat(component.textureHandle).as("Texture handle").isEqualTo(expectedHandle);
-        assertThat(component.color).as("Default color").isEqualTo(new Vector4f(1.0f, 1.0f, 1.0f, 1.0f));
+        // Use accessor methods for records
+        assertThat(component.textureHandle()).as("Texture handle").isEqualTo(expectedHandle);
+        assertThat(component.color()).as("Default color").isEqualTo(new Vector4f(1.0f, 1.0f, 1.0f, 1.0f));
     }
 
     @Test
@@ -33,7 +35,8 @@ class SpriteComponentTest {
         SpriteComponent component = new SpriteComponent(expectedHandle, expectedColor);
 
         // Assert
-        assertThat(component.textureHandle).as("Texture handle").isEqualTo(expectedHandle);
-        assertThat(component.color).as("Custom color").isEqualTo(expectedColor);
+        // Use accessor methods for records
+        assertThat(component.textureHandle()).as("Texture handle").isEqualTo(expectedHandle);
+        assertThat(component.color()).as("Custom color").isEqualTo(expectedColor);
     }
 }

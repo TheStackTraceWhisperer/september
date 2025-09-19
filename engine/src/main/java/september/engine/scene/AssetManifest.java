@@ -12,7 +12,7 @@ public record AssetManifest(
   @JsonCreator
   public AssetManifest(
     @JsonProperty("textures") List<TextureDefinition> textures,
-    @JsonProperty("textures") List<MeshDefinition> meshes
+    @JsonProperty("meshes") List<MeshDefinition> meshes
   ) {
     this.textures = textures != null ? textures : List.of();
     this.meshes = meshes != null ? meshes : List.of();
