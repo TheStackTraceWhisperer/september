@@ -1,6 +1,7 @@
 package september.engine.systems;
 
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import org.joml.Vector4f;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -69,19 +70,19 @@ class RenderSystemIT extends EngineTestHarness {
         TransformComponent transform1 = new TransformComponent();
         transform1.position.set(0.0f, 0.0f, 0.0f);
         world.addComponent(entity1, transform1);
-        world.addComponent(entity1, new SpriteComponent("player_texture"));
+        world.addComponent(entity1, new SpriteComponent("player_texture", new Vector4f(1.0f)));
 
         int entity2 = world.createEntity();
         TransformComponent transform2 = new TransformComponent();
         transform2.position.set(5.0f, 3.0f, 0.0f);
         world.addComponent(entity2, transform2);
-        world.addComponent(entity2, new SpriteComponent("player_texture"));
+        world.addComponent(entity2, new SpriteComponent("player_texture", new Vector4f(1.0f)));
 
         int entity3 = world.createEntity();
         TransformComponent transform3 = new TransformComponent();
         transform3.position.set(-2.0f, -1.0f, 0.0f);
         world.addComponent(entity3, transform3);
-        world.addComponent(entity3, new SpriteComponent("player_texture"));
+        world.addComponent(entity3, new SpriteComponent("player_texture", new Vector4f(1.0f)));
 
         // --- Act & Assert ---
         assertThatCode(() -> renderSystem.update(0.016f))
@@ -102,7 +103,7 @@ class RenderSystemIT extends EngineTestHarness {
         transform.scale.set(1.5f, 2.0f, 1.0f); // Non-uniform scaling
 
         world.addComponent(entity, transform);
-        world.addComponent(entity, new SpriteComponent("player_texture"));
+        world.addComponent(entity, new SpriteComponent("player_texture", new Vector4f(1.0f)));
 
         // --- Act & Assert ---
         assertThatCode(() -> renderSystem.update(0.016f))
@@ -119,7 +120,7 @@ class RenderSystemIT extends EngineTestHarness {
 
         int entityWithSprite = world.createEntity();
         world.addComponent(entityWithSprite, new TransformComponent());
-        world.addComponent(entityWithSprite, new SpriteComponent("player_texture"));
+        world.addComponent(entityWithSprite, new SpriteComponent("player_texture", new Vector4f(1.0f)));
 
         // --- Act & Assert ---
         // The system should only render entities that have both components
@@ -133,11 +134,11 @@ class RenderSystemIT extends EngineTestHarness {
     void update_handlesEntitiesWithoutTransforms_gracefully() {
         // --- Arrange ---
         int entityWithoutTransform = world.createEntity();
-        world.addComponent(entityWithoutTransform, new SpriteComponent("player_texture"));
+        world.addComponent(entityWithoutTransform, new SpriteComponent("player_texture", new Vector4f(1.0f)));
 
         int entityWithBoth = world.createEntity();
         world.addComponent(entityWithBoth, new TransformComponent());
-        world.addComponent(entityWithBoth, new SpriteComponent("player_texture"));
+        world.addComponent(entityWithBoth, new SpriteComponent("player_texture", new Vector4f(1.0f)));
 
         // --- Act & Assert ---
         // The system should only render entities that have both components
@@ -152,7 +153,7 @@ class RenderSystemIT extends EngineTestHarness {
         // --- Arrange ---
         int entity = world.createEntity();
         world.addComponent(entity, new TransformComponent());
-        world.addComponent(entity, new SpriteComponent("player_texture"));
+        world.addComponent(entity, new SpriteComponent("player_texture", new Vector4f(1.0f)));
 
         // Move the camera to a different position
         camera.setPosition(new Vector3f(10.0f, 5.0f, 3.0f));
@@ -169,7 +170,7 @@ class RenderSystemIT extends EngineTestHarness {
         // --- Arrange ---
         int entity = world.createEntity();
         world.addComponent(entity, new TransformComponent());
-        world.addComponent(entity, new SpriteComponent("player_texture"));
+        world.addComponent(entity, new SpriteComponent("player_texture", new Vector4f(1.0f)));
 
         // --- Act & Assert ---
         // Simulate multiple rapid frame updates
@@ -187,7 +188,7 @@ class RenderSystemIT extends EngineTestHarness {
         // --- Arrange ---
         int permanentEntity = world.createEntity();
         world.addComponent(permanentEntity, new TransformComponent());
-        world.addComponent(permanentEntity, new SpriteComponent("player_texture"));
+        world.addComponent(permanentEntity, new SpriteComponent("player_texture", new Vector4f(1.0f)));
 
         // --- Act & Assert ---
         assertThatCode(() -> {
@@ -197,7 +198,7 @@ class RenderSystemIT extends EngineTestHarness {
             // Add new entity
             int newEntity = world.createEntity();
             world.addComponent(newEntity, new TransformComponent());
-            world.addComponent(newEntity, new SpriteComponent("player_texture"));
+            world.addComponent(newEntity, new SpriteComponent("player_texture", new Vector4f(1.0f)));
 
             // Render with both entities
             renderSystem.update(0.016f);
