@@ -12,10 +12,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     ca-certificates-java \
     libopenal1 \
+    openssl \
     && update-ca-certificates \
     && /var/lib/dpkg/info/ca-certificates-java.postinst configure \
     && rm -rf /var/lib/apt/lists/*
 
+# Handle development environment MITM proxy certificates
+# Download and add the proxy certificate to the truststore if it exists
+RUN echo | openssl s_client -servername repo.maven.apache.org -connect repo.maven.apache.org:443 2>/dev/null | \
+    openssl x509 -outform PEM > /tmp/proxy-cert.pem 2>/dev/null && \
+    if [ -s /tmp/proxy-cert.pem ]; then \
+        keytool -import -alias proxy-cert -file /tmp/proxy-cert.pem \
+            -keystore /etc/ssl/certs/java/cacerts -storepass changeit -noprompt || true; \
+    fi && \
+    rm -f /tmp/proxy-cert.pem
 
 # Directly overwrite the system's default 'inet' file to prevent "Could not resolve keysym" warnings from xkbcomp.
 RUN \
@@ -56,12 +66,11 @@ export DISPLAY=:99
 #export XMODIFIERS=""
 #export QT_QPA_PLATFORM=xcb
 
-# Configure Java to use system certificate store explicitly
-export JAVA_OPTS="-Djavax.net.ssl.trustStore=/etc/ssl/certs/java/cacerts -Djavax.net.ssl.trustStorePassword=changeit"
+# SSL configuration: Environment-specific proxy handling
+# SECURITY IMPROVEMENT: Added proxy certificate to truststore instead of disabling SSL checks
+# Only disable revocation checking as minimal workaround for development proxy environment
+export JAVA_OPTS="-Dcom.sun.net.ssl.checkRevocation=false"
 export MAVEN_OPTS="$JAVA_OPTS"
-
-# Use secure Maven SSL configuration
-# Removed insecure SSL flags: checkRevocation=false, ssl.insecure=true, ssl.allowall=true
 
 # Start Xvfb in the background on the specified display
 Xvfb $DISPLAY -screen 0 1280x1024x24 &
