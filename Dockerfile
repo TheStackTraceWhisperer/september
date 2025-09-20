@@ -67,15 +67,9 @@ set -e
 # Configure the virtual display identifier for Xvfb
 export DISPLAY=:99
 
-#export XKB_LOG_LEVEL=0
-#export XKB_LOG_VERBOSITY=0
-#export LC_ALL=C
-#export XMODIFIERS=""
-#export QT_QPA_PLATFORM=xcb
 
 # Configure Maven with additional SSL security bypasses for CI environments.
 # These settings allow Maven to download dependencies even when certificate
-# validation fails in restricted network environments.
 export MAVEN_OPTS="-Dcom.sun.net.ssl.checkRevocation=false -Dmaven.wagon.http.ssl.insecure=true -Dmaven.wagon.http.ssl.allowall=true"
 
 # Start the virtual X11 server in the background with a 1280x1024 resolution.
