@@ -1,9 +1,18 @@
-# This Dockerfile sets up a Java 21 and Maven environment on Ubuntu 24.04
-# with Xvfb for headless OpenGL rendering.
+# This Dockerfile creates a containerized CI/testing environment for the September game engine.
+# It configures Ubuntu 24.04 with Java 21, Maven, and a virtual display (Xvfb) to enable
+# headless execution of OpenGL and OpenAL dependent tests and applications.
 
 FROM ubuntu:24.04
+# Prevent interactive prompts during package installation
 ARG DEBIAN_FRONTEND=noninteractive
 
+# Install core dependencies for the September engine CI environment:
+# - xvfb: Virtual X11 server for headless graphics testing
+# - mesa-utils: Provides Mesa OpenGL drivers for software rendering
+# - openjdk-21-jdk: Java 21 development kit (required by engine)
+# - maven: Build tool for compiling and testing the Java project
+# - ca-certificates: SSL certificate authorities for secure downloads
+# - libopenal1: OpenAL audio library for 3D audio testing
 RUN apt-get update && apt-get install -y --no-install-recommends \
     xvfb \
     mesa-utils \
@@ -17,7 +26,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 
-# Directly overwrite the system's default 'inet' file to prevent "Could not resolve keysym" warnings from xkbcomp.
+# Fix X11 keyboard configuration to eliminate xkbcomp warning messages.
+# This overwrites the default X11 'inet' symbols file with a minimal configuration
+# to prevent "Could not resolve keysym" warnings that occur when Xvfb starts.
 RUN \
     cat <<'EOF' > /usr/share/X11/xkb/symbols/inet
 default partial alphanumeric_keys
@@ -25,48 +36,47 @@ xkb_symbols "evdev" {
 };
 EOF
 
-# Set Java security properties - use secure defaults
-# Note: Removed insecure checkRevocation=false for better security
-
-# Set the OpenGL version override. This forces Mesa to report 4.6, though the
-# underlying GLSL support may be lower. This is necessary for context creation.
+# Override Mesa OpenGL version reporting for the September engine requirements.
+# The engine requires OpenGL 4.6 support, but Mesa in CI environments may report
+# a lower version even when 4.6 features are available. These overrides force
+# Mesa to report version 4.6 with GLSL 460 support, enabling proper context creation.
 ENV MESA_GL_VERSION_OVERRIDE=4.6
 ENV MESA_GLSL_VERSION_OVERRIDE=460
 
-# Configure OpenAL to use null backend for headless audio testing.
-# This provides full OpenAL API compatibility while discarding audio output,
-# similar to how Xvfb provides headless graphics testing.
+# Configure OpenAL to use a null audio backend for headless testing.
+# This provides complete OpenAL API compatibility while silently discarding all
+# audio output, similar to how Xvfb provides headless graphics functionality.
+# Essential for testing audio systems without requiring actual audio hardware.
 ENV ALSOFT_DRIVERS=null
 
+# Copy the September engine source code into the container
 COPY . /workspace
 WORKDIR /workspace
 
-# Copy in the robust entrypoint script that sets up the virtual display.
+# Generate a robust entrypoint script that initializes the virtual display environment.
+# This script handles Xvfb startup, waits for proper initialization, and ensures
+# the X11 display is ready before executing the main container command.
 RUN cat <<'EOF' > /usr/local/bin/entrypoint.sh && \
     chmod +x /usr/local/bin/entrypoint.sh
 #!/bin/bash
 set -e
 
-# Set the display variable for the virtual framebuffer
+# Configure the virtual display identifier for Xvfb
 export DISPLAY=:99
 
-#export XKB_LOG_LEVEL=0
-#export XKB_LOG_VERBOSITY=0
-#export LC_ALL=C
-#export XMODIFIERS=""
-#export QT_QPA_PLATFORM=xcb
 
 # Configure Java to use system certificate store explicitly
 export JAVA_OPTS="-Djavax.net.ssl.trustStore=/etc/ssl/certs/java/cacerts -Djavax.net.ssl.trustStorePassword=changeit"
 export MAVEN_OPTS="$JAVA_OPTS"
 
-# Use secure Maven SSL configuration
-# Removed insecure SSL flags: checkRevocation=false, ssl.insecure=true, ssl.allowall=true
-
-# Start Xvfb in the background on the specified display
+# Start the virtual X11 server in the background with a 1280x1024 resolution.
+# The server creates a virtual framebuffer that applications can render to
+# without requiring a physical display or graphics hardware.
 Xvfb $DISPLAY -screen 0 1280x1024x24 &
 
-# ROBUST WAIT: Actively wait for the X server's socket to appear before proceeding.
+# Implement robust waiting logic for X11 server initialization.
+# The script actively polls for the X11 socket file to ensure the server
+# is fully operational before proceeding with the main command execution.
 XVFB_SOCKET="/tmp/.X11-unix/X99"
 retries=0
 while [ ! -S "$XVFB_SOCKET" ] && [ "$retries" -lt 30 ]; do
@@ -78,12 +88,16 @@ if [ ! -S "$XVFB_SOCKET" ]; then
   exit 1
 fi
 
-# Execute the main command passed to the container (e.g., mvn verify)
+# Execute the main command passed to the container (typically Maven build/test commands)
 exec "$@"
 EOF
 
-# Set the new script as the main executable
+# Set the entrypoint script as the container's main executable.
+# This ensures that every container run will initialize the virtual display
+# environment before executing any commands.
 ENTRYPOINT ["entrypoint.sh"]
 
-# Set the default command to run. Use batch mode for better CI output.
+# Define the default command for container execution.
+# Runs Maven in batch mode (-B) with no transfer progress (-ntp) to verify
+# the September engine build, including compilation and full test suite execution.
 CMD ["mvn", "-B", "-ntp", "verify"]
