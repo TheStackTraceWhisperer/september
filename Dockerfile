@@ -48,12 +48,6 @@ set -e
 # Set the display variable for the virtual framebuffer
 export DISPLAY=:99
 
-#export XKB_LOG_LEVEL=0
-#export XKB_LOG_VERBOSITY=0
-#export LC_ALL=C
-#export XMODIFIERS=""
-#export QT_QPA_PLATFORM=xcb
-
 # Set Maven options for SSL
 export MAVEN_OPTS="-Dcom.sun.net.ssl.checkRevocation=false -Dmaven.wagon.http.ssl.insecure=true -Dmaven.wagon.http.ssl.allowall=true"
 
