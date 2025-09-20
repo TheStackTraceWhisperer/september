@@ -10,8 +10,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openjdk-21-jdk \
     maven \
     ca-certificates \
+    ca-certificates-java \
     libopenal1 \
     && update-ca-certificates \
+    && /var/lib/dpkg/info/ca-certificates-java.postinst configure \
     && rm -rf /var/lib/apt/lists/*
 
 
@@ -23,8 +25,8 @@ xkb_symbols "evdev" {
 };
 EOF
 
-# Set Java security properties to handle SSL properly
-ENV JAVA_OPTS="-Dcom.sun.net.ssl.checkRevocation=false"
+# Set Java security properties - use secure defaults
+# Note: Removed insecure checkRevocation=false for better security
 
 # Set the OpenGL version override. This forces Mesa to report 4.6, though the
 # underlying GLSL support may be lower. This is necessary for context creation.
@@ -54,8 +56,12 @@ export DISPLAY=:99
 #export XMODIFIERS=""
 #export QT_QPA_PLATFORM=xcb
 
-# Set Maven options for SSL
-export MAVEN_OPTS="-Dcom.sun.net.ssl.checkRevocation=false -Dmaven.wagon.http.ssl.insecure=true -Dmaven.wagon.http.ssl.allowall=true"
+# Configure Java to use system certificate store explicitly
+export JAVA_OPTS="-Djavax.net.ssl.trustStore=/etc/ssl/certs/java/cacerts -Djavax.net.ssl.trustStorePassword=changeit"
+export MAVEN_OPTS="$JAVA_OPTS"
+
+# Use secure Maven SSL configuration
+# Removed insecure SSL flags: checkRevocation=false, ssl.insecure=true, ssl.allowall=true
 
 # Start Xvfb in the background on the specified display
 Xvfb $DISPLAY -screen 0 1280x1024x24 &
