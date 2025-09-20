@@ -43,7 +43,8 @@ public class Camera {
 
   /**
    * Creates a new camera with a specific 2D orthographic projection.
-   * @param worldWidth The visible width of the game world.
+   *
+   * @param worldWidth  The visible width of the game world.
    * @param worldHeight The visible height of the game world.
    */
   public Camera(float worldWidth, float worldHeight) {
@@ -89,10 +90,10 @@ public class Camera {
   /**
    * Configures the camera for 3D rendering with a perspective projection.
    *
-   * @param fov          The vertical field of view, in degrees.
-   * @param aspectRatio  The aspect ratio of the viewport (width / height).
-   * @param nearPlane    The distance to the near clipping plane.
-   * @param farPlane     The distance to the far clipping plane.
+   * @param fov         The vertical field of view, in degrees.
+   * @param aspectRatio The aspect ratio of the viewport (width / height).
+   * @param nearPlane   The distance to the near clipping plane.
+   * @param farPlane    The distance to the far clipping plane.
    */
   public final void setPerspective(float fov, float aspectRatio, float nearPlane, float farPlane) {
     this.projectionType = ProjectionType.PERSPECTIVE;

@@ -5,6 +5,14 @@
       {
         "handle": "main_menu_bg",
         "path": "/textures/main_menu_background.png"
+      },
+      {
+        "handle": "button_normal",
+        "path": "/textures/button_normal.png"
+      },
+      {
+        "handle": "button_hovered",
+        "path": "/textures/button_hovered.png"
       }
     ],
     "meshes": [
@@ -24,11 +32,34 @@
     {
       "name": "Background",
       "components": {
-        "TransformComponent": {
-          "position": {"x": 0.0, "y": 0.0, "z": 0.0}
+        "UITransformComponent": {
+          "anchor": {"x": 0.5, "y": 0.5},
+          "pivot": {"x": 0.5, "y": 0.5},
+          "size": {"x": 800, "y": 600},
+          "offset": {"x": 0, "y": 0, "z": 0.0}
         },
-        "SpriteComponent": {
+        "UIImageComponent": {
           "textureHandle": "main_menu_bg"
+        }
+      }
+    },
+    {
+      "name": "NewGameButton",
+      "components": {
+        "UITransformComponent": {
+          "anchor": {"x": 0.5, "y": 0.5},
+          "pivot": {"x": 0.5, "y": 0.5},
+          "size": {"x": 200, "y": 50},
+          "offset": {"x": 0, "y": -50, "z": 0.1}
+        },
+        "UIImageComponent": {
+          "textureHandle": "button_normal"
+        },
+        "UIButtonComponent": {
+          "actionEvent": "START_NEW_GAME",
+          "normalTexture": "button_normal",
+          "hoveredTexture": "button_hovered",
+          "pressedTexture": "button_hovered"
         }
       }
     }

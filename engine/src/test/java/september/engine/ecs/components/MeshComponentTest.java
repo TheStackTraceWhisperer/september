@@ -6,15 +6,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MeshComponentTest {
 
-    @Test
-    void meshHandle_returnsConstructorValue() {
-        // Arrange
-        String expectedHandle = "player_mesh";
+  @Test
+  void meshHandle_returnsConstructorValue() {
+    // Arrange
+    String expectedHandle = "player_mesh";
 
-        // Act
-        MeshComponent component = new MeshComponent(expectedHandle);
+    // Act
+    MeshComponent component = new MeshComponent(expectedHandle);
 
-        // Assert
-        assertThat(component.meshHandle()).isEqualTo(expectedHandle);
-    }
+    // Assert
+    assertThat(component.meshHandle()).isEqualTo(expectedHandle);
+  }
 }

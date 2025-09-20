@@ -1,4 +1,4 @@
 # Invalid mesh file - malformed OBJ
 v this is not a valid vertex line
-f 1 2 3 999999
+       f 1 2 3 999999
 invalid obj syntax here

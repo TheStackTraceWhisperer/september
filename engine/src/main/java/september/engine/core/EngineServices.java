@@ -28,4 +28,5 @@ public record EngineServices(
   Camera camera,
   Renderer renderer,
   WindowContext window
-) {}
+) {
+}

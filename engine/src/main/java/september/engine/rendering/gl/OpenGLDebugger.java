@@ -8,8 +8,20 @@ import org.slf4j.LoggerFactory;
 
 import java.util.function.IntSupplier;
 
-import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL43.*;
+import static org.lwjgl.opengl.GL11.GL_DONT_CARE;
+import static org.lwjgl.opengl.GL11.GL_INVALID_ENUM;
+import static org.lwjgl.opengl.GL11.GL_INVALID_OPERATION;
+import static org.lwjgl.opengl.GL11.GL_INVALID_VALUE;
+import static org.lwjgl.opengl.GL11.GL_NO_ERROR;
+import static org.lwjgl.opengl.GL11.GL_OUT_OF_MEMORY;
+import static org.lwjgl.opengl.GL11.GL_STACK_OVERFLOW;
+import static org.lwjgl.opengl.GL11.GL_STACK_UNDERFLOW;
+import static org.lwjgl.opengl.GL11.glEnable;
+import static org.lwjgl.opengl.GL43.GL_DEBUG_OUTPUT;
+import static org.lwjgl.opengl.GL43.GL_DEBUG_OUTPUT_SYNCHRONOUS;
+import static org.lwjgl.opengl.GL43.GL_DEBUG_SEVERITY_NOTIFICATION;
+import static org.lwjgl.opengl.GL43.GL_INVALID_FRAMEBUFFER_OPERATION;
+import static org.lwjgl.opengl.GL43.glDebugMessageControl;
 
 /**
  * Utility to enable OpenGL debug output.
@@ -18,73 +30,74 @@ import static org.lwjgl.opengl.GL43.*;
  */
 public final class OpenGLDebugger {
 
-    private static final Logger log = LoggerFactory.getLogger(OpenGLDebugger.class);
-    private static Callback debugCallback;
+  private static final Logger log = LoggerFactory.getLogger(OpenGLDebugger.class);
+  private static Callback debugCallback;
 
-    /**
-     * Initializes and enables OpenGL debug output.
-     * Must be called after a GL context has been created (e.g., after GL.createCapabilities()).
-     */
-    public static void init() {
-        log.info("Initializing OpenGL Debugger...");
+  /**
+   * Initializes and enables OpenGL debug output.
+   * Must be called after a GL context has been created (e.g., after GL.createCapabilities()).
+   */
+  public static void init() {
+    log.info("Initializing OpenGL Debugger...");
 
-        // Create and set our custom callback that routes messages to SLF4J.
-        debugCallback = new Slf4jGLDebugCallback(log);
-        GL43.glDebugMessageCallback((Slf4jGLDebugCallback) debugCallback, 0);
+    // Create and set our custom callback that routes messages to SLF4J.
+    debugCallback = new Slf4jGLDebugCallback(log);
+    GL43.glDebugMessageCallback((Slf4jGLDebugCallback) debugCallback, 0);
 
-        // Set the debug level. Use GL_DEBUG_SEVERITY_NOTIFICATION for verbose output.
-        glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, (int[]) null, true);
-        glEnable(GL_DEBUG_OUTPUT);
-        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-        log.info("OpenGL Debugger Initialized.");
+    // Set the debug level. Use GL_DEBUG_SEVERITY_NOTIFICATION for verbose output.
+    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, (int[]) null, true);
+    glEnable(GL_DEBUG_OUTPUT);
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+    log.info("OpenGL Debugger Initialized.");
+  }
+
+  /**
+   * Checks for any accumulated OpenGL errors and throws a RuntimeException if any are found.
+   * This is the public entry point that uses the real OpenGL error supplier.
+   */
+  public static void checkErrors() {
+    checkErrors(GL11::glGetError);
+  }
+
+  /**
+   * Test-visible method that checks for errors using a provided supplier.
+   *
+   * @param errorSupplier A supplier that returns sequential OpenGL error codes.
+   */
+  static void checkErrors(IntSupplier errorSupplier) {
+    int error;
+    StringBuilder sb = new StringBuilder();
+    while ((error = errorSupplier.getAsInt()) != GL_NO_ERROR) {
+      if (sb.length() == 0) {
+        sb.append("OpenGL error(s): ");
+      }
+      sb.append(errorToString(error)).append(' ');
     }
-
-    /**
-     * Checks for any accumulated OpenGL errors and throws a RuntimeException if any are found.
-     * This is the public entry point that uses the real OpenGL error supplier.
-     */
-    public static void checkErrors() {
-        checkErrors(GL11::glGetError);
+    if (sb.length() > 0) {
+      throw new RuntimeException(sb.toString().trim());
     }
+  }
 
-    /**
-     * Test-visible method that checks for errors using a provided supplier.
-     * @param errorSupplier A supplier that returns sequential OpenGL error codes.
-     */
-    static void checkErrors(IntSupplier errorSupplier) {
-        int error;
-        StringBuilder sb = new StringBuilder();
-        while ((error = errorSupplier.getAsInt()) != GL_NO_ERROR) {
-            if (sb.length() == 0) {
-                sb.append("OpenGL error(s): ");
-            }
-            sb.append(errorToString(error)).append(' ');
-        }
-        if (sb.length() > 0) {
-            throw new RuntimeException(sb.toString().trim());
-        }
-    }
+  private static String errorToString(int code) {
+    return switch (code) {
+      case GL_INVALID_ENUM -> "GL_INVALID_ENUM";
+      case GL_INVALID_VALUE -> "GL_INVALID_VALUE";
+      case GL_INVALID_OPERATION -> "GL_INVALID_OPERATION";
+      case GL_STACK_OVERFLOW -> "GL_STACK_OVERFLOW";
+      case GL_STACK_UNDERFLOW -> "GL_STACK_UNDERFLOW";
+      case GL_OUT_OF_MEMORY -> "GL_OUT_OF_MEMORY";
+      case GL_INVALID_FRAMEBUFFER_OPERATION -> "GL_INVALID_FRAMEBUFFER_OPERATION";
+      default -> "UNKNOWN_ERROR(" + code + ")";
+    };
+  }
 
-    private static String errorToString(int code) {
-        return switch (code) {
-            case GL_INVALID_ENUM -> "GL_INVALID_ENUM";
-            case GL_INVALID_VALUE -> "GL_INVALID_VALUE";
-            case GL_INVALID_OPERATION -> "GL_INVALID_OPERATION";
-            case GL_STACK_OVERFLOW -> "GL_STACK_OVERFLOW";
-            case GL_STACK_UNDERFLOW -> "GL_STACK_UNDERFLOW";
-            case GL_OUT_OF_MEMORY -> "GL_OUT_OF_MEMORY";
-            case GL_INVALID_FRAMEBUFFER_OPERATION -> "GL_INVALID_FRAMEBUFFER_OPERATION";
-            default -> "UNKNOWN_ERROR(" + code + ")";
-        };
+  /**
+   * Cleans up the debug callback. Should be called before the context is destroyed.
+   */
+  public static void cleanup() {
+    if (debugCallback != null) {
+      debugCallback.free();
+      debugCallback = null;
     }
-
-    /**
-     * Cleans up the debug callback. Should be called before the context is destroyed.
-     */
-    public static void cleanup() {
-        if (debugCallback != null) {
-            debugCallback.free();
-            debugCallback = null;
-        }
-    }
+  }
 }

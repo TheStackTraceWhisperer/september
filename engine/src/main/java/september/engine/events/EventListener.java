@@ -9,6 +9,7 @@ package september.engine.events;
 public interface EventListener<T extends Event> {
   /**
    * Handles the dispatched event.
+   *
    * @param event The event object containing relevant data.
    */
   void handle(T event);

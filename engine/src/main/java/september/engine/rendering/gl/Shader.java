@@ -1,7 +1,7 @@
 package september.engine.rendering.gl;
 
 import org.joml.Matrix4f;
-import org.joml.Vector3f; // added
+import org.joml.Vector3f;
 import org.lwjgl.system.MemoryStack;
 
 import java.nio.FloatBuffer;
@@ -51,7 +51,8 @@ public class Shader implements AutoCloseable {
 
   /**
    * Caches and sets a Matrix4f uniform.
-   * @param name The name of the uniform in the shader code.
+   *
+   * @param name  The name of the uniform in the shader code.
    * @param value The Matrix4f value to set.
    */
   public void setUniform(String name, Matrix4f value) {
@@ -71,7 +72,8 @@ public class Shader implements AutoCloseable {
 
   /**
    * Caches and sets an integer uniform. This is essential for setting texture samplers.
-   * @param name The name of the uniform in the shader code (e.g., "uTextureSampler").
+   *
+   * @param name  The name of the uniform in the shader code (e.g., "uTextureSampler").
    * @param value The integer value to set (e.g., 0 for texture unit GL_TEXTURE0).
    */
   public void setUniform(String name, int value) {

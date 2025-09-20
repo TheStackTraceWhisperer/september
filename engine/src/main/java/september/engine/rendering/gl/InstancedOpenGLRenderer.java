@@ -1,10 +1,17 @@
 package september.engine.rendering.gl;
 
 import org.joml.Matrix4f;
-import september.engine.rendering.*;
+import september.engine.rendering.Camera;
+import september.engine.rendering.InstancedMesh;
+import september.engine.rendering.Mesh;
+import september.engine.rendering.Renderer;
+import september.engine.rendering.SpriteBatch;
+import september.engine.rendering.Texture;
 
-import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL30.glBindVertexArray;
+import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
+import static org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT;
+import static org.lwjgl.opengl.GL11.glClear;
+import static org.lwjgl.opengl.GL11.glClearColor;
 
 /**
  * An OpenGL renderer that uses instanced rendering for improved performance.
@@ -68,12 +75,12 @@ public final class InstancedOpenGLRenderer implements Renderer {
     // Render all batches
     for (Texture texture : spriteBatch.getTextures()) {
       var transforms = spriteBatch.getSpritesForTexture(texture);
-      
+
       if (!transforms.isEmpty()) {
         // Bind texture
         texture.bind(0);
         instancedShader.setUniform("uTextureSampler", 0);
-        
+
         // Render all instances for this texture
         quadMesh.renderInstanced(transforms);
       }

@@ -13,8 +13,11 @@ class WorldTest {
   private IWorld world;
 
   // --- Test Component Classes ---
-  private static class PositionComponent implements Component {}
-  private static class VelocityComponent implements Component {}
+  private static class PositionComponent implements Component {
+  }
+
+  private static class VelocityComponent implements Component {
+  }
 
   @BeforeEach
   void setUp() {

@@ -1,7 +1,5 @@
 package september.engine.audio;
 
-import org.lwjgl.openal.AL10;
-import org.lwjgl.stb.STBVorbis;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
@@ -9,9 +7,14 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 
-import static org.lwjgl.openal.AL10.*;
-import static org.lwjgl.stb.STBVorbis.*;
-import static org.lwjgl.system.MemoryUtil.NULL;
+import static org.lwjgl.openal.AL10.AL_FORMAT_MONO16;
+import static org.lwjgl.openal.AL10.AL_FORMAT_STEREO16;
+import static org.lwjgl.openal.AL10.AL_NO_ERROR;
+import static org.lwjgl.openal.AL10.alBufferData;
+import static org.lwjgl.openal.AL10.alDeleteBuffers;
+import static org.lwjgl.openal.AL10.alGenBuffers;
+import static org.lwjgl.openal.AL10.alGetError;
+import static org.lwjgl.stb.STBVorbis.stb_vorbis_decode_memory;
 
 /**
  * Represents an OpenAL audio buffer that holds audio data.
@@ -28,16 +31,16 @@ public final class AudioBuffer implements AutoCloseable {
   /**
    * Creates an AudioBuffer from raw PCM audio data.
    *
-   * @param data        The audio data as 16-bit signed integers
-   * @param channels    Number of audio channels (1 for mono, 2 for stereo)
-   * @param sampleRate  Sample rate in Hz (e.g., 44100)
+   * @param data       The audio data as 16-bit signed integers
+   * @param channels   Number of audio channels (1 for mono, 2 for stereo)
+   * @param sampleRate Sample rate in Hz (e.g., 44100)
    */
   public AudioBuffer(ShortBuffer data, int channels, int sampleRate) {
     this.bufferId = alGenBuffers();
-    
+
     int format = channels == 1 ? AL_FORMAT_MONO16 : AL_FORMAT_STEREO16;
     alBufferData(bufferId, format, data, sampleRate);
-    
+
     if (alGetError() != AL_NO_ERROR) {
       throw new RuntimeException("Failed to upload audio data to OpenAL buffer");
     }
@@ -60,7 +63,7 @@ public final class AudioBuffer implements AutoCloseable {
       // Decode the OGG file
       IntBuffer channelsBuffer = stack.mallocInt(1);
       IntBuffer sampleRateBuffer = stack.mallocInt(1);
-      
+
       ShortBuffer audioData = stb_vorbis_decode_memory(oggData, channelsBuffer, sampleRateBuffer);
       if (audioData == null) {
         throw new RuntimeException("Failed to decode OGG file: " + resourcePath);
@@ -80,12 +83,12 @@ public final class AudioBuffer implements AutoCloseable {
   private static ByteBuffer loadResourceAsBuffer(String resourcePath) {
     // Ensure the resource path starts with / for classpath lookup
     String correctedPath = resourcePath.startsWith("/") ? resourcePath : "/" + resourcePath;
-    
+
     try (var inputStream = AudioBuffer.class.getResourceAsStream(correctedPath)) {
       if (inputStream == null) {
         return null;
       }
-      
+
       byte[] bytes = inputStream.readAllBytes();
       ByteBuffer buffer = MemoryUtil.memAlloc(bytes.length);
       buffer.put(bytes);

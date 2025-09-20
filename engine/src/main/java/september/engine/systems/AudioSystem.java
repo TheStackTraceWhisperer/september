@@ -11,11 +11,10 @@ import september.engine.ecs.components.MusicComponent;
 import september.engine.ecs.components.SoundEffectComponent;
 import september.engine.ecs.components.TransformComponent;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.ArrayList;
 
 /**
  * The system responsible for managing all audio playback in the engine.

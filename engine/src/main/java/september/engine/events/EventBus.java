@@ -1,15 +1,18 @@
 package september.engine.events;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * A simple, synchronous event bus for dispatching events to listeners.
+ * This implementation is thread-safe and prevents ConcurrentModificationException
+ * by using concurrent collections.
  */
 public class EventBus {
-  private final Map<Class<? extends Event>, List<EventListener>> listeners = new HashMap<>();
+  // Use ConcurrentHashMap and CopyOnWriteArrayList to allow for safe concurrent modification.
+  private final Map<Class<? extends Event>, List<EventListener>> listeners = new ConcurrentHashMap<>();
 
   /**
    * Subscribes a listener to a specific type of event.
@@ -19,7 +22,8 @@ public class EventBus {
    * @param <T>        The type of the event.
    */
   public <T extends Event> void subscribe(Class<T> eventClass, EventListener<T> listener) {
-    listeners.computeIfAbsent(eventClass, k -> new ArrayList<>()).add(listener);
+    // computeIfAbsent is atomic for ConcurrentHashMap
+    listeners.computeIfAbsent(eventClass, k -> new CopyOnWriteArrayList<>()).add(listener);
   }
 
   /**
@@ -30,6 +34,7 @@ public class EventBus {
    * @param <T>        The type of the event.
    */
   public <T extends Event> void unsubscribe(Class<T> eventClass, EventListener<T> listener) {
+    // computeIfPresent is atomic for ConcurrentHashMap
     listeners.computeIfPresent(eventClass, (k, v) -> {
       v.remove(listener);
       return v;
@@ -46,8 +51,9 @@ public class EventBus {
   public <T extends Event> void publish(T event) {
     List<EventListener> eventListeners = listeners.get(event.getClass());
     if (eventListeners != null) {
+      // Iteration on CopyOnWriteArrayList is safe from ConcurrentModificationException.
+      // The iterator holds a snapshot of the list at the time of its creation.
       for (EventListener listener : eventListeners) {
-        // The cast is safe due to the structure of our map and subscribe method.
         listener.handle(event);
       }
     }

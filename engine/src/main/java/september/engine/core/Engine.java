@@ -4,10 +4,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import september.engine.assets.ResourceManager;
 import september.engine.audio.AudioManager;
+import september.engine.core.input.GamepadService;
 import september.engine.core.input.GlfwGamepadService;
 import september.engine.core.input.GlfwInputService;
 import september.engine.core.input.InputService;
-import september.engine.core.input.GamepadService;
 import september.engine.core.preferences.PreferencesService;
 import september.engine.ecs.IWorld;
 import september.engine.ecs.SystemManager;
@@ -139,12 +139,35 @@ public final class Engine implements Runnable {
   }
 
   // Getters for tests
-  public IWorld getWorld() { return world; }
-  public Renderer getRenderer() { return renderer; }
-  public WindowContext getWindow() { return window; }
-  public PreferencesService getPreferencesService() { return preferencesService; }
-  public ResourceManager getResourceManager() { return resourceManager; }
-  public Camera getCamera() { return camera; }
-  public AudioManager getAudioManager() { return audioManager; }
-  public SystemManager getSystemManager() { return systemManager; }
+  public IWorld getWorld() {
+    return world;
+  }
+
+  public Renderer getRenderer() {
+    return renderer;
+  }
+
+  public WindowContext getWindow() {
+    return window;
+  }
+
+  public PreferencesService getPreferencesService() {
+    return preferencesService;
+  }
+
+  public ResourceManager getResourceManager() {
+    return resourceManager;
+  }
+
+  public Camera getCamera() {
+    return camera;
+  }
+
+  public AudioManager getAudioManager() {
+    return audioManager;
+  }
+
+  public SystemManager getSystemManager() {
+    return systemManager;
+  }
 }

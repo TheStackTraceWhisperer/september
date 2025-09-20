@@ -19,11 +19,13 @@ import java.nio.charset.StandardCharsets;
 public final class AssetLoader {
 
   // Private constructor to prevent instantiation of this utility class.
-  private AssetLoader() {}
+  private AssetLoader() {
+  }
 
   /**
    * Loads a shader program by reading vertex and fragment shader source files.
    * This method recursively processes #include directives.
+   *
    * @param vertexPath   The classpath resource path to the vertex shader file.
    * @param fragmentPath The classpath resource path to the fragment shader file.
    * @return A new, compiled Shader object.
@@ -36,6 +38,7 @@ public final class AssetLoader {
 
   /**
    * Loads a texture from an image file on the classpath.
+   *
    * @param filePath The classpath resource path to the image file.
    * @return A new Texture object.
    */
@@ -50,6 +53,7 @@ public final class AssetLoader {
 
   /**
    * Recursively loads a shader source file, processing #include directives.
+   *
    * @param filePath The classpath path to the shader file.
    * @return The complete shader source with all includes resolved.
    */
@@ -60,27 +64,28 @@ public final class AssetLoader {
     String basePath = "";
     int lastSlash = filePath.lastIndexOf('/');
     if (lastSlash != -1) {
-        basePath = filePath.substring(0, lastSlash + 1);
+      basePath = filePath.substring(0, lastSlash + 1);
     }
 
     StringBuilder finalSource = new StringBuilder();
     for (String line : source.split("\\R")) { // Split by any newline sequence
-        String trimmedLine = line.trim();
-        if (trimmedLine.startsWith("#include")) {
-            // Extract path from quotes
-            String includePath = trimmedLine.substring(trimmedLine.indexOf('"') + 1, trimmedLine.lastIndexOf('"'));
-            // Recursively load and append the included source
-            finalSource.append(loadShaderSourceWithIncludes(basePath + includePath));
-            finalSource.append(System.lineSeparator());
-        } else {
-            finalSource.append(line).append(System.lineSeparator());
-        }
+      String trimmedLine = line.trim();
+      if (trimmedLine.startsWith("#include")) {
+        // Extract path from quotes
+        String includePath = trimmedLine.substring(trimmedLine.indexOf('"') + 1, trimmedLine.lastIndexOf('"'));
+        // Recursively load and append the included source
+        finalSource.append(loadShaderSourceWithIncludes(basePath + includePath));
+        finalSource.append(System.lineSeparator());
+      } else {
+        finalSource.append(line).append(System.lineSeparator());
+      }
     }
     return finalSource.toString();
   }
 
   /**
    * Reads a resource file from the classpath into a single String.
+   *
    * @param filePath The classpath resource path.
    * @return The contents of the file as a string.
    */
@@ -106,6 +111,7 @@ public final class AssetLoader {
   /**
    * Reads a resource file from the classpath into a direct ByteBuffer.
    * This method reads the resource in chunks and is robust for use inside JARs.
+   *
    * @param filePath The classpath resource path.
    * @return A ByteBuffer containing the file data.
    */
@@ -113,7 +119,7 @@ public final class AssetLoader {
     String correctedPath = filePath.startsWith("/") ? filePath.substring(1) : filePath;
     InputStream source = AssetLoader.class.getClassLoader().getResourceAsStream(correctedPath);
     if (source == null) {
-        throw new IOException("Resource not found: " + filePath);
+      throw new IOException("Resource not found: " + filePath);
     }
 
     int bufferSize = 8192;

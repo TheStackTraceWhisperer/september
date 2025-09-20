@@ -16,7 +16,7 @@ import java.util.Map;
  * <p>
  * Usage pattern:
  * 1. Clear the batch at the start of the frame
- * 2. Add sprites throughout the frame  
+ * 2. Add sprites throughout the frame
  * 3. Render all batches at the end of the frame
  */
 public class SpriteBatch {
@@ -58,6 +58,15 @@ public class SpriteBatch {
    */
   public Iterable<Texture> getTextures() {
     return batches.keySet();
+  }
+
+  /**
+   * Gets the underlying map of batches.
+   *
+   * @return A map where keys are textures and values are lists of transforms.
+   */
+  public Map<Texture, List<Matrix4f>> getBatches() {
+    return batches;
   }
 
   /**

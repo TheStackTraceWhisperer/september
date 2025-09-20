@@ -21,7 +21,7 @@ public final class GlfwContext implements AutoCloseable {
   public GlfwContext() {
     // Install an error callback that logs to our SLF4J logger.
     this.errorCallback = GLFWErrorCallback.create((error, description) ->
-        log.error("[GLFW Error] Code: {}, Description: {}", error, GLFWErrorCallback.getDescription(description))
+      log.error("[GLFW Error] Code: {}, Description: {}", error, GLFWErrorCallback.getDescription(description))
     );
     this.errorCallback.set();
 

@@ -5,8 +5,18 @@ import org.lwjgl.openal.ALC;
 import org.lwjgl.openal.ALCCapabilities;
 import org.lwjgl.openal.ALCapabilities;
 
-import static org.lwjgl.openal.AL10.*;
-import static org.lwjgl.openal.ALC10.*;
+import static org.lwjgl.openal.AL10.AL_GAIN;
+import static org.lwjgl.openal.AL10.AL_ORIENTATION;
+import static org.lwjgl.openal.AL10.AL_POSITION;
+import static org.lwjgl.openal.AL10.alGetListenerf;
+import static org.lwjgl.openal.AL10.alListener3f;
+import static org.lwjgl.openal.AL10.alListenerf;
+import static org.lwjgl.openal.AL10.alListenerfv;
+import static org.lwjgl.openal.ALC10.alcCloseDevice;
+import static org.lwjgl.openal.ALC10.alcCreateContext;
+import static org.lwjgl.openal.ALC10.alcDestroyContext;
+import static org.lwjgl.openal.ALC10.alcMakeContextCurrent;
+import static org.lwjgl.openal.ALC10.alcOpenDevice;
 
 /**
  * Manages the OpenAL audio context and provides high-level audio services.
@@ -77,7 +87,7 @@ public final class AudioManager implements AutoCloseable {
     if (!initialized) {
       throw new IllegalStateException("AudioManager is not initialized");
     }
-    
+
     alListenerf(AL_GAIN, Math.max(0.0f, volume));
   }
 
@@ -90,7 +100,7 @@ public final class AudioManager implements AutoCloseable {
     if (!initialized) {
       throw new IllegalStateException("AudioManager is not initialized");
     }
-    
+
     return alGetListenerf(AL_GAIN);
   }
 
@@ -105,7 +115,7 @@ public final class AudioManager implements AutoCloseable {
     if (!initialized) {
       throw new IllegalStateException("AudioManager is not initialized");
     }
-    
+
     alListener3f(AL_POSITION, x, y, z);
   }
 
@@ -124,7 +134,7 @@ public final class AudioManager implements AutoCloseable {
     if (!initialized) {
       throw new IllegalStateException("AudioManager is not initialized");
     }
-    
+
     float[] orientation = {forwardX, forwardY, forwardZ, upX, upY, upZ};
     alListenerfv(AL_ORIENTATION, orientation);
   }
@@ -139,7 +149,7 @@ public final class AudioManager implements AutoCloseable {
     if (!initialized) {
       throw new IllegalStateException("AudioManager is not initialized");
     }
-    
+
     return new AudioSource();
   }
 
@@ -147,16 +157,16 @@ public final class AudioManager implements AutoCloseable {
    * Creates a new AudioBuffer from raw audio data.
    * The caller is responsible for closing the returned buffer.
    *
-   * @param data        The audio data
-   * @param channels    Number of channels
-   * @param sampleRate  Sample rate in Hz
+   * @param data       The audio data
+   * @param channels   Number of channels
+   * @param sampleRate Sample rate in Hz
    * @return A new AudioBuffer instance
    */
   public AudioBuffer createBuffer(java.nio.ShortBuffer data, int channels, int sampleRate) {
     if (!initialized) {
       throw new IllegalStateException("AudioManager is not initialized");
     }
-    
+
     return new AudioBuffer(data, channels, sampleRate);
   }
 
@@ -171,7 +181,7 @@ public final class AudioManager implements AutoCloseable {
     if (!initialized) {
       throw new IllegalStateException("AudioManager is not initialized");
     }
-    
+
     return AudioBuffer.loadFromOggFile(resourcePath);
   }
 
@@ -191,7 +201,7 @@ public final class AudioManager implements AutoCloseable {
       alcMakeContextCurrent(0);
       alcDestroyContext(context);
       alcCloseDevice(device);
-      
+
       initialized = false;
     }
   }

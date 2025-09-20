@@ -10,20 +10,20 @@ import java.io.IOException;
 
 public class Vector3fDeserializer extends StdDeserializer<Vector3f> {
 
-    public Vector3fDeserializer() {
-        this(null);
-    }
+  public Vector3fDeserializer() {
+    this(null);
+  }
 
-    public Vector3fDeserializer(Class<?> vc) {
-        super(vc);
-    }
+  public Vector3fDeserializer(Class<?> vc) {
+    super(vc);
+  }
 
-    @Override
-    public Vector3f deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
-        JsonNode node = jp.getCodec().readTree(jp);
-        float x = (float) node.get("x").asDouble();
-        float y = (float) node.get("y").asDouble();
-        float z = (float) node.get("z").asDouble();
-        return new Vector3f(x, y, z);
-    }
+  @Override
+  public Vector3f deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
+    JsonNode node = jp.getCodec().readTree(jp);
+    float x = (float) node.get("x").asDouble();
+    float y = (float) node.get("y").asDouble();
+    float z = (float) node.get("z").asDouble();
+    return new Vector3f(x, y, z);
+  }
 }

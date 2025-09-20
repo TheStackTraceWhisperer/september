@@ -17,7 +17,7 @@ public interface GamepadService {
   /**
    * Gets the current value of a gamepad axis.
    *
-   * @param index The gamepad index (0-7).
+   * @param index     The gamepad index (0-7).
    * @param axisConst The GLFW axis constant (e.g., GLFW_GAMEPAD_AXIS_LEFT_X).
    * @return The axis value (-1.0 to 1.0), or 0.0f if gamepad not connected.
    */
@@ -26,7 +26,7 @@ public interface GamepadService {
   /**
    * Checks if a gamepad button is currently pressed.
    *
-   * @param index The gamepad index (0-7).
+   * @param index       The gamepad index (0-7).
    * @param buttonConst The GLFW button constant (e.g., GLFW_GAMEPAD_BUTTON_A).
    * @return true if the button is pressed, false if not pressed or gamepad not connected.
    */

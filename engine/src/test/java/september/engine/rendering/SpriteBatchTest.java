@@ -61,7 +61,7 @@ class SpriteBatchTest {
     assertThat(spriteBatch.getTotalSpriteCount()).isEqualTo(2);
     assertThat(spriteBatch.getBatchCount()).isEqualTo(1); // Only one batch
     assertThat(spriteBatch.getSpriteCount(mockTexture1)).isEqualTo(2);
-    
+
     var sprites = spriteBatch.getSpritesForTexture(mockTexture1);
     assertThat(sprites).hasSize(2);
     assertThat(sprites).containsExactly(transform1, transform2);
@@ -143,7 +143,7 @@ class SpriteBatchTest {
   @DisplayName("getMaxInstancesPerBatch should return constructor value")
   void getMaxInstancesPerBatch_shouldReturnConstructorValue() {
     assertThat(spriteBatch.getMaxInstancesPerBatch()).isEqualTo(100);
-    
+
     SpriteBatch customBatch = new SpriteBatch(500);
     assertThat(customBatch.getMaxInstancesPerBatch()).isEqualTo(500);
   }

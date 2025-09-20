@@ -30,6 +30,7 @@ public interface Game {
   /**
    * Gets the mapping of component names (as used in scene files) to their
    * concrete Class objects. This allows the SceneManager to deserialize scenes.
+   *
    * @return A map of component names to component classes.
    */
   Map<String, Class<? extends Component>> getComponentRegistry();

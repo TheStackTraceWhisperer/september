@@ -1,6 +1,7 @@
 package september.engine.state;
 
 import september.engine.core.EngineServices;
+
 import java.util.Stack;
 
 /**
@@ -11,6 +12,7 @@ public class GameStateManager {
 
   /**
    * Updates the current active state.
+   *
    * @param services  The engine services context.
    * @param deltaTime The time elapsed since the last frame.
    */
@@ -22,6 +24,7 @@ public class GameStateManager {
 
   /**
    * Pushes a new state onto the stack, making it the active state.
+   *
    * @param state    The new state to activate.
    * @param services The engine services context.
    */
@@ -41,6 +44,7 @@ public class GameStateManager {
 
   /**
    * Pops the current state and pushes a new one in a single, atomic operation.
+   *
    * @param state    The new state to activate.
    * @param services The engine services context.
    */
@@ -54,6 +58,7 @@ public class GameStateManager {
 
   /**
    * Checks if the state manager is empty.
+   *
    * @return true if no states are active.
    */
   public boolean isEmpty() {

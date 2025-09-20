@@ -22,7 +22,7 @@ public interface Material extends AutoCloseable {
 
   /**
    * Gets the primary texture used by this material.
-   * 
+   *
    * @return The texture for this material, or null if no texture is set.
    */
   Texture getTexture();

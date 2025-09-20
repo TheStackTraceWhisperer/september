@@ -19,11 +19,11 @@ public final class AudioSource implements AutoCloseable {
 
   public AudioSource() {
     this.sourceId = alGenSources();
-    
+
     if (alGetError() != AL_NO_ERROR) {
       throw new RuntimeException("Failed to create OpenAL audio source");
     }
-    
+
     // Set sensible defaults
     setVolume(1.0f);
     setPitch(1.0f);
@@ -40,7 +40,7 @@ public final class AudioSource implements AutoCloseable {
     if (closed) {
       throw new IllegalStateException("AudioSource has been closed");
     }
-    
+
     alSourcei(sourceId, AL_BUFFER, buffer.getBufferId());
     alSourcePlay(sourceId);
   }
@@ -52,7 +52,7 @@ public final class AudioSource implements AutoCloseable {
     if (closed) {
       throw new IllegalStateException("AudioSource has been closed");
     }
-    
+
     alSourcePause(sourceId);
   }
 
@@ -63,7 +63,7 @@ public final class AudioSource implements AutoCloseable {
     if (closed) {
       throw new IllegalStateException("AudioSource has been closed");
     }
-    
+
     alSourcePlay(sourceId);
   }
 
@@ -74,7 +74,7 @@ public final class AudioSource implements AutoCloseable {
     if (closed) {
       throw new IllegalStateException("AudioSource has been closed");
     }
-    
+
     alSourceStop(sourceId);
   }
 
@@ -87,7 +87,7 @@ public final class AudioSource implements AutoCloseable {
     if (closed) {
       throw new IllegalStateException("AudioSource has been closed");
     }
-    
+
     alSourcef(sourceId, AL_GAIN, Math.max(0.0f, volume));
   }
 
@@ -100,7 +100,7 @@ public final class AudioSource implements AutoCloseable {
     if (closed) {
       throw new IllegalStateException("AudioSource has been closed");
     }
-    
+
     alSourcef(sourceId, AL_PITCH, Math.max(0.1f, pitch));
   }
 
@@ -108,14 +108,14 @@ public final class AudioSource implements AutoCloseable {
    * Sets the 3D position of this audio source.
    *
    * @param x X coordinate
-   * @param y Y coordinate  
+   * @param y Y coordinate
    * @param z Z coordinate
    */
   public void setPosition(float x, float y, float z) {
     if (closed) {
       throw new IllegalStateException("AudioSource has been closed");
     }
-    
+
     alSource3f(sourceId, AL_POSITION, x, y, z);
   }
 
@@ -137,7 +137,7 @@ public final class AudioSource implements AutoCloseable {
     if (closed) {
       throw new IllegalStateException("AudioSource has been closed");
     }
-    
+
     alSourcei(sourceId, AL_LOOPING, looping ? AL_TRUE : AL_FALSE);
   }
 
@@ -150,7 +150,7 @@ public final class AudioSource implements AutoCloseable {
     if (closed) {
       throw new IllegalStateException("AudioSource has been closed");
     }
-    
+
     return alGetSourcei(sourceId, AL_SOURCE_STATE);
   }
 
@@ -190,7 +190,7 @@ public final class AudioSource implements AutoCloseable {
     if (closed) {
       throw new IllegalStateException("AudioSource has been closed");
     }
-    
+
     return alGetSourcef(sourceId, AL_GAIN);
   }
 

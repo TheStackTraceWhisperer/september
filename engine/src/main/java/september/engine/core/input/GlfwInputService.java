@@ -21,6 +21,7 @@ public final class GlfwInputService implements InputService {
 
   /**
    * Installs the necessary GLFW callbacks on the given window to capture input events.
+   *
    * @param window the WindowContext to listen to for input.
    */
   public void installCallbacks(WindowContext window) {

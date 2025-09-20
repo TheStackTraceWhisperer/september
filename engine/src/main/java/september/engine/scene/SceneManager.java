@@ -27,8 +27,8 @@ public class SceneManager {
     log.info("Loading scene: {}", path);
     world.getEntitiesWith().forEach(world::destroyEntity);
 
-    try(InputStream sceneStream = SceneManager.class.getResourceAsStream(path)) {
-      if(sceneStream == null) {
+    try (InputStream sceneStream = SceneManager.class.getResourceAsStream(path)) {
+      if (sceneStream == null) {
         throw new IOException("Scene file not found: " + path);
       }
       Scene scene = MAPPER.readValue(sceneStream, Scene.class);
@@ -38,15 +38,15 @@ public class SceneManager {
       loadAssets(scene.manifest());
 
       // Step 2: Create all entities from the templates
-      for(EntityTemplate template : scene.entities()) {
+      for (EntityTemplate template : scene.entities()) {
         int entity = world.createEntity();
         log.info("creating entity {} with id {}", template.name(), entity);
 
-        for(Map.Entry<String, Object> componentEntity : template.components().entrySet()) {
+        for (Map.Entry<String, Object> componentEntity : template.components().entrySet()) {
           String componentName = componentEntity.getKey();
           Class<? extends Component> componentClass = componentRegistry.get(componentName);
 
-          if(componentClass != null) {
+          if (componentClass != null) {
             Component component = MAPPER.convertValue(componentEntity.getValue(), componentClass);
             world.addComponent(entity, component);
           } else {
