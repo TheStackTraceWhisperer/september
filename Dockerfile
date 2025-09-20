@@ -19,8 +19,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openjdk-21-jdk \
     maven \
     ca-certificates \
+    ca-certificates-java \
     libopenal1 \
     && update-ca-certificates \
+    && /var/lib/dpkg/info/ca-certificates-java.postinst configure \
     && rm -rf /var/lib/apt/lists/*
 
 
@@ -33,11 +35,6 @@ default partial alphanumeric_keys
 xkb_symbols "evdev" {
 };
 EOF
-
-# Configure Java security settings for SSL certificate handling.
-# Disables certificate revocation checking to avoid network issues in CI environments
-# where external certificate validation services may not be accessible.
-ENV JAVA_OPTS="-Dcom.sun.net.ssl.checkRevocation=false"
 
 # Override Mesa OpenGL version reporting for the September engine requirements.
 # The engine requires OpenGL 4.6 support, but Mesa in CI environments may report
@@ -68,9 +65,9 @@ set -e
 export DISPLAY=:99
 
 
-# Configure Maven with additional SSL security bypasses for CI environments.
-# These settings allow Maven to download dependencies even when certificate
-export MAVEN_OPTS="-Dcom.sun.net.ssl.checkRevocation=false -Dmaven.wagon.http.ssl.insecure=true -Dmaven.wagon.http.ssl.allowall=true"
+# Configure Java to use system certificate store explicitly
+export JAVA_OPTS="-Djavax.net.ssl.trustStore=/etc/ssl/certs/java/cacerts -Djavax.net.ssl.trustStorePassword=changeit"
+export MAVEN_OPTS="$JAVA_OPTS"
 
 # Start the virtual X11 server in the background with a 1280x1024 resolution.
 # The server creates a virtual framebuffer that applications can render to
