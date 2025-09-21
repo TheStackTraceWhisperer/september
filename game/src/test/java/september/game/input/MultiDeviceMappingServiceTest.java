@@ -7,7 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import september.engine.core.input.GamepadService;
-import september.engine.core.input.InputService;
+import september.engine.core.input.GlfwInputService;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.lwjgl.glfw.GLFW.*;
@@ -21,7 +21,7 @@ import static org.mockito.Mockito.when;
 class MultiDeviceMappingServiceTest {
 
   @Mock
-  private InputService mockInputService;
+  private GlfwInputService mockInputService;
 
   @Mock
   private GamepadService mockGamepadService;
@@ -43,10 +43,10 @@ class MultiDeviceMappingServiceTest {
     when(mockInputService.isKeyPressed(GLFW_KEY_W)).thenReturn(true);
     when(mockInputService.isKeyPressed(GLFW_KEY_S)).thenReturn(false);
     when(mockInputService.isKeyPressed(GLFW_KEY_SPACE)).thenReturn(true);
-    
+
     // Recreate service to trigger refreshAssignments with new stubbing
     mappingService = new MultiDeviceMappingService(mockInputService, mockGamepadService);
-    
+
     // Act & Assert
     assertThat(mappingService.isActionActive(0, GameAction.MOVE_UP)).isTrue();
     assertThat(mappingService.isActionActive(0, GameAction.MOVE_DOWN)).isFalse();
@@ -61,9 +61,9 @@ class MultiDeviceMappingServiceTest {
     when(mockGamepadService.getAxis(0, GLFW_GAMEPAD_AXIS_LEFT_Y)).thenReturn(-0.8f); // Up
     when(mockGamepadService.getAxis(0, GLFW_GAMEPAD_AXIS_LEFT_X)).thenReturn(0.1f); // Center
     when(mockGamepadService.isButtonPressed(0, GLFW_GAMEPAD_BUTTON_A)).thenReturn(true);
-    
+
     mappingService.refreshAssignments();
-    
+
     // Act & Assert
     assertThat(mappingService.isActionActive(0, GameAction.MOVE_UP)).isTrue();
     assertThat(mappingService.isActionActive(0, GameAction.MOVE_DOWN)).isFalse();
@@ -79,9 +79,9 @@ class MultiDeviceMappingServiceTest {
     when(mockGamepadService.isGamepadConnected(0)).thenReturn(true);
     when(mockGamepadService.getAxis(0, GLFW_GAMEPAD_AXIS_LEFT_Y)).thenReturn(-0.2f); // Within deadzone
     when(mockGamepadService.getAxis(0, GLFW_GAMEPAD_AXIS_LEFT_X)).thenReturn(0.15f); // Within deadzone
-    
+
     mappingService.refreshAssignments();
-    
+
     // Act & Assert: Movement should be false due to deadzone
     assertThat(mappingService.isActionActive(0, GameAction.MOVE_UP)).isFalse();
     assertThat(mappingService.isActionActive(0, GameAction.MOVE_DOWN)).isFalse();
@@ -96,9 +96,9 @@ class MultiDeviceMappingServiceTest {
     when(mockGamepadService.isGamepadConnected(0)).thenReturn(true);
     when(mockGamepadService.getAxis(0, GLFW_GAMEPAD_AXIS_LEFT_Y)).thenReturn(0.5f); // Down
     when(mockGamepadService.getAxis(0, GLFW_GAMEPAD_AXIS_LEFT_X)).thenReturn(-0.7f); // Left
-    
+
     mappingService.refreshAssignments();
-    
+
     // Act & Assert
     assertThat(mappingService.isActionActive(0, GameAction.MOVE_UP)).isFalse();
     assertThat(mappingService.isActionActive(0, GameAction.MOVE_DOWN)).isTrue();
@@ -116,15 +116,15 @@ class MultiDeviceMappingServiceTest {
     for (int i = 3; i < 8; i++) {
       when(mockGamepadService.isGamepadConnected(i)).thenReturn(false);
     }
-    
+
     // Gamepad 1: right movement
     when(mockGamepadService.getAxis(1, GLFW_GAMEPAD_AXIS_LEFT_X)).thenReturn(0.8f);
-    
+
     // Gamepad 2: A button pressed
     when(mockGamepadService.isButtonPressed(2, GLFW_GAMEPAD_BUTTON_A)).thenReturn(true);
-    
+
     mappingService.refreshAssignments();
-    
+
     // Act & Assert
     assertThat(mappingService.isActionActive(1, GameAction.MOVE_RIGHT)).isTrue();
     assertThat(mappingService.isActionActive(1, GameAction.MOVE_LEFT)).isFalse();
@@ -135,7 +135,7 @@ class MultiDeviceMappingServiceTest {
   @DisplayName("Should handle disconnected gamepad gracefully")
   void handlesDisconnectedGamepadGracefully() {
     // Arrange: All gamepads disconnected (already set up in setUp method)
-    
+
     // Act & Assert: Should not crash and should return false
     assertThat(mappingService.isActionActive(0, GameAction.MOVE_UP)).isFalse();
     assertThat(mappingService.isActionActive(1, GameAction.MOVE_DOWN)).isFalse();
@@ -148,7 +148,7 @@ class MultiDeviceMappingServiceTest {
     // Arrange: Some gamepads connected
     when(mockGamepadService.isGamepadConnected(0)).thenReturn(true);
     mappingService.refreshAssignments();
-    
+
     // Act & Assert: Out-of-range player IDs should return false
     assertThat(mappingService.isActionActive(-1, GameAction.MOVE_UP)).isFalse();
     assertThat(mappingService.isActionActive(8, GameAction.MOVE_DOWN)).isFalse();
@@ -161,10 +161,10 @@ class MultiDeviceMappingServiceTest {
     // Arrange: Gamepad 0 connected but manually bind player 0 to keyboard
     when(mockGamepadService.isGamepadConnected(0)).thenReturn(true);
     when(mockInputService.isKeyPressed(GLFW_KEY_W)).thenReturn(true);
-    
+
     mappingService.refreshAssignments(); // Auto-assign gamepad
     mappingService.bindPlayerToKeyboard(0); // Override with keyboard
-    
+
     // Act & Assert: Should use keyboard instead of gamepad
     assertThat(mappingService.isActionActive(0, GameAction.MOVE_UP)).isTrue();
   }
@@ -177,14 +177,14 @@ class MultiDeviceMappingServiceTest {
       when(mockGamepadService.isGamepadConnected(i)).thenReturn(true);
       when(mockGamepadService.getAxis(i, GLFW_GAMEPAD_AXIS_LEFT_Y)).thenReturn(-0.5f); // Up
     }
-    
+
     mappingService.refreshAssignments();
-    
+
     // Act & Assert: All 8 players should be able to move up
     for (int i = 0; i < 8; i++) {
       assertThat(mappingService.isActionActive(i, GameAction.MOVE_UP)).isTrue();
     }
-    
+
     assertThat(mappingService.getMaxSupportedPlayers()).isEqualTo(8);
   }
 
@@ -192,7 +192,7 @@ class MultiDeviceMappingServiceTest {
   @DisplayName("Should handle unmapped actions gracefully")
   void handlesUnmappedActionsGracefully() {
     // Arrange: Player 0 with keyboard (only basic actions mapped) - already set up
-    
+
     // Act & Assert: Unmapped actions should return false
     assertThat(mappingService.isActionActive(0, GameAction.INTERACT)).isFalse();
     assertThat(mappingService.isActionActive(0, GameAction.OPEN_MENU)).isFalse();

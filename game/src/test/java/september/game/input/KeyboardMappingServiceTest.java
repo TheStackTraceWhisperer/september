@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import september.engine.core.input.InputService;
+import september.engine.core.input.GlfwInputService;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.lwjgl.glfw.GLFW.*;
@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
 class KeyboardMappingServiceTest {
 
     @Mock
-    private InputService mockInputService;
+    private GlfwInputService mockInputService;
 
     private KeyboardMappingService mappingService;
 

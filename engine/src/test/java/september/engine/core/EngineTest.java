@@ -83,7 +83,7 @@ public class EngineTest {
   }
 
   public static void main(String[] args) {
-    System.out.println("Running Engine tests...");
+    //System.out.println("Running Engine tests...");
 
     // 1. Set up all the mocks
     MockSystem mockSystem = new MockSystem();
@@ -100,7 +100,7 @@ public class EngineTest {
     // 4. Assert that our mock system was updated by the engine's loop.
     assert mockSystem.updated : "Test Failed: Engine main loop did not update systems.";
 
-    System.out.println("- Main loop update test PASSED");
-    System.out.println("All Engine tests passed!");
+    //System.out.println("- Main loop update test PASSED");
+    //System.out.println("All Engine tests passed!");
   }
 }

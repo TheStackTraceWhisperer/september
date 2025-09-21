@@ -2,7 +2,7 @@ package september.game.input;
 
 import org.lwjgl.glfw.GLFW;
 import september.engine.core.input.GamepadService;
-import september.engine.core.input.InputService;
+import september.engine.core.input.GlfwInputService;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,16 +17,16 @@ public class MultiDeviceMappingService implements InputMappingService {
   private static final int MAX_PLAYERS = 8;
   private static final float DEADZONE = 0.25f;
 
-  private final InputService inputService;
+  private final GlfwInputService inputService;
   private final GamepadService gamepadService;
-  
+
   // Device bindings: player -> device type
   private final Map<Integer, DeviceBinding> playerBindings = new HashMap<>();
-  
+
   // Keyboard mappings
   private final Map<Integer, Map<GameAction, Integer>> playerKeyMappings = new HashMap<>();
 
-  public MultiDeviceMappingService(InputService inputService, GamepadService gamepadService) {
+  public MultiDeviceMappingService(GlfwInputService inputService, GamepadService gamepadService) {
     this.inputService = inputService;
     this.gamepadService = gamepadService;
     loadDefaultMappings();
@@ -136,14 +136,14 @@ public class MultiDeviceMappingService implements InputMappingService {
   public void refreshAssignments() {
     // Clear all bindings except explicit keyboard bindings
     playerBindings.clear();
-    
+
     // Auto-assign connected gamepads to players
     for (int gamepadIndex = 0; gamepadIndex < MAX_PLAYERS; gamepadIndex++) {
       if (gamepadService.isGamepadConnected(gamepadIndex)) {
         playerBindings.put(gamepadIndex, new DeviceBinding(DeviceType.GAMEPAD, gamepadIndex));
       }
     }
-    
+
     // Ensure player 0 always has a binding
     if (!playerBindings.containsKey(0)) {
       bindPlayerToKeyboard(0);

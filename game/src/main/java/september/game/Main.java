@@ -1,17 +1,18 @@
 package september.game;
 
+import java.util.HashMap;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import september.engine.core.ApplicationLoopPolicy;
 import september.engine.core.Engine;
 import september.engine.core.EngineServices;
 import september.engine.core.Game;
-import september.engine.core.ApplicationLoopPolicy;
 import september.engine.ecs.Component;
 import september.engine.ecs.components.ColliderComponent;
 import september.engine.ecs.components.ControllableComponent;
 import september.engine.ecs.components.MovementStatsComponent;
 import september.engine.ecs.components.SpriteComponent;
 import september.engine.ecs.components.TransformComponent;
-import september.engine.events.StartNewGameEvent;
 import september.engine.state.GameState;
 import september.engine.ui.components.UIButtonComponent;
 import september.engine.ui.components.UIImageComponent;
@@ -20,10 +21,6 @@ import september.game.components.EnemyComponent;
 import september.game.components.HealthComponent;
 import september.game.components.PlayerComponent;
 import september.game.state.MainMenuState;
-import september.game.state.PlayingState;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Slf4j
 public final class Main implements Game {
@@ -32,23 +29,11 @@ public final class Main implements Game {
   @Override
   public void init(EngineServices services) {
     this.services = services;
-    // The Game implementation is responsible for its own event handling.
-    registerEventHandlers();
-  }
-
-  private void registerEventHandlers() {
-    services.eventBus().subscribe(StartNewGameEvent.class, this::onStartNewGame);
-  }
-
-  private void onStartNewGame(StartNewGameEvent event) {
-    log.info("StartNewGameEvent received, changing to PlayingState.");
-    services.gameStateManager().changeState(new PlayingState(), services);
+    // Event handling is now managed by the individual states (e.g., MainMenuState).
   }
 
   @Override
   public GameState getInitialState(EngineServices services) {
-    // The game starts directly in the "Playing" state for this simple implementation.
-    // A full game would return a new MainMenuState() here.
     return new MainMenuState();
   }
 

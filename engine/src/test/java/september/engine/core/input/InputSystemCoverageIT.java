@@ -23,19 +23,6 @@ class InputSystemCoverageIT {
   }
 
   @Test
-  @DisplayName("Input services should be instantiable and functional")
-  void inputServices_instantiableAndFunctional() {
-    // Test basic instantiation and interface compliance
-    assertThat(inputService)
-      .as("GlfwInputService should implement InputService")
-      .isInstanceOf(InputService.class);
-
-    assertThat(gamepadService)
-      .as("GlfwGamepadService should implement GamepadService")
-      .isInstanceOf(GamepadService.class);
-  }
-
-  @Test
   @DisplayName("Input service should exercise all key methods")
   void inputService_exercisesAllKeyMethods() {
     // Exercise isKeyPressed for various key types

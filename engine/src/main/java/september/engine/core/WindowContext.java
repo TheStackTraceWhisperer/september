@@ -1,15 +1,15 @@
 package september.engine.core;
 
+import java.nio.IntBuffer;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
+import org.lwjgl.system.MemoryStack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * GLFW window wrapper that creates an OpenGL 4.6 core profile context.
- */
+/** GLFW window wrapper that creates an OpenGL 4.6 core profile context. */
 public final class WindowContext implements AutoCloseable {
   private static final Logger log = LoggerFactory.getLogger(WindowContext.class);
 
@@ -29,7 +29,8 @@ public final class WindowContext implements AutoCloseable {
     log.info("Creating GLFW window with OpenGL 4.6 core profile");
     long window = GLFW.glfwCreateWindow(width, height, title, 0L, 0L);
     if (window == 0L) {
-      throw new IllegalStateException("Unable to create GLFW window (requested OpenGL 4.6 core profile)");
+      throw new IllegalStateException(
+          "Unable to create GLFW window (requested OpenGL 4.6 core profile)");
     }
 
     this.handle = window;
@@ -75,34 +76,52 @@ public final class WindowContext implements AutoCloseable {
     return handle;
   }
 
+  public int getWidth() {
+    try (MemoryStack stack = MemoryStack.stackPush()) {
+      IntBuffer pWidth = stack.mallocInt(1);
+      IntBuffer pHeight = stack.mallocInt(1);
+      GLFW.glfwGetWindowSize(handle, pWidth, pHeight);
+      return pWidth.get(0);
+    }
+  }
+
+  public int getHeight() {
+    try (MemoryStack stack = MemoryStack.stackPush()) {
+      IntBuffer pWidth = stack.mallocInt(1);
+      IntBuffer pHeight = stack.mallocInt(1);
+      GLFW.glfwGetWindowSize(handle, pWidth, pHeight);
+      return pHeight.get(0);
+    }
+  }
+
   public void swapBuffers() {
     GLFW.glfwSwapBuffers(handle);
   }
 
-  /**
-   * Processes all pending events for the window.
-   */
+  /** Processes all pending events for the window. */
   public void pollEvents() {
     GLFW.glfwPollEvents();
   }
 
   /**
-   * Sets a listener to be called when the window's framebuffer is resized.
-   * This method handles setting the GLFW callback and managing the GL viewport.
+   * Sets a listener to be called when the window's framebuffer is resized. This method handles
+   * setting the GLFW callback and managing the GL viewport.
    *
    * @param listener The listener that will handle the resize event for game logic (e.g., camera).
    */
   public void setResizeListener(WindowResizeListener listener) {
-    GLFW.glfwSetFramebufferSizeCallback(handle, (win, w, h) -> {
-      if (w > 0 && h > 0) {
-        // The context is responsible for the GL call
-        GL30.glViewport(0, 0, w, h);
-        // The listener is responsible for game-logic updates (like camera)
-        if (listener != null) {
-          listener.onResize(w, h);
-        }
-      }
-    });
+    GLFW.glfwSetFramebufferSizeCallback(
+        handle,
+        (win, w, h) -> {
+          if (w > 0 && h > 0) {
+            // The context is responsible for the GL call
+            GL30.glViewport(0, 0, w, h);
+            // The listener is responsible for game-logic updates (like camera)
+            if (listener != null) {
+              listener.onResize(w, h);
+            }
+          }
+        });
   }
 
   @Override

@@ -1,120 +1,124 @@
 package september.engine.systems;
 
-import september.engine.core.input.InputService;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import september.engine.core.WindowContext;
+import september.engine.core.input.GlfwInputService;
 import september.engine.ecs.IWorld;
 import september.engine.ecs.World;
 import september.engine.events.EventBus;
 import september.engine.events.UIButtonClickedEvent;
 import september.engine.ui.components.UIButtonComponent;
+import september.engine.ui.components.UIImageComponent;
 import september.engine.ui.components.UITransformComponent;
 
-// NOTE: This is a simplified test file due to the lack of a testing framework.
+@ExtendWith(MockitoExtension.class)
+class UISystemTest {
 
-public class UISystemTest {
+  private static final int WINDOW_WIDTH = 800;
+  private static final int WINDOW_HEIGHT = 600;
 
-  // Mock for InputService
-  static class MockInputService implements InputService {
-    private double mouseX, mouseY;
-    private boolean isPressed;
+  @Mock private GlfwInputService mockInputService;
+  @Mock private EventBus mockEventBus;
+  @Mock private WindowContext mockWindowContext;
 
-    public void setMouse(double x, double y) {
-      this.mouseX = x;
-      this.mouseY = y;
-    }
+  private IWorld world;
+  private UISystem uiSystem;
+  private int buttonEntity;
+  private UIButtonComponent button;
+  private UIImageComponent image;
 
-    public void setPressed(boolean pressed) {
-      this.isPressed = pressed;
-    }
+  @BeforeEach
+  void setUp() {
+    world = new World();
+    uiSystem = new UISystem(world, mockWindowContext, mockInputService, mockEventBus);
 
-    @Override
-    public double getMouseX() {
-      return mouseX;
-    }
+    when(mockWindowContext.getWidth()).thenReturn(WINDOW_WIDTH);
+    when(mockWindowContext.getHeight()).thenReturn(WINDOW_HEIGHT);
 
-    @Override
-    public double getMouseY() {
-      return mouseY;
-    }
+    buttonEntity = world.createEntity();
 
-    @Override
-    public boolean isMouseButtonPressed(int button) {
-      return isPressed;
-    }
-
-    // Unused methods
-    @Override
-    public boolean isKeyPressed(int key) {
-      return false;
-    }
-
-    @Override
-    public boolean isKeyReleased(int key) {
-      return false;
-    }
-  }
-
-  // Mock for EventBus
-  static class MockEventBus extends EventBus {
-    public UIButtonClickedEvent publishedEvent = null;
-
-    @Override
-    public <T extends september.engine.events.Event> void publish(T event) {
-      if (event instanceof UIButtonClickedEvent) {
-        publishedEvent = (UIButtonClickedEvent) event;
-      }
-    }
-  }
-
-  public static void main(String[] args) {
-    System.out.println("Running UISystem tests...");
-
-    // 1. Set up mocks and the UISystem instance
-    IWorld world = new World();
-    MockInputService mockInput = new MockInputService();
-    MockEventBus mockEventBus = new MockEventBus();
-    // WindowContext is not directly used in the tested logic, so null is fine
-    UISystem uiSystem = new UISystem(world, null, mockInput, mockEventBus);
-
-    // 2. Create a button entity for testing
-    int buttonEntity = world.createEntity();
+    // Set up the transform so that calculateLayout will produce the bounds the test expects.
+    // Expected bounds: [100, 100, 300, 150] -> size (200, 50)
     UITransformComponent transform = new UITransformComponent();
-    transform.screenBounds = new float[]{100, 100, 300, 150}; // Manually set screen bounds for testing
-    UIButtonComponent button = new UIButtonComponent();
-    button.actionEvent = "TEST_ACTION";
+    transform.anchor.set(0.0f, 0.0f);
+    transform.pivot.set(0.0f, 0.0f);
+    transform.size.set(200.0f, 50.0f);
+    transform.offset.set(100.0f, 100.0f, 0.0f);
+
+    button = new UIButtonComponent("TEST_ACTION", "normal_tex", "hover_tex", "pressed_tex", null, null, null);
+    image = new UIImageComponent(button.normalTexture, null);
+
     world.addComponent(buttonEntity, transform);
     world.addComponent(buttonEntity, button);
+    world.addComponent(buttonEntity, image);
+  }
 
-    // --- Test 1: Button Hover ---
-    mockInput.setMouse(150, 475); // Y is flipped (600 - 125)
-    mockInput.setPressed(false);
+  @Test
+  @DisplayName("Button state should be HOVERED and texture should update when mouse is over it")
+  void buttonState_isHovered_whenMouseIsOver() {
+    // Test with mouse at (150, 125) which is inside the calculated bounds [100,100,300,150]
+    when(mockInputService.getMouseX()).thenReturn(150.0);
+    when(mockInputService.getMouseY()).thenReturn(475.0); // 600 - 125
+    when(mockInputService.isMouseButtonPressed(anyInt())).thenReturn(false);
+
     uiSystem.update(0.0f);
-    assert button.currentState == UIButtonComponent.ButtonState.HOVERED : "Test Failed: Button should be in HOVERED state";
-    assert mockEventBus.publishedEvent == null : "Test Failed: No event should be published on hover";
-    System.out.println("- Button Hover test PASSED");
 
-    // --- Test 2: Button Press (but not release) ---
-    mockInput.setPressed(true);
+    assertThat(button.currentState).isEqualTo(UIButtonComponent.ButtonState.HOVERED);
+    assertThat(image.textureHandle).isEqualTo(button.hoveredTexture);
+    verify(mockEventBus, never()).publish(any());
+  }
+
+  @Test
+  @DisplayName("Button state should be PRESSED and texture should update when mouse is over and down")
+  void buttonState_isPressed_whenMouseIsOverAndDown() {
+    when(mockInputService.getMouseX()).thenReturn(150.0);
+    when(mockInputService.getMouseY()).thenReturn(475.0);
+    when(mockInputService.isMouseButtonPressed(anyInt())).thenReturn(true);
+
     uiSystem.update(0.0f);
-    assert button.currentState == UIButtonComponent.ButtonState.PRESSED : "Test Failed: Button should be in PRESSED state";
-    assert mockEventBus.publishedEvent == null : "Test Failed: No event should be published on press";
-    System.out.println("- Button Press test PASSED");
 
-    // --- Test 3: Button Click (Press and Release) ---
-    // The state is already PRESSED from the previous test.
-    mockInput.setPressed(false); // Simulate release
+    assertThat(button.currentState).isEqualTo(UIButtonComponent.ButtonState.PRESSED);
+    assertThat(image.textureHandle).isEqualTo(button.pressedTexture);
+    verify(mockEventBus, never()).publish(any());
+  }
+
+  @Test
+  @DisplayName("Click event should be published when mouse is released over a pressed button")
+  void clickEvent_isPublished_onReleaseOverPressedButton() {
+    button.currentState = UIButtonComponent.ButtonState.PRESSED;
+    when(mockInputService.getMouseX()).thenReturn(150.0);
+    when(mockInputService.getMouseY()).thenReturn(475.0);
+    when(mockInputService.isMouseButtonPressed(anyInt())).thenReturn(false);
+
     uiSystem.update(0.0f);
-    assert mockEventBus.publishedEvent != null : "Test Failed: A click event should have been published";
-    assert "TEST_ACTION".equals(mockEventBus.publishedEvent.actionEvent()) : "Test Failed: Published event has wrong action string";
-    System.out.println("- Button Click test PASSED");
 
-    // --- Test 4: Mouse leaves button area ---
-    mockEventBus.publishedEvent = null; // Reset for next test
-    mockInput.setMouse(0, 0);
+    ArgumentCaptor<UIButtonClickedEvent> eventCaptor =
+        ArgumentCaptor.forClass(UIButtonClickedEvent.class);
+    verify(mockEventBus).publish(eventCaptor.capture());
+    assertThat(eventCaptor.getValue().actionEvent()).isEqualTo("TEST_ACTION");
+  }
+
+  @Test
+  @DisplayName("Button state should be NORMAL and texture should reset when mouse is not over it")
+  void buttonState_isNormal_whenMouseIsNotOver() {
+    button.currentState = UIButtonComponent.ButtonState.HOVERED;
+    image.textureHandle = button.hoveredTexture;
+    when(mockInputService.getMouseX()).thenReturn(0.0);
+    when(mockInputService.getMouseY()).thenReturn(0.0);
+
     uiSystem.update(0.0f);
-    assert button.currentState == UIButtonComponent.ButtonState.NORMAL : "Test Failed: Button should be in NORMAL state";
-    assert mockEventBus.publishedEvent == null : "Test Failed: No event should be published when mouse leaves";
-    System.out.println("- Mouse Leave test PASSED");
 
-    System.out.println("All UISystem tests passed!");
+    assertThat(button.currentState).isEqualTo(UIButtonComponent.ButtonState.NORMAL);
+    assertThat(image.textureHandle).isEqualTo(button.normalTexture);
+    verify(mockEventBus, never()).publish(any());
   }
 }

@@ -1,6 +1,7 @@
 package september.engine.ui.components;
 
 import org.joml.Vector2f;
+import org.joml.Vector3f;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,8 +18,8 @@ class UITransformComponentTest {
     // Assert
     assertThat(transform.anchor).isEqualTo(new Vector2f(0.5f, 0.5f));
     assertThat(transform.pivot).isEqualTo(new Vector2f(0.5f, 0.5f));
-    assertThat(transform.size).isEqualTo(new Vector2f(100, 30));
-    assertThat(transform.offset).isEqualTo(new Vector2f(0, 0));
+    assertThat(transform.size).isEqualTo(new Vector2f(100.0f, 100.0f));
+    assertThat(transform.offset).isEqualTo(new Vector3f(0.0f, 0.0f, 0.0f));
   }
 
   @Test
@@ -28,7 +29,7 @@ class UITransformComponentTest {
     var anchor = new Vector2f(1.0f, 1.0f);
     var pivot = new Vector2f(0.0f, 0.0f);
     var size = new Vector2f(200, 75);
-    var offset = new Vector2f(-10, -10);
+    var offset = new Vector3f(-10, -10, 0);
 
     // Act
     var transform = new UITransformComponent(anchor, pivot, size, offset);
@@ -50,6 +51,6 @@ class UITransformComponentTest {
     assertThat(transform.anchor).isEqualTo(new Vector2f(0.5f, 0.5f));
     assertThat(transform.pivot).isEqualTo(new Vector2f(0.5f, 0.5f));
     assertThat(transform.size).isEqualTo(new Vector2f(100, 30));
-    assertThat(transform.offset).isEqualTo(new Vector2f(0, 0));
+    assertThat(transform.offset).isEqualTo(new Vector3f(0, 0, 0));
   }
 }

@@ -1,6 +1,6 @@
 package september.game.input;
 import org.lwjgl.glfw.GLFW;
-import september.engine.core.input.InputService;
+import september.engine.core.input.GlfwInputService;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,10 +11,10 @@ import java.util.Map;
  */
 public class KeyboardMappingService implements InputMappingService {
 
-  private final InputService inputService;
+  private final GlfwInputService inputService;
   private final Map<Integer, Map<GameAction, Integer>> playerMappings = new HashMap<>();
 
-  public KeyboardMappingService(InputService inputService) {
+  public KeyboardMappingService(GlfwInputService inputService) {
     this.inputService = inputService;
     loadDefaultMappings();
   }

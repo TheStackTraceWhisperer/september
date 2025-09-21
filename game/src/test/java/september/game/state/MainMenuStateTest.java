@@ -58,8 +58,12 @@ public class MainMenuStateTest {
         MockEventBus mockEventBus = new MockEventBus();
         MockGameStateManager mockGameStateManager = new MockGameStateManager();
 
-        // The EngineServices constructor is very large. We pass null for unused services.
-        EngineServices mockServices = new EngineServices(null, mockSystemManager, mockGameStateManager, null, null, null, null, null, mockEventBus, null, new september.engine.rendering.Camera(), null, null);
+        // Use the builder for a more robust and readable test setup
+        EngineServices mockServices = EngineServices.builder()
+            .systemManager(mockSystemManager)
+            .gameStateManager(mockGameStateManager)
+            .eventBus(mockEventBus)
+            .build();
 
         // Test onEnter
         state.onEnter(mockServices);

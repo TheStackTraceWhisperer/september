@@ -1,7 +1,10 @@
 package september.engine.systems;
 
+import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Comparator;
+import org.lwjgl.glfw.GLFW;
+import org.lwjgl.system.MemoryStack;
 import september.engine.assets.ResourceManager;
 import september.engine.core.WindowContext;
 import september.engine.ecs.ISystem;
@@ -10,9 +13,7 @@ import september.engine.ui.components.UIImageComponent;
 import september.engine.ui.components.UITransformComponent;
 import september.engine.ui.rendering.UIRenderer;
 
-/**
- * The system responsible for rendering all UI elements.
- */
+/** The system responsible for rendering all UI elements. */
 public class UIRenderSystem implements ISystem {
 
   private final IWorld world;
@@ -22,7 +23,20 @@ public class UIRenderSystem implements ISystem {
 
   public UIRenderSystem(IWorld world, ResourceManager resourceManager, WindowContext window) {
     this.world = world;
-    this.renderer = new UIRenderer(resourceManager, 800, 600);
+
+    int width, height;
+    try (MemoryStack stack = MemoryStack.stackPush()) {
+      IntBuffer pWidth = stack.mallocInt(1);
+      IntBuffer pHeight = stack.mallocInt(1);
+      GLFW.glfwGetWindowSize(window.handle(), pWidth, pHeight);
+      width = pWidth.get(0);
+      height = pHeight.get(0);
+    }
+
+    this.renderer = new UIRenderer(resourceManager, width, height);
+
+    // Ensure the renderer's projection is updated when the window is resized.
+    window.setResizeListener((w, h) -> this.renderer.resize(w, h));
   }
 
   @Override

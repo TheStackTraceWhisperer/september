@@ -34,8 +34,17 @@ public class PlayingStateTest {
 
         // Mock services
         MockSystemManager mockSystemManager = new MockSystemManager();
-        // Mock other services as null since they are not directly used by the methods we are testing
-        EngineServices mockServices = new EngineServices(new september.engine.ecs.World(), mockSystemManager, null, new september.engine.assets.ResourceManager(), new september.engine.scene.SceneManager(new java.util.HashMap<>(), null), new september.engine.core.input.GlfwInputService(), new september.engine.core.input.GlfwGamepadService(), null, null, null, new september.engine.rendering.Camera(), null, null);
+
+        // Use the builder for a more robust and readable test setup
+        EngineServices mockServices = EngineServices.builder()
+            .world(new september.engine.ecs.World())
+            .systemManager(mockSystemManager)
+            .resourceManager(new september.engine.assets.ResourceManager())
+            .sceneManager(new september.engine.scene.SceneManager(new java.util.HashMap<>(), null))
+            .inputService(new september.engine.core.input.GlfwInputService())
+            .gamepadService(new september.engine.core.input.GlfwGamepadService())
+            .camera(new september.engine.rendering.Camera())
+            .build();
 
         // Test onEnter
         state.onEnter(mockServices);

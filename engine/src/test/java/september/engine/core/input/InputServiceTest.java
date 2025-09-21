@@ -21,7 +21,7 @@ import static org.mockito.Mockito.when;
 class InputServiceTest {
 
   @Mock
-  private InputService mockInputService;
+  private GlfwInputService mockInputService;
 
   @Test
   @DisplayName("isKeyPressed should return consistent boolean values")

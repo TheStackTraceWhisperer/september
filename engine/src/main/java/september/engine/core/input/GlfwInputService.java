@@ -13,7 +13,7 @@ import java.util.Arrays;
  * This class maintains arrays for key and mouse button states and updates them
  * when GLFW signals an event.
  */
-public final class GlfwInputService implements InputService {
+public class GlfwInputService {
   private final boolean[] keys = new boolean[GLFW.GLFW_KEY_LAST + 1];
   private final boolean[] mouseButtons = new boolean[GLFW.GLFW_MOUSE_BUTTON_LAST + 1];
   private double mouseX;
@@ -63,7 +63,6 @@ public final class GlfwInputService implements InputService {
     mouseY = 0.0;
   }
 
-  @Override
   public boolean isKeyPressed(int keyCode) {
     if (keyCode < 0 || keyCode > GLFW.GLFW_KEY_LAST) {
       return false;
@@ -71,7 +70,6 @@ public final class GlfwInputService implements InputService {
     return keys[keyCode];
   }
 
-  @Override
   public boolean isMouseButtonPressed(int button) {
     if (button < 0 || button > GLFW.GLFW_MOUSE_BUTTON_LAST) {
       return false;
@@ -79,12 +77,10 @@ public final class GlfwInputService implements InputService {
     return mouseButtons[button];
   }
 
-  @Override
   public double getMouseX() {
     return mouseX;
   }
 
-  @Override
   public double getMouseY() {
     return mouseY;
   }
