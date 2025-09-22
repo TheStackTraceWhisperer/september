@@ -1,5 +1,6 @@
 package september.engine.state;
 
+import jakarta.inject.Singleton;
 import september.engine.core.EngineServices;
 
 import java.util.Stack;
@@ -7,6 +8,7 @@ import java.util.Stack;
 /**
  * A stack-based Finite State Machine (FSM) for managing the game's high-level states.
  */
+@Singleton
 public class GameStateManager {
   private final Stack<GameState> stateStack = new Stack<>();
 

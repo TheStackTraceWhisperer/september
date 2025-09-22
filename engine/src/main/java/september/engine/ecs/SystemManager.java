@@ -1,5 +1,7 @@
 package september.engine.ecs;
 
+import jakarta.inject.Singleton;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -7,6 +9,7 @@ import java.util.List;
 /**
  * Manages the registration and execution of all systems.
  */
+@Singleton
 public class SystemManager {
   private final List<ISystem> systems = new ArrayList<>();
   private boolean sorted = true;

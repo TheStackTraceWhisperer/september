@@ -1,5 +1,6 @@
 package september.engine.core.input;
 
+import jakarta.inject.Singleton;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWCursorPosCallback;
 import org.lwjgl.glfw.GLFWKeyCallback;
@@ -13,6 +14,7 @@ import java.util.Arrays;
  * This class maintains arrays for key and mouse button states and updates them
  * when GLFW signals an event.
  */
+@Singleton
 public class GlfwInputService {
   private final boolean[] keys = new boolean[GLFW.GLFW_KEY_LAST + 1];
   private final boolean[] mouseButtons = new boolean[GLFW.GLFW_MOUSE_BUTTON_LAST + 1];

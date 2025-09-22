@@ -1,5 +1,6 @@
 package september.engine.audio;
 
+import jakarta.inject.Singleton;
 import org.lwjgl.openal.AL;
 import org.lwjgl.openal.ALC;
 import org.lwjgl.openal.ALCCapabilities;
@@ -27,6 +28,7 @@ import static org.lwjgl.openal.ALC10.alcOpenDevice;
  * - Managing global audio settings (master volume, listener properties)
  * - Providing factory methods for creating audio resources
  */
+@Singleton
 public final class AudioManager implements AutoCloseable {
 
   private long device;

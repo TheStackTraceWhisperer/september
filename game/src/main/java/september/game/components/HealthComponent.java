@@ -1,10 +1,12 @@
 package september.game.components;
 
+import lombok.Getter;
 import september.engine.ecs.Component;
 
 /**
  * A component that gives an entity health and makes it susceptible to damage.
  */
+@Getter
 public class HealthComponent implements Component {
 
     private int maxHealth;
@@ -16,14 +18,6 @@ public class HealthComponent implements Component {
         }
         this.maxHealth = maxHealth;
         this.currentHealth = maxHealth;
-    }
-
-    public int getCurrentHealth() {
-        return currentHealth;
-    }
-
-    public int getMaxHealth() {
-        return maxHealth;
     }
 
     /**

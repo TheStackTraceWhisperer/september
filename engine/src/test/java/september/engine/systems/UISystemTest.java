@@ -3,6 +3,7 @@ package september.engine.systems;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+import io.avaje.inject.events.Event;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,7 +15,6 @@ import september.engine.core.WindowContext;
 import september.engine.core.input.GlfwInputService;
 import september.engine.ecs.IWorld;
 import september.engine.ecs.World;
-import september.engine.events.EventBus;
 import september.engine.events.UIButtonClickedEvent;
 import september.engine.ui.components.UIButtonComponent;
 import september.engine.ui.components.UIImageComponent;
@@ -27,7 +27,7 @@ class UISystemTest {
   private static final int WINDOW_HEIGHT = 600;
 
   @Mock private GlfwInputService mockInputService;
-  @Mock private EventBus mockEventBus;
+  @Mock private Event<UIButtonClickedEvent> mockButtonClickedEvent;
   @Mock private WindowContext mockWindowContext;
 
   private IWorld world;
@@ -39,7 +39,7 @@ class UISystemTest {
   @BeforeEach
   void setUp() {
     world = new World();
-    uiSystem = new UISystem(world, mockWindowContext, mockInputService, mockEventBus);
+    uiSystem = new UISystem(world, mockWindowContext, mockInputService, mockButtonClickedEvent);
 
     when(mockWindowContext.getWidth()).thenReturn(WINDOW_WIDTH);
     when(mockWindowContext.getHeight()).thenReturn(WINDOW_HEIGHT);
@@ -74,7 +74,7 @@ class UISystemTest {
 
     assertThat(button.currentState).isEqualTo(UIButtonComponent.ButtonState.HOVERED);
     assertThat(image.textureHandle).isEqualTo(button.hoveredTexture);
-    verify(mockEventBus, never()).publish(any());
+    verify(mockButtonClickedEvent, never()).fire(any());
   }
 
   @Test
@@ -88,7 +88,7 @@ class UISystemTest {
 
     assertThat(button.currentState).isEqualTo(UIButtonComponent.ButtonState.PRESSED);
     assertThat(image.textureHandle).isEqualTo(button.pressedTexture);
-    verify(mockEventBus, never()).publish(any());
+    verify(mockButtonClickedEvent, never()).fire(any());
   }
 
   @Test
@@ -103,7 +103,7 @@ class UISystemTest {
 
     ArgumentCaptor<UIButtonClickedEvent> eventCaptor =
         ArgumentCaptor.forClass(UIButtonClickedEvent.class);
-    verify(mockEventBus).publish(eventCaptor.capture());
+    verify(mockButtonClickedEvent).fire(eventCaptor.capture());
     assertThat(eventCaptor.getValue().actionEvent()).isEqualTo("TEST_ACTION");
   }
 
@@ -119,6 +119,6 @@ class UISystemTest {
 
     assertThat(button.currentState).isEqualTo(UIButtonComponent.ButtonState.NORMAL);
     assertThat(image.textureHandle).isEqualTo(button.normalTexture);
-    verify(mockEventBus, never()).publish(any());
+    verify(mockButtonClickedEvent, never()).fire(any());
   }
 }

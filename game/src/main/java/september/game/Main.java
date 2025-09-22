@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import september.engine.core.ApplicationLoopPolicy;
+import september.engine.core.ApplicationLoopPolicy;
 import september.engine.core.Engine;
 import september.engine.core.EngineServices;
 import september.engine.core.Game;
