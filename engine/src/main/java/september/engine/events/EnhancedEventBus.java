@@ -38,21 +38,17 @@ public class EnhancedEventBus extends EventBus {
   /**
    * Wraps an annotated method as an event listener.
    */
+  @lombok.AllArgsConstructor
+  @lombok.Getter
   private static class AnnotatedEventListener {
     private final Object instance;
     private final Method method;
     private final Class<? extends Event> eventType;
 
-    public AnnotatedEventListener(Object instance, Method method, Class<? extends Event> eventType) {
-      this.instance = instance;
-      this.method = method;
-      this.eventType = eventType;
-      method.setAccessible(true);
-    }
-
     @SuppressWarnings("unchecked")
     public void handle(Event event) {
       try {
+        method.setAccessible(true);
         method.invoke(instance, event);
       } catch (Exception e) {
         log.error("Error invoking event listener method {} on {}", method.getName(), instance.getClass().getSimpleName(), e);
@@ -87,6 +83,7 @@ public class EnhancedEventBus extends EventBus {
         @SuppressWarnings("unchecked")
         Class<? extends Event> eventType = (Class<? extends Event>) parameterType;
         
+        method.setAccessible(true);
         AnnotatedEventListener annotatedListener = new AnnotatedEventListener(listener, method, eventType);
         annotatedListeners.computeIfAbsent(eventType, k -> new CopyOnWriteArrayList<>()).add(annotatedListener);
         

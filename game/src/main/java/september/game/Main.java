@@ -3,8 +3,7 @@ package september.game;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import september.engine.core.ApplicationLoopPolicy;
 import september.engine.core.ApplicationLoopPolicy;
 import september.engine.core.Engine;
 import september.engine.core.EngineServices;
@@ -26,7 +25,6 @@ import september.game.state.MainMenuState;
 
 @Slf4j
 public final class Main implements Game {
-  private static final Logger log = LoggerFactory.getLogger(Main.class);
   private EngineServices services;
 
   @Override

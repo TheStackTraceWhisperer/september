@@ -2,6 +2,8 @@ package september.engine.core;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import lombok.Getter;
+import lombok.experimental.Accessors;
 import september.engine.assets.ResourceManager;
 import september.engine.audio.AudioManager;
 import september.engine.core.input.GamepadService;
@@ -25,6 +27,8 @@ import java.util.Map;
  * into classes that need access to multiple services.
  */
 @Singleton
+@Getter
+@Accessors(fluent = true)
 public class EngineServices {
   
   private final IWorld world;
@@ -161,20 +165,4 @@ public class EngineServices {
                                camera, renderer, window);
     }
   }
-
-  // Getter methods for all services
-  public IWorld world() { return world; }
-  public SystemManager systemManager() { return systemManager; }
-  public GameStateManager gameStateManager() { return gameStateManager; }
-  public ResourceManager resourceManager() { return resourceManager; }
-  public SceneManager sceneManager() { return sceneManager; }
-  public EventBus eventBus() { return eventBus; }
-  public GlfwInputService inputService() { return inputService; }
-  public GamepadService gamepadService() { return gamepadService; }
-  public TimeService timeService() { return timeService; }
-  public AudioManager audioManager() { return audioManager; }
-  public PreferencesService preferencesService() { return preferencesService; }
-  public Camera camera() { return camera; }
-  public Renderer renderer() { return renderer; }
-  public WindowContext window() { return window; }
 }
