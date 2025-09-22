@@ -1,6 +1,9 @@
 package september.engine.scene;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import september.engine.assets.ResourceManager;
 import september.engine.ecs.Component;
@@ -12,18 +15,27 @@ import java.io.InputStream;
 import java.util.Map;
 
 @Slf4j
+@Singleton
+@RequiredArgsConstructor
 public class SceneManager {
   private static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new CustomJomlModule());
 
-  private final Map<String, Class<? extends Component>> componentRegistry;
   private final ResourceManager resourceManager;
+  private Map<String, Class<? extends Component>> componentRegistry;
 
-  public SceneManager(Map<String, Class<? extends Component>> componentRegistry, ResourceManager resourceManager) {
+  /**
+   * Initializes the scene manager with the component registry.
+   * This must be called before loading any scenes.
+   */
+  public void initialize(Map<String, Class<? extends Component>> componentRegistry) {
     this.componentRegistry = componentRegistry;
-    this.resourceManager = resourceManager;
   }
 
   public void load(String path, IWorld world) {
+    if (componentRegistry == null) {
+      throw new IllegalStateException("SceneManager not initialized. Call initialize() with component registry first.");
+    }
+    
     log.info("Loading scene: {}", path);
     world.getEntitiesWith().forEach(world::destroyEntity);
 

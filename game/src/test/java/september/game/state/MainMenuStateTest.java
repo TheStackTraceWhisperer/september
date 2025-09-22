@@ -61,22 +61,23 @@ public class MainMenuStateTest {
         MockEventPublisher mockEventPublisher = new MockEventPublisher();
         MockGameStateManager mockGameStateManager = new MockGameStateManager();
 
-        // Create a minimal EngineServices for testing
-        EngineServices mockServices = new EngineServices(
-            null, // world
-            mockSystemManager,
-            mockGameStateManager,
-            null, // resourceManager
-            mockEventPublisher,
-            null, // inputService
-            null, // gamepadService
-            null, // timeService
-            null, // audioManager
-            null, // preferencesService
-            null, // camera
-            null, // renderer
-            null  // window
-        );
+        // Create a minimal EngineServices for testing using builder
+        EngineServices mockServices = EngineServices.builder()
+            .world(null)
+            .systemManager(mockSystemManager)
+            .gameStateManager(mockGameStateManager)
+            .resourceManager(null)
+            .sceneManager(null)
+            .eventPublisher(mockEventPublisher)
+            .inputService(null)
+            .gamepadService(null)
+            .timeService(null)
+            .audioManager(null)
+            .preferencesService(null)
+            .camera(null)
+            .renderer(null)
+            .window(null)
+            .build();
 
         // Test onExit (most basic test)
         try {

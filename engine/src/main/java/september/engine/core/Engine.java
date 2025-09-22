@@ -47,8 +47,8 @@ public final class Engine implements Runnable {
       // Get the main services aggregator
       services = beanScope.get(EngineServices.class);
       
-      // Set up the scene manager with the game's component registry
-      services.setSceneManager(game.getComponentRegistry());
+      // Initialize the scene manager with the game's component registry
+      services.sceneManager().initialize(game.getComponentRegistry());
       
       // Set up test getters by delegating to the services
       world = services.world();

@@ -2,12 +2,22 @@ package september.engine.di;
 
 import io.avaje.inject.Bean;
 import io.avaje.inject.Factory;
+import september.engine.assets.ResourceManager;
+import september.engine.audio.AudioManager;
+import september.engine.core.EngineServices;
 import september.engine.core.GlfwContext;
+import september.engine.core.TimeService;
 import september.engine.core.WindowContext;
+import september.engine.core.input.GamepadService;
+import september.engine.core.input.GlfwInputService;
 import september.engine.core.preferences.PreferencesService;
+import september.engine.ecs.IWorld;
+import september.engine.ecs.SystemManager;
+import september.engine.events.EventPublisher;
 import september.engine.rendering.Camera;
-import september.engine.rendering.Renderer;
 import september.engine.rendering.gl.OpenGLRenderer;
+import september.engine.scene.SceneManager;
+import september.engine.state.GameStateManager;
 
 /**
  * DI configuration factory for the September Engine.
@@ -38,12 +48,46 @@ public class EngineConfiguration {
   }
 
   @Bean
-  public Renderer renderer() {
+  public OpenGLRenderer renderer() {
     return new OpenGLRenderer();
   }
 
   @Bean
   public PreferencesService preferencesService() {
     return new PreferencesService("september-engine");
+  }
+
+  @Bean
+  public EngineServices engineServices(
+      IWorld world,
+      SystemManager systemManager,
+      GameStateManager gameStateManager,
+      ResourceManager resourceManager,
+      SceneManager sceneManager,
+      EventPublisher eventPublisher,
+      GlfwInputService inputService,
+      GamepadService gamepadService,
+      TimeService timeService,
+      AudioManager audioManager,
+      PreferencesService preferencesService,
+      Camera camera,
+      OpenGLRenderer renderer,
+      WindowContext window) {
+    return EngineServices.builder()
+        .world(world)
+        .systemManager(systemManager)
+        .gameStateManager(gameStateManager)
+        .resourceManager(resourceManager)
+        .sceneManager(sceneManager)
+        .eventPublisher(eventPublisher)
+        .inputService(inputService)
+        .gamepadService(gamepadService)
+        .timeService(timeService)
+        .audioManager(audioManager)
+        .preferencesService(preferencesService)
+        .camera(camera)
+        .renderer(renderer)
+        .window(window)
+        .build();
   }
 }

@@ -6,17 +6,15 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import september.engine.rendering.Camera;
 import september.engine.rendering.Mesh;
-import september.engine.rendering.Renderer;
 import september.engine.rendering.Texture;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * Unit tests for compatibility between old and new renderer interfaces.
- * Tests that the new instanced renderer can be used as a drop-in replacement.
+ * Unit tests for OpenGL renderer implementations.
+ * Tests that both OpenGLRenderer and InstancedOpenGLRenderer have compatible interfaces.
  */
 class RendererCompatibilityTest {
 
@@ -38,22 +36,31 @@ class RendererCompatibilityTest {
   }
 
   @Test
-  @DisplayName("Both renderers should implement the same interface")
-  void bothRenderers_implementSameInterface() {
-    // This test verifies that both renderers can be used interchangeably
-    // by ensuring they implement the same Renderer interface
+  @DisplayName("OpenGLRenderer should have required rendering methods")
+  void openGLRenderer_hasRequiredMethods() {
+    // Verify OpenGLRenderer has the core rendering methods
+    try {
+      var beginSceneMethod = OpenGLRenderer.class.getMethod("beginScene", Camera.class);
+      var submitMethod = OpenGLRenderer.class.getMethod("submit", Mesh.class, Texture.class, Matrix4f.class);
+      var endSceneMethod = OpenGLRenderer.class.getMethod("endScene");
 
-    assertThat(Renderer.class).isAssignableFrom(OpenGLRenderer.class);
-    assertThat(Renderer.class).isAssignableFrom(InstancedOpenGLRenderer.class);
+      assertThat(beginSceneMethod).isNotNull();
+      assertThat(submitMethod).isNotNull();
+      assertThat(endSceneMethod).isNotNull();
+
+      // Verify return types
+      assertThat(beginSceneMethod.getReturnType()).isEqualTo(void.class);
+      assertThat(submitMethod.getReturnType()).isEqualTo(void.class);
+      assertThat(endSceneMethod.getReturnType()).isEqualTo(void.class);
+    } catch (NoSuchMethodException e) {
+      throw new AssertionError("OpenGLRenderer missing required rendering methods", e);
+    }
   }
 
   @Test
-  @DisplayName("Instanced renderer should accept same method calls as original renderer")
-  void instancedRenderer_acceptsSameMethodCalls() {
-    // This test verifies the interface compatibility without requiring OpenGL
-
-    // The InstancedOpenGLRenderer constructor will fail without OpenGL context,
-    // but we can verify the interface exists and would work
+  @DisplayName("InstancedOpenGLRenderer should have compatible interface with OpenGLRenderer")
+  void instancedRenderer_hasCompatibleInterface() {
+    // This test verifies that InstancedOpenGLRenderer has the same core methods as OpenGLRenderer
 
     // Verify the methods exist and have correct signatures
     try {
@@ -71,30 +78,12 @@ class RendererCompatibilityTest {
       assertThat(endSceneMethod.getReturnType()).isEqualTo(void.class);
 
     } catch (NoSuchMethodException e) {
-      throw new AssertionError("InstancedOpenGLRenderer missing required Renderer interface methods", e);
+      throw new AssertionError("InstancedOpenGLRenderer missing required rendering methods", e);
     }
   }
 
   @Test
-  @DisplayName("RenderSystem should work with either renderer implementation")
-  void renderSystem_worksWithEitherRenderer() {
-    // Test that a mock renderer can be used in place of the real ones
-    Renderer mockRenderer = mock(Renderer.class);
-
-    // Simulate what RenderSystem does
-    mockRenderer.beginScene(mockCamera);
-    mockRenderer.submit(mockMesh, mockTexture, transform);
-    mockRenderer.endScene();
-
-    // Verify the calls were made in order
-    var inOrder = inOrder(mockRenderer);
-    inOrder.verify(mockRenderer).beginScene(mockCamera);
-    inOrder.verify(mockRenderer).submit(mockMesh, mockTexture, transform);
-    inOrder.verify(mockRenderer).endScene();
-  }
-
-  @Test
-  @DisplayName("Instanced renderer should provide additional statistics functionality")
+  @DisplayName("InstancedOpenGLRenderer should provide additional statistics functionality")
   void instancedRenderer_providesAdditionalFunctionality() {
     // Verify that the instanced renderer has additional methods for monitoring performance
     try {
