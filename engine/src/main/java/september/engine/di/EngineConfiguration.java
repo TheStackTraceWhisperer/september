@@ -5,8 +5,6 @@ import io.avaje.inject.Factory;
 import september.engine.core.GlfwContext;
 import september.engine.core.WindowContext;
 import september.engine.core.preferences.PreferencesService;
-import september.engine.events.EnhancedEventBus;
-import september.engine.events.EventBus;
 import september.engine.rendering.Camera;
 import september.engine.rendering.Renderer;
 import september.engine.rendering.gl.OpenGLRenderer;
@@ -47,11 +45,5 @@ public class EngineConfiguration {
   @Bean
   public PreferencesService preferencesService() {
     return new PreferencesService("september-engine");
-  }
-
-  @Bean
-  public EventBus eventBus() {
-    // Use the enhanced event bus that supports both programmatic and annotation-based listeners
-    return new EnhancedEventBus();
   }
 }

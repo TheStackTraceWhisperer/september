@@ -6,7 +6,7 @@ import september.engine.core.WindowContext;
 import september.engine.core.input.GlfwInputService;
 import september.engine.ecs.ISystem;
 import september.engine.ecs.IWorld;
-import september.engine.events.EventBus;
+import september.engine.events.EventPublisher;
 import september.engine.events.UIButtonClickedEvent;
 import september.engine.ui.components.UIButtonComponent;
 import september.engine.ui.components.UIImageComponent;
@@ -18,14 +18,14 @@ public class UISystem implements ISystem {
   private final IWorld world;
   private final WindowContext window;
   private final GlfwInputService inputService;
-  private final EventBus eventBus;
+  private final EventPublisher eventPublisher;
 
   public UISystem(
-      IWorld world, WindowContext window, GlfwInputService inputService, EventBus eventBus) {
+      IWorld world, WindowContext window, GlfwInputService inputService, EventPublisher eventPublisher) {
     this.world = world;
     this.window = window;
     this.inputService = inputService;
-    this.eventBus = eventBus;
+    this.eventPublisher = eventPublisher;
   }
 
   @Override
@@ -106,7 +106,7 @@ public class UISystem implements ISystem {
           button.currentState = UIButtonComponent.ButtonState.PRESSED;
         } else {
           if (previousState == UIButtonComponent.ButtonState.PRESSED) {
-            eventBus.publish(new UIButtonClickedEvent(button.actionEvent));
+            eventPublisher.publishButtonClicked(new UIButtonClickedEvent(button.actionEvent));
           }
           button.currentState = UIButtonComponent.ButtonState.HOVERED;
         }
