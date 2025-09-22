@@ -1,5 +1,6 @@
 package september.engine.assets;
 
+import jakarta.inject.Singleton;
 import september.engine.audio.AudioBuffer;
 import september.engine.rendering.Mesh;
 import september.engine.rendering.Texture;
@@ -17,6 +18,7 @@ import java.util.Objects;
  * It implements AutoCloseable to guarantee that all native resources it manages
  * are freed when the manager is closed.
  */
+@Singleton
 public final class ResourceManager implements AutoCloseable {
 
   private final Map<String, Mesh> meshCache = new HashMap<>();

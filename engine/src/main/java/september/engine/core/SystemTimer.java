@@ -1,5 +1,8 @@
 package september.engine.core;
 
+import jakarta.inject.Singleton;
+
+@Singleton
 public class SystemTimer implements TimeService {
 
   private static final double NANOS_PER_SECOND = 1_000_000_000.0;

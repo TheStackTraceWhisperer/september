@@ -1,5 +1,6 @@
 package september.engine.core.input;
 
+import jakarta.inject.Singleton;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWGamepadState;
 
@@ -7,6 +8,7 @@ import org.lwjgl.glfw.GLFWGamepadState;
  * A concrete implementation of GamepadService that uses GLFW to query gamepad state.
  * Supports up to 8 gamepads (indices 0-7) mapped to GLFW joystick IDs.
  */
+@Singleton
 public final class GlfwGamepadService implements GamepadService {
 
   private static final int MAX_GAMEPADS = 8;

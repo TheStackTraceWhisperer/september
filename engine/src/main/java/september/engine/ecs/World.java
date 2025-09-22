@@ -1,5 +1,7 @@
 package september.engine.ecs;
 
+import jakarta.inject.Singleton;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -14,6 +16,7 @@ import java.util.stream.Collectors;
  * This class orchestrates the various managers (Entity, Component, System)
  * to provide a coherent ECS framework.
  */
+@Singleton
 public class World implements IWorld {
 
   private final EntityManager entityManager;
