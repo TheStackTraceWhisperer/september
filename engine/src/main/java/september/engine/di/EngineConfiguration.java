@@ -2,6 +2,7 @@ package september.engine.di;
 
 import io.avaje.inject.Bean;
 import io.avaje.inject.Factory;
+import io.avaje.inject.events.Event;
 import september.engine.assets.ResourceManager;
 import september.engine.audio.AudioManager;
 import september.engine.core.EngineServices;
@@ -13,7 +14,7 @@ import september.engine.core.input.GlfwInputService;
 import september.engine.core.preferences.PreferencesService;
 import september.engine.ecs.IWorld;
 import september.engine.ecs.SystemManager;
-import september.engine.events.EventPublisher;
+import september.engine.events.UIButtonClickedEvent;
 import september.engine.rendering.Camera;
 import september.engine.rendering.gl.OpenGLRenderer;
 import september.engine.scene.SceneManager;
@@ -64,7 +65,6 @@ public class EngineConfiguration {
       GameStateManager gameStateManager,
       ResourceManager resourceManager,
       SceneManager sceneManager,
-      EventPublisher eventPublisher,
       GlfwInputService inputService,
       GamepadService gamepadService,
       TimeService timeService,
@@ -72,14 +72,14 @@ public class EngineConfiguration {
       PreferencesService preferencesService,
       Camera camera,
       OpenGLRenderer renderer,
-      WindowContext window) {
+      WindowContext window,
+      Event<UIButtonClickedEvent> buttonClickedEvent) {
     return EngineServices.builder()
         .world(world)
         .systemManager(systemManager)
         .gameStateManager(gameStateManager)
         .resourceManager(resourceManager)
         .sceneManager(sceneManager)
-        .eventPublisher(eventPublisher)
         .inputService(inputService)
         .gamepadService(gamepadService)
         .timeService(timeService)
@@ -88,6 +88,7 @@ public class EngineConfiguration {
         .camera(camera)
         .renderer(renderer)
         .window(window)
+        .buttonClickedEvent(buttonClickedEvent)
         .build();
   }
 }

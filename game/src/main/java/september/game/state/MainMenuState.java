@@ -27,7 +27,7 @@ public class MainMenuState implements GameState {
     // Register the systems needed for this state's behavior.
     var systemManager = services.systemManager();
     systemManager.register(new RenderSystem(services.world(), services.renderer(), services.resourceManager(), services.camera()));
-    systemManager.register(new UISystem(services.world(), services.window(), services.inputService(), services.eventPublisher()));
+    systemManager.register(new UISystem(services.world(), services.window(), services.inputService(), services.buttonClickedEvent()));
     systemManager.register(new UIRenderSystem(services.world(), services.resourceManager(), services.window()));
   }
 

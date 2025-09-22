@@ -2,7 +2,6 @@ package september.game.state;
 
 import september.engine.core.EngineServices;
 import september.engine.ecs.SystemManager;
-import september.engine.events.EventPublisher;
 import september.engine.events.UIButtonClickedEvent;
 import september.engine.state.GameStateManager;
 import september.engine.systems.RenderSystem;
@@ -30,20 +29,6 @@ public class MainMenuStateTest {
         @Override public void clear() { cleared = true; }
     }
 
-    // Mock for EventPublisher
-    static class MockEventPublisher extends EventPublisher {
-        public boolean buttonClickPublished = false;
-
-        public MockEventPublisher() {
-            super(null); // Pass null for test purposes
-        }
-
-        @Override
-        public void publishButtonClicked(UIButtonClickedEvent event) {
-            buttonClickPublished = true;
-        }
-    }
-
     // Mock for GameStateManager  
     static class MockGameStateManager extends GameStateManager {
         public boolean stateChanged = false;
@@ -58,7 +43,6 @@ public class MainMenuStateTest {
 
         // Mock services
         MockSystemManager mockSystemManager = new MockSystemManager();
-        MockEventPublisher mockEventPublisher = new MockEventPublisher();
         MockGameStateManager mockGameStateManager = new MockGameStateManager();
 
         // Create a minimal EngineServices for testing using builder
@@ -68,7 +52,6 @@ public class MainMenuStateTest {
             .gameStateManager(mockGameStateManager)
             .resourceManager(null)
             .sceneManager(null)
-            .eventPublisher(mockEventPublisher)
             .inputService(null)
             .gamepadService(null)
             .timeService(null)
@@ -77,6 +60,7 @@ public class MainMenuStateTest {
             .camera(null)
             .renderer(null)
             .window(null)
+            .buttonClickedEvent(null)
             .build();
 
         // Test onExit (most basic test)
