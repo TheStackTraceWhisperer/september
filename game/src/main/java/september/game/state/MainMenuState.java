@@ -2,7 +2,7 @@ package september.game.state;
 
 import org.joml.Vector3f;
 import september.engine.core.EngineServices;
-import september.engine.events.Event;
+import september.engine.events.EnhancedEventBus;
 import september.engine.events.EventListener;
 import september.engine.events.UIButtonClickedEvent;
 import september.engine.state.GameState;
@@ -10,7 +10,7 @@ import september.engine.systems.RenderSystem;
 import september.engine.systems.UIRenderSystem;
 import september.engine.systems.UISystem;
 
-public class MainMenuState implements GameState, EventListener<UIButtonClickedEvent> {
+public class MainMenuState implements GameState {
 
   private EngineServices services;
 
@@ -29,8 +29,10 @@ public class MainMenuState implements GameState, EventListener<UIButtonClickedEv
     systemManager.register(new UISystem(services.world(), services.window(), services.inputService(), services.eventBus()));
     systemManager.register(new UIRenderSystem(services.world(), services.resourceManager(), services.window()));
 
-    // Subscribe to UI events
-    services.eventBus().subscribe(UIButtonClickedEvent.class, this);
+    // Register this state for annotation-based event listening
+    if (services.eventBus() instanceof EnhancedEventBus enhancedEventBus) {
+      enhancedEventBus.registerAnnotatedListeners(this);
+    }
   }
 
   @Override
@@ -40,13 +42,19 @@ public class MainMenuState implements GameState, EventListener<UIButtonClickedEv
 
   @Override
   public void onExit(EngineServices services) {
-    // Unsubscribe from events and clear systems to ensure a clean slate for the next state.
-    services.eventBus().unsubscribe(UIButtonClickedEvent.class, this);
+    // Unregister from annotation-based event listening
+    if (services.eventBus() instanceof EnhancedEventBus enhancedEventBus) {
+      enhancedEventBus.unregisterAnnotatedListeners(this);
+    }
     services.systemManager().clear();
   }
 
-  @Override
-  public void handle(UIButtonClickedEvent event) {
+  /**
+   * Handles UI button click events using the new @EventHandler annotation.
+   * This demonstrates the Jakarta pattern support.
+   */
+  @EnhancedEventBus.EventHandler
+  public void onButtonClicked(UIButtonClickedEvent event) {
     if ("START_NEW_GAME".equals(event.actionEvent())) {
       services.gameStateManager().changeState(new PlayingState(), services);
     }

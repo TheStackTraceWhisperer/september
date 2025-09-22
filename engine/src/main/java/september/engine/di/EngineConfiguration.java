@@ -5,12 +5,11 @@ import io.avaje.inject.Factory;
 import september.engine.core.GlfwContext;
 import september.engine.core.WindowContext;
 import september.engine.core.preferences.PreferencesService;
-import september.engine.ecs.Component;
+import september.engine.events.EnhancedEventBus;
+import september.engine.events.EventBus;
 import september.engine.rendering.Camera;
 import september.engine.rendering.Renderer;
 import september.engine.rendering.gl.OpenGLRenderer;
-
-import java.util.Map;
 
 /**
  * DI configuration factory for the September Engine.
@@ -51,9 +50,8 @@ public class EngineConfiguration {
   }
 
   @Bean
-  public Map<String, Class<? extends Component>> componentRegistry() {
-    // This will be populated later by the game layer
-    // For now, return an empty map as the engine itself doesn't define game components
-    return Map.of();
+  public EventBus eventBus() {
+    // Use the enhanced event bus that supports both programmatic and annotation-based listeners
+    return new EnhancedEventBus();
   }
 }

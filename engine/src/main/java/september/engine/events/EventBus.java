@@ -1,7 +1,5 @@
 package september.engine.events;
 
-import jakarta.inject.Singleton;
-
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -12,7 +10,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * This implementation is thread-safe and prevents ConcurrentModificationException
  * by using concurrent collections.
  */
-@Singleton
 public class EventBus {
   // Use ConcurrentHashMap and CopyOnWriteArrayList to allow for safe concurrent modification.
   private final Map<Class<? extends Event>, List<EventListener>> listeners = new ConcurrentHashMap<>();

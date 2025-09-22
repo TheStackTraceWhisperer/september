@@ -30,7 +30,7 @@ public class EnhancedEventBus extends EventBus {
    */
   @Target(ElementType.METHOD)
   @Retention(RetentionPolicy.RUNTIME)
-  public @interface EventListener {
+  public @interface EventHandler {
   }
 
   private final Map<Class<? extends Event>, List<AnnotatedEventListener>> annotatedListeners = new ConcurrentHashMap<>();
@@ -61,25 +61,25 @@ public class EnhancedEventBus extends EventBus {
   }
 
   /**
-   * Registers all @EventListener annotated methods in the given object.
+   * Registers all @EventHandler annotated methods in the given object.
    *
-   * @param listener The object containing @EventListener annotated methods
+   * @param listener The object containing @EventHandler annotated methods
    */
   public void registerAnnotatedListeners(Object listener) {
     Class<?> listenerClass = listener.getClass();
     
     for (Method method : listenerClass.getDeclaredMethods()) {
-      if (method.isAnnotationPresent(EventListener.class)) {
+      if (method.isAnnotationPresent(EventHandler.class)) {
         // Validate method signature
         if (method.getParameterCount() != 1) {
-          log.warn("@EventListener method {} in {} must have exactly one parameter", 
+          log.warn("@EventHandler method {} in {} must have exactly one parameter", 
                    method.getName(), listenerClass.getSimpleName());
           continue;
         }
 
         Class<?> parameterType = method.getParameterTypes()[0];
         if (!Event.class.isAssignableFrom(parameterType)) {
-          log.warn("@EventListener method {} in {} parameter must be a subtype of Event",
+          log.warn("@EventHandler method {} in {} parameter must be a subtype of Event",
                    method.getName(), listenerClass.getSimpleName());
           continue;
         }
@@ -90,14 +90,14 @@ public class EnhancedEventBus extends EventBus {
         AnnotatedEventListener annotatedListener = new AnnotatedEventListener(listener, method, eventType);
         annotatedListeners.computeIfAbsent(eventType, k -> new CopyOnWriteArrayList<>()).add(annotatedListener);
         
-        log.debug("Registered @EventListener method {} in {} for event type {}", 
+        log.debug("Registered @EventHandler method {} in {} for event type {}", 
                   method.getName(), listenerClass.getSimpleName(), eventType.getSimpleName());
       }
     }
   }
 
   /**
-   * Unregisters all @EventListener annotated methods in the given object.
+   * Unregisters all @EventHandler annotated methods in the given object.
    *
    * @param listener The object to unregister
    */

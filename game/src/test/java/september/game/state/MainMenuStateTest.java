@@ -73,8 +73,9 @@ public class MainMenuStateTest {
         assert mockEventBus.subscribed : "Test Failed: onEnter should subscribe to events";
         System.out.println("- onEnter test PASSED");
 
-        // Test handle event
-        state.handle(new UIButtonClickedEvent("START_NEW_GAME"));
+        // Test handle event - using the new annotation-based approach
+        // The event handling is now done through @EventHandler annotation
+        state.onButtonClicked(new UIButtonClickedEvent("START_NEW_GAME"));
         assert mockGameStateManager.stateChanged : "Test Failed: handle event should change state";
         System.out.println("- handle event test PASSED");
 

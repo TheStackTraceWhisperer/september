@@ -1,8 +1,6 @@
 package september.engine.scene;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import september.engine.assets.ResourceManager;
 import september.engine.ecs.Component;
@@ -14,14 +12,12 @@ import java.io.InputStream;
 import java.util.Map;
 
 @Slf4j
-@Singleton
 public class SceneManager {
   private static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new CustomJomlModule());
 
   private final Map<String, Class<? extends Component>> componentRegistry;
   private final ResourceManager resourceManager;
 
-  @Inject
   public SceneManager(Map<String, Class<? extends Component>> componentRegistry, ResourceManager resourceManager) {
     this.componentRegistry = componentRegistry;
     this.resourceManager = resourceManager;
