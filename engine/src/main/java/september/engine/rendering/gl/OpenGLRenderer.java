@@ -22,7 +22,7 @@ import static org.lwjgl.opengl.GL30.glBindVertexArray;
 public final class OpenGLRenderer implements Renderer {
 
   private static final String DEFAULT_VERTEX_SHADER_SOURCE =
-    "#version 460 core\n" +
+    "#version 450 core\n" +
       "layout (location = 0) in vec3 aPos;\n" +
       "layout (location = 1) in vec2 aTexCoord;\n" +
       "out vec2 vTexCoord;\n" +
@@ -36,7 +36,7 @@ public final class OpenGLRenderer implements Renderer {
       "}";
 
   private static final String DEFAULT_FRAGMENT_SHADER_SOURCE =
-    "#version 460 core\n" +
+    "#version 450 core\n" +
       "out vec4 FragColor;\n" +
       "in vec2 vTexCoord;\n" +
       "uniform sampler2D uTextureSampler;\n" +

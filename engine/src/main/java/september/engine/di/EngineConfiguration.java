@@ -49,7 +49,8 @@ public class EngineConfiguration {
   }
 
   @Bean
-  public OpenGLRenderer renderer() {
+  public OpenGLRenderer renderer(WindowContext windowContext) {
+    // WindowContext dependency ensures OpenGL context is ready before creating renderer
     return new OpenGLRenderer();
   }
 
