@@ -1,6 +1,6 @@
 package september.engine.core;
 
-import io.avaje.inject.events.Event;
+import io.micronaut.context.event.ApplicationEventPublisher;
 import lombok.Builder;
 import september.engine.assets.ResourceManager;
 import september.engine.audio.AudioManager;
@@ -35,5 +35,5 @@ public record EngineServices(
     Camera camera,
     OpenGLRenderer renderer,
     WindowContext window,
-    Event<UIButtonClickedEvent> buttonClickedEvent
+    ApplicationEventPublisher<UIButtonClickedEvent> buttonClickedEvent
 ) {}

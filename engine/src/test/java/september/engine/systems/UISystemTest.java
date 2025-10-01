@@ -3,7 +3,7 @@ package september.engine.systems;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
-import io.avaje.inject.events.Event;
+import io.micronaut.context.event.ApplicationEventPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,7 +27,7 @@ class UISystemTest {
   private static final int WINDOW_HEIGHT = 600;
 
   @Mock private GlfwInputService mockInputService;
-  @Mock private Event<UIButtonClickedEvent> mockButtonClickedEvent;
+  @Mock private ApplicationEventPublisher<UIButtonClickedEvent> mockButtonClickedEvent;
   @Mock private WindowContext mockWindowContext;
 
   private IWorld world;
@@ -74,7 +74,7 @@ class UISystemTest {
 
     assertThat(button.currentState).isEqualTo(UIButtonComponent.ButtonState.HOVERED);
     assertThat(image.textureHandle).isEqualTo(button.hoveredTexture);
-    verify(mockButtonClickedEvent, never()).fire(any());
+    verify(mockButtonClickedEvent, never()).publishEvent(any());
   }
 
   @Test
@@ -88,7 +88,7 @@ class UISystemTest {
 
     assertThat(button.currentState).isEqualTo(UIButtonComponent.ButtonState.PRESSED);
     assertThat(image.textureHandle).isEqualTo(button.pressedTexture);
-    verify(mockButtonClickedEvent, never()).fire(any());
+    verify(mockButtonClickedEvent, never()).publishEvent(any());
   }
 
   @Test
@@ -103,7 +103,7 @@ class UISystemTest {
 
     ArgumentCaptor<UIButtonClickedEvent> eventCaptor =
         ArgumentCaptor.forClass(UIButtonClickedEvent.class);
-    verify(mockButtonClickedEvent).fire(eventCaptor.capture());
+    verify(mockButtonClickedEvent).publishEvent(eventCaptor.capture());
     assertThat(eventCaptor.getValue().actionEvent()).isEqualTo("TEST_ACTION");
   }
 
@@ -119,6 +119,6 @@ class UISystemTest {
 
     assertThat(button.currentState).isEqualTo(UIButtonComponent.ButtonState.NORMAL);
     assertThat(image.textureHandle).isEqualTo(button.normalTexture);
-    verify(mockButtonClickedEvent, never()).fire(any());
+    verify(mockButtonClickedEvent, never()).publishEvent(any());
   }
 }
