@@ -1,16 +1,27 @@
 package september.game.state;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.joml.Vector3f;
 import september.engine.core.EngineServices;
 import september.engine.state.GameState;
-import september.engine.systems.MovementSystem;
-import september.engine.systems.RenderSystem;
-import september.game.input.InputMappingService;
-import september.game.input.MultiDeviceMappingService;
-import september.game.systems.EnemyAISystem;
-import september.game.systems.PlayerInputSystem;
+import september.engine.systems.SystemFactory;
+import september.game.systems.GameSystemFactory;
 
+@Singleton
 public class PlayingState implements GameState {
+  
+  private final SystemFactory systemFactory;
+  private final GameSystemFactory gameSystemFactory;
+  
+  @Inject
+  public PlayingState(
+      SystemFactory systemFactory,
+      GameSystemFactory gameSystemFactory) {
+    this.systemFactory = systemFactory;
+    this.gameSystemFactory = gameSystemFactory;
+  }
+  
   @Override
   public void onEnter(EngineServices services) {
     // Step 1: Load the scene, which now includes loading all necessary assets.
@@ -19,15 +30,14 @@ public class PlayingState implements GameState {
     // Step 2: Configure any engine services specific to this state.
     services.camera().setPosition(new Vector3f(0.0f, 0.0f, 5.0f));
 
-    // Step 3: Register the systems that define this state's behavior.
+    // Step 3: Register the systems that define this state's behavior using factories.
     var world = services.world();
     var systemManager = services.systemManager();
-    InputMappingService mappingService = new MultiDeviceMappingService(services.inputService(), services.gamepadService());
 
-    systemManager.register(new PlayerInputSystem(world, mappingService));
-    systemManager.register(new MovementSystem(world));
-    systemManager.register(new EnemyAISystem(world, services.timeService()));
-    systemManager.register(new RenderSystem(world, services.renderer(), services.resourceManager(), services.camera()));
+    systemManager.register(gameSystemFactory.createPlayerInputSystem(world));
+    systemManager.register(systemFactory.createMovementSystem(world));
+    systemManager.register(gameSystemFactory.createEnemyAISystem(world));
+    systemManager.register(systemFactory.createRenderSystem(world));
   }
 
   @Override

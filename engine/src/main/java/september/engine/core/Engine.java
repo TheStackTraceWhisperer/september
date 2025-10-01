@@ -74,7 +74,8 @@ public final class Engine implements Runnable {
 
       // --- INITIALIZE THE GAME AND SET THE INITIAL STATE ---
       game.init(services);
-      GameState initialState = game.getInitialState(services);
+      // Get the initial state from the game, but allow DI injection if needed
+      GameState initialState = game.getInitialState(services, applicationContext);
       services.gameStateManager().pushState(initialState, services);
 
       log.info("September Engine initialized successfully");

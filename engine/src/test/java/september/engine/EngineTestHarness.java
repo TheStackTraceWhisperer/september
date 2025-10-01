@@ -1,5 +1,6 @@
 package september.engine;
 
+import io.micronaut.context.ApplicationContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import september.engine.assets.ResourceManager;
@@ -75,7 +76,7 @@ public abstract class EngineTestHarness {
     }
 
     @Override
-    public GameState getInitialState(EngineServices services) {
+    public GameState getInitialState(EngineServices services, ApplicationContext applicationContext) {
       return new TestGameState();
     }
 
