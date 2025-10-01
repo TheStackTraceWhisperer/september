@@ -1,8 +1,8 @@
 package september.engine.di;
 
-import io.avaje.inject.Bean;
-import io.avaje.inject.Factory;
-import io.avaje.inject.events.Event;
+import io.micronaut.context.annotation.Bean;
+import io.micronaut.context.annotation.Factory;
+import io.micronaut.context.event.ApplicationEventPublisher;
 import september.engine.assets.ResourceManager;
 import september.engine.audio.AudioManager;
 import september.engine.core.EngineServices;
@@ -49,7 +49,8 @@ public class EngineConfiguration {
   }
 
   @Bean
-  public OpenGLRenderer renderer() {
+  public OpenGLRenderer renderer(WindowContext windowContext) {
+    // WindowContext dependency ensures OpenGL context is ready before creating renderer
     return new OpenGLRenderer();
   }
 
@@ -73,7 +74,7 @@ public class EngineConfiguration {
       Camera camera,
       OpenGLRenderer renderer,
       WindowContext window,
-      Event<UIButtonClickedEvent> buttonClickedEvent) {
+      ApplicationEventPublisher<UIButtonClickedEvent> buttonClickedEvent) {
     return EngineServices.builder()
         .world(world)
         .systemManager(systemManager)

@@ -1,6 +1,6 @@
 package september.engine.core;
 
-import io.avaje.inject.BeanScope;
+import io.micronaut.context.ApplicationContext;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +20,7 @@ public final class Engine implements Runnable {
 
   private final Game game;
   private final ApplicationLoopPolicy loopPolicy;
-  private BeanScope beanScope;
+  private ApplicationContext applicationContext;
   private EngineServices services;
 
   // Getters for tests - delegate to the injected services
@@ -41,11 +41,13 @@ public final class Engine implements Runnable {
     try {
       log.info("Initializing September Engine with DI container");
       
-      // Create the DI container and get all services
-      beanScope = BeanScope.builder().build();
+      // Create the DI container with eager singleton initialization disabled
+      applicationContext = ApplicationContext.builder()
+          .eagerInitSingletons(false)
+          .start();
 
       // Get the main services aggregator
-      services = beanScope.get(EngineServices.class);
+      services = applicationContext.getBean(EngineServices.class);
       
       // Initialize the scene manager with the game's component registry
       services.sceneManager().initialize(game.getComponentRegistry());
@@ -122,9 +124,9 @@ public final class Engine implements Runnable {
     }
 
     // Close the DI container
-    if (beanScope != null) {
+    if (applicationContext != null) {
       try {
-        beanScope.close();
+        applicationContext.close();
       } catch (Exception e) {
         log.error("Error closing DI container", e);
       }

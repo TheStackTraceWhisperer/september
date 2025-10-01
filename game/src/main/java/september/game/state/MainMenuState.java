@@ -1,6 +1,6 @@
 package september.game.state;
 
-import io.avaje.inject.events.Observes;
+import io.micronaut.runtime.event.annotation.EventListener;
 import jakarta.inject.Singleton;
 import org.joml.Vector3f;
 import september.engine.core.EngineServices;
@@ -42,10 +42,11 @@ public class MainMenuState implements GameState {
   }
 
   /**
-   * Handles UI button click events using avaje-inject's @Observes annotation.
-   * This demonstrates the pure avaje-inject event system.
+   * Handles UI button click events using Micronaut's @EventListener annotation.
+   * This demonstrates the Micronaut event system.
    */
-  public void onButtonClicked(@Observes UIButtonClickedEvent event) {
+  @EventListener
+  public void onButtonClicked(UIButtonClickedEvent event) {
     if ("START_NEW_GAME".equals(event.actionEvent())) {
       services.gameStateManager().changeState(new PlayingState(), services);
     }

@@ -1,6 +1,6 @@
 package september.engine.systems;
 
-import io.avaje.inject.events.Event;
+import io.micronaut.context.event.ApplicationEventPublisher;
 import org.joml.Vector2f;
 import org.lwjgl.glfw.GLFW;
 import september.engine.core.WindowContext;
@@ -18,10 +18,10 @@ public class UISystem implements ISystem {
   private final IWorld world;
   private final WindowContext window;
   private final GlfwInputService inputService;
-  private final Event<UIButtonClickedEvent> buttonClickedEvent;
+  private final ApplicationEventPublisher<UIButtonClickedEvent> buttonClickedEvent;
 
   public UISystem(
-      IWorld world, WindowContext window, GlfwInputService inputService, Event<UIButtonClickedEvent> buttonClickedEvent) {
+      IWorld world, WindowContext window, GlfwInputService inputService, ApplicationEventPublisher<UIButtonClickedEvent> buttonClickedEvent) {
     this.world = world;
     this.window = window;
     this.inputService = inputService;
@@ -106,7 +106,7 @@ public class UISystem implements ISystem {
           button.currentState = UIButtonComponent.ButtonState.PRESSED;
         } else {
           if (previousState == UIButtonComponent.ButtonState.PRESSED) {
-            buttonClickedEvent.fire(new UIButtonClickedEvent(button.actionEvent));
+            buttonClickedEvent.publishEvent(new UIButtonClickedEvent(button.actionEvent));
           }
           button.currentState = UIButtonComponent.ButtonState.HOVERED;
         }
