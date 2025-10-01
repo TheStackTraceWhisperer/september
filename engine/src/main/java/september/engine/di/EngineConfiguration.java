@@ -3,6 +3,7 @@ package september.engine.di;
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.event.ApplicationEventPublisher;
+import jakarta.inject.Singleton;
 import september.engine.assets.ResourceManager;
 import september.engine.audio.AudioManager;
 import september.engine.core.EngineServices;
@@ -31,17 +32,20 @@ public class EngineConfiguration {
   private static final int INITIAL_HEIGHT = 600;
 
   @Bean
+  @Singleton
   public GlfwContext glfwContext() {
     return new GlfwContext();
   }
 
   @Bean
+  @Singleton
   public WindowContext windowContext(GlfwContext glfwContext) {
     // GlfwContext dependency ensures GLFW is initialized before creating window
     return new WindowContext(INITIAL_WIDTH, INITIAL_HEIGHT, "September Engine");
   }
 
   @Bean
+  @Singleton
   public Camera camera() {
     Camera camera = new Camera(INITIAL_WIDTH, INITIAL_HEIGHT);
     camera.setPerspective(45.0f, (float) INITIAL_WIDTH / INITIAL_HEIGHT, 0.1f, 100.0f);
@@ -49,17 +53,20 @@ public class EngineConfiguration {
   }
 
   @Bean
+  @Singleton
   public OpenGLRenderer renderer(WindowContext windowContext) {
     // WindowContext dependency ensures OpenGL context is ready before creating renderer
     return new OpenGLRenderer();
   }
 
   @Bean
+  @Singleton
   public PreferencesService preferencesService() {
     return new PreferencesService("september-engine");
   }
 
   @Bean
+  @Singleton
   public EngineServices engineServices(
       IWorld world,
       SystemManager systemManager,
