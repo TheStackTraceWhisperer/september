@@ -8,21 +8,28 @@ import september.engine.core.EngineServices;
 import september.engine.events.UIButtonClickedEvent;
 import september.engine.state.GameState;
 import september.engine.state.GameStateManager;
-import september.engine.systems.RenderSystem;
-import september.engine.systems.UIRenderSystem;
-import september.engine.systems.UISystem;
+import september.engine.systems.SystemFactory;
+import september.engine.systems.UISystemFactory;
 
 @Singleton
 public class MainMenuState implements GameState {
 
   private final PlayingState playingState;
   private final GameStateManager gameStateManager;
+  private final SystemFactory systemFactory;
+  private final UISystemFactory uiSystemFactory;
   private EngineServices services;
 
   @Inject
-  public MainMenuState(PlayingState playingState, GameStateManager gameStateManager) {
+  public MainMenuState(
+      PlayingState playingState,
+      GameStateManager gameStateManager,
+      SystemFactory systemFactory,
+      UISystemFactory uiSystemFactory) {
     this.playingState = playingState;
     this.gameStateManager = gameStateManager;
+    this.systemFactory = systemFactory;
+    this.uiSystemFactory = uiSystemFactory;
   }
 
   @Override
@@ -34,11 +41,11 @@ public class MainMenuState implements GameState {
     // Position the camera so it can see the scene.
     services.camera().setPosition(new Vector3f(0.0f, 0.0f, 5.0f));
 
-    // Register the systems needed for this state's behavior.
+    // Register the systems needed for this state's behavior using factories.
     var systemManager = services.systemManager();
-    systemManager.register(new RenderSystem(services.world(), services.renderer(), services.resourceManager(), services.camera()));
-    systemManager.register(new UISystem(services.world(), services.window(), services.inputService(), services.buttonClickedEvent()));
-    systemManager.register(new UIRenderSystem(services.world(), services.resourceManager(), services.window()));
+    systemManager.register(systemFactory.createRenderSystem(services.world()));
+    systemManager.register(uiSystemFactory.createUISystem(services.world()));
+    systemManager.register(systemFactory.createUIRenderSystem(services.world()));
   }
 
   @Override

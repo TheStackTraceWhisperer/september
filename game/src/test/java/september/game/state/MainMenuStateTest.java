@@ -43,9 +43,18 @@ public class MainMenuStateTest {
         // Mock services
         MockSystemManager mockSystemManager = new MockSystemManager();
         MockGameStateManager mockGameStateManager = new MockGameStateManager();
-        PlayingState mockPlayingState = new PlayingState(null); // Simplified mock
+        
+        // Create mock factories
+        MockSystemFactory mockSystemFactory = new MockSystemFactory();
+        MockUISystemFactory mockUISystemFactory = new MockUISystemFactory();
+        
+        PlayingState mockPlayingState = new PlayingState(mockSystemFactory, null); // Simplified mock
 
-        MainMenuState state = new MainMenuState(mockPlayingState, mockGameStateManager);
+        MainMenuState state = new MainMenuState(
+            mockPlayingState,
+            mockGameStateManager,
+            mockSystemFactory,
+            mockUISystemFactory);
 
         // Create a minimal EngineServices for testing using builder
         EngineServices mockServices = EngineServices.builder()
@@ -86,5 +95,27 @@ public class MainMenuStateTest {
         }
 
         System.out.println("MainMenuState tests completed with Micronaut events!");
+    }
+    
+    // Mock factories for testing
+    static class MockSystemFactory extends september.engine.systems.SystemFactory {
+        public MockSystemFactory() {
+            super(null, null, null, null);
+        }
+        @Override public RenderSystem createRenderSystem(september.engine.ecs.IWorld world) {
+            return null; // Simplified mock
+        }
+        @Override public UIRenderSystem createUIRenderSystem(september.engine.ecs.IWorld world) {
+            return null; // Simplified mock
+        }
+    }
+    
+    static class MockUISystemFactory extends september.engine.systems.UISystemFactory {
+        public MockUISystemFactory() {
+            super(null, null, null);
+        }
+        @Override public UISystem createUISystem(september.engine.ecs.IWorld world) {
+            return null; // Simplified mock
+        }
     }
 }
