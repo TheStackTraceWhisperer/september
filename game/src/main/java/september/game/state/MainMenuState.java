@@ -1,11 +1,13 @@
 package september.game.state;
 
 import io.micronaut.runtime.event.annotation.EventListener;
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.joml.Vector3f;
 import september.engine.core.EngineServices;
 import september.engine.events.UIButtonClickedEvent;
 import september.engine.state.GameState;
+import september.engine.state.GameStateManager;
 import september.engine.systems.RenderSystem;
 import september.engine.systems.UIRenderSystem;
 import september.engine.systems.UISystem;
@@ -13,7 +15,15 @@ import september.engine.systems.UISystem;
 @Singleton
 public class MainMenuState implements GameState {
 
+  private final PlayingState playingState;
+  private final GameStateManager gameStateManager;
   private EngineServices services;
+
+  @Inject
+  public MainMenuState(PlayingState playingState, GameStateManager gameStateManager) {
+    this.playingState = playingState;
+    this.gameStateManager = gameStateManager;
+  }
 
   @Override
   public void onEnter(EngineServices services) {
@@ -48,7 +58,7 @@ public class MainMenuState implements GameState {
   @EventListener
   public void onButtonClicked(UIButtonClickedEvent event) {
     if ("START_NEW_GAME".equals(event.actionEvent())) {
-      services.gameStateManager().changeState(new PlayingState(), services);
+      gameStateManager.changeState(playingState, services);
     }
   }
 }

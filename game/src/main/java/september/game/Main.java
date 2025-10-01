@@ -1,5 +1,6 @@
 package september.game;
 
+import io.micronaut.context.ApplicationContext;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -34,8 +35,9 @@ public final class Main implements Game {
   }
 
   @Override
-  public GameState getInitialState(EngineServices services) {
-    return new MainMenuState();
+  public GameState getInitialState(EngineServices services, ApplicationContext applicationContext) {
+    // Get the MainMenuState from the DI container
+    return applicationContext.getBean(MainMenuState.class);
   }
 
   @Override

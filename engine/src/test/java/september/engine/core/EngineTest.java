@@ -1,5 +1,6 @@
 package september.engine.core;
 
+import io.micronaut.context.ApplicationContext;
 import september.engine.ecs.ISystem;
 import september.engine.state.GameState;
 
@@ -58,7 +59,7 @@ public class EngineTest {
     }
 
     @Override
-    public GameState getInitialState(EngineServices services) {
+    public GameState getInitialState(EngineServices services, ApplicationContext applicationContext) {
       return initialState;
     }
 

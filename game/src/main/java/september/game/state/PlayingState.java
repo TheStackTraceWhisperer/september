@@ -1,16 +1,26 @@
 package september.game.state;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.joml.Vector3f;
 import september.engine.core.EngineServices;
 import september.engine.state.GameState;
 import september.engine.systems.MovementSystem;
 import september.engine.systems.RenderSystem;
 import september.game.input.InputMappingService;
-import september.game.input.MultiDeviceMappingService;
 import september.game.systems.EnemyAISystem;
 import september.game.systems.PlayerInputSystem;
 
+@Singleton
 public class PlayingState implements GameState {
+  
+  private final InputMappingService inputMappingService;
+  
+  @Inject
+  public PlayingState(InputMappingService inputMappingService) {
+    this.inputMappingService = inputMappingService;
+  }
+  
   @Override
   public void onEnter(EngineServices services) {
     // Step 1: Load the scene, which now includes loading all necessary assets.
@@ -22,9 +32,8 @@ public class PlayingState implements GameState {
     // Step 3: Register the systems that define this state's behavior.
     var world = services.world();
     var systemManager = services.systemManager();
-    InputMappingService mappingService = new MultiDeviceMappingService(services.inputService(), services.gamepadService());
 
-    systemManager.register(new PlayerInputSystem(world, mappingService));
+    systemManager.register(new PlayerInputSystem(world, inputMappingService));
     systemManager.register(new MovementSystem(world));
     systemManager.register(new EnemyAISystem(world, services.timeService()));
     systemManager.register(new RenderSystem(world, services.renderer(), services.resourceManager(), services.camera()));

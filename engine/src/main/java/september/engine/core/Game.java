@@ -1,5 +1,6 @@
 package september.engine.core;
 
+import io.micronaut.context.ApplicationContext;
 import september.engine.ecs.Component;
 import september.engine.state.GameState;
 
@@ -22,9 +23,10 @@ public interface Game {
    * Called once by the Engine to get the initial state of the game.
    *
    * @param services A service locator providing access to all core engine systems.
+   * @param applicationContext The DI container for retrieving managed beans
    * @return The first GameState that the engine should run.
    */
-  GameState getInitialState(EngineServices services);
+  GameState getInitialState(EngineServices services, ApplicationContext applicationContext);
 
 
   /**

@@ -39,11 +39,13 @@ public class MainMenuStateTest {
 
     public static void main(String[] args) {
         System.out.println("Running MainMenuState tests...");
-        MainMenuState state = new MainMenuState();
-
+        
         // Mock services
         MockSystemManager mockSystemManager = new MockSystemManager();
         MockGameStateManager mockGameStateManager = new MockGameStateManager();
+        PlayingState mockPlayingState = new PlayingState(null); // Simplified mock
+
+        MainMenuState state = new MainMenuState(mockPlayingState, mockGameStateManager);
 
         // Create a minimal EngineServices for testing using builder
         EngineServices mockServices = EngineServices.builder()
@@ -72,15 +74,17 @@ public class MainMenuStateTest {
             System.out.println("- onExit test FAILED: " + e.getMessage());
         }
 
-        // Test event handling with avaje-inject @Observes
+        // Test event handling with Micronaut @EventListener
         try {
+            // Need to call onEnter first to set the services reference
+            state.onEnter(mockServices);
             state.onButtonClicked(new UIButtonClickedEvent("START_NEW_GAME"));
             assert mockGameStateManager.stateChanged : "Test Failed: handle event should change state";
-            System.out.println("- @Observes event handling test PASSED");
+            System.out.println("- @EventListener event handling test PASSED");
         } catch (Exception e) {
-            System.out.println("- @Observes event handling test FAILED: " + e.getMessage());
+            System.out.println("- @EventListener event handling test FAILED: " + e.getMessage());
         }
 
-        System.out.println("MainMenuState tests completed with avaje-inject events!");
+        System.out.println("MainMenuState tests completed with Micronaut events!");
     }
 }

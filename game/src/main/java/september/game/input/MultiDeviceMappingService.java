@@ -1,5 +1,6 @@
 package september.game.input;
 
+import jakarta.inject.Singleton;
 import org.lwjgl.glfw.GLFW;
 import september.engine.core.input.GamepadService;
 import september.engine.core.input.GlfwInputService;
@@ -12,6 +13,7 @@ import java.util.Map;
  * Automatically assigns players to connected gamepads and provides keyboard fallback
  * for player 0 when no gamepad is available.
  */
+@Singleton
 public class MultiDeviceMappingService implements InputMappingService {
 
   private static final int MAX_PLAYERS = 8;
