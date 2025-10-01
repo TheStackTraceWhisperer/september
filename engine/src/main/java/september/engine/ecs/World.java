@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 /**
  * A concrete implementation of the IWorld interface.
  * <p>
- * This class orchestrates the various managers (Entity, Component, System)
+ * This class orchestrates the various managers (Entity, Component)
  * to provide a coherent ECS framework.
  */
 @Singleton
@@ -21,12 +21,10 @@ public class World implements IWorld {
 
   private final EntityManager entityManager;
   private final ComponentManager componentManager;
-  private final SystemManager systemManager;
 
   public World() {
     this.entityManager = new EntityManager();
     this.componentManager = new ComponentManager();
-    this.systemManager = new SystemManager();
   }
 
   @Override
