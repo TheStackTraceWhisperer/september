@@ -38,46 +38,56 @@ public final class AudioManager implements AutoCloseable {
   /**
    * Initializes the OpenAL audio system.
    * This must be called before any other audio operations.
+   * If initialization fails (e.g., no audio device available), audio features will be disabled.
    */
   public void initialize() {
     if (initialized) {
       throw new IllegalStateException("AudioManager is already initialized");
     }
 
-    // Open the default audio device
-    device = alcOpenDevice((CharSequence) null);
-    if (device == 0) {
-      throw new RuntimeException("Failed to open the default OpenAL device");
+    try {
+      // Open the default audio device
+      device = alcOpenDevice((CharSequence) null);
+      if (device == 0) {
+        org.slf4j.LoggerFactory.getLogger(AudioManager.class).warn("No OpenAL device available - audio will be disabled");
+        return;
+      }
+
+      // Create an OpenAL context
+      context = alcCreateContext(device, (int[]) null);
+      if (context == 0) {
+        alcCloseDevice(device);
+        org.slf4j.LoggerFactory.getLogger(AudioManager.class).warn("Failed to create OpenAL context - audio will be disabled");
+        return;
+      }
+
+      // Make the context current
+      if (!alcMakeContextCurrent(context)) {
+        alcDestroyContext(context);
+        alcCloseDevice(device);
+        org.slf4j.LoggerFactory.getLogger(AudioManager.class).warn("Failed to make OpenAL context current - audio will be disabled");
+        return;
+      }
+
+      // Initialize OpenAL capabilities
+      ALCCapabilities alcCapabilities = ALC.createCapabilities(device);
+      ALCapabilities alCapabilities = AL.createCapabilities(alcCapabilities);
+
+      if (!alCapabilities.OpenAL10) {
+        org.slf4j.LoggerFactory.getLogger(AudioManager.class).warn("OpenAL 1.0 is not supported - audio will be disabled");
+        return;
+      }
+
+      initialized = true;
+
+      // Set up the audio listener at the origin
+      setListenerPosition(0.0f, 0.0f, 0.0f);
+      setListenerOrientation(0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f);
+      setMasterVolume(1.0f);
+    } catch (Exception e) {
+      org.slf4j.LoggerFactory.getLogger(AudioManager.class).warn("Audio initialization failed - audio will be disabled", e);
+      initialized = false;
     }
-
-    // Create an OpenAL context
-    context = alcCreateContext(device, (int[]) null);
-    if (context == 0) {
-      alcCloseDevice(device);
-      throw new RuntimeException("Failed to create OpenAL context");
-    }
-
-    // Make the context current
-    if (!alcMakeContextCurrent(context)) {
-      alcDestroyContext(context);
-      alcCloseDevice(device);
-      throw new RuntimeException("Failed to make OpenAL context current");
-    }
-
-    // Initialize OpenAL capabilities
-    ALCCapabilities alcCapabilities = ALC.createCapabilities(device);
-    ALCapabilities alCapabilities = AL.createCapabilities(alcCapabilities);
-
-    if (!alCapabilities.OpenAL10) {
-      throw new RuntimeException("OpenAL 1.0 is not supported");
-    }
-
-    initialized = true;
-
-    // Set up the audio listener at the origin
-    setListenerPosition(0.0f, 0.0f, 0.0f);
-    setListenerOrientation(0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f);
-    setMasterVolume(1.0f);
   }
 
   /**
