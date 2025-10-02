@@ -1,5 +1,6 @@
 package september.engine.core.preferences;
 
+import jakarta.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -38,7 +39,7 @@ import java.util.prefs.Preferences;
  * - Backward compatible with existing API
  */
 @Slf4j
-public final class PreferencesService implements AutoCloseable {
+public final class PreferencesService {
 
   private static final String PREFERENCES_KEY = "properties_data";
 
@@ -117,7 +118,7 @@ public final class PreferencesService implements AutoCloseable {
     return !activeProperties.equals(savedProperties);
   }
 
-  @Override
+  @PreDestroy
   public void close() {
     if (closed) {
       return;

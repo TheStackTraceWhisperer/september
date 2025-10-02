@@ -1,5 +1,6 @@
 package september.engine.core;
 
+import jakarta.annotation.PreDestroy;
 import java.nio.IntBuffer;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL;
@@ -10,7 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** GLFW window wrapper that creates an OpenGL 4.6 core profile context. */
-public final class WindowContext implements AutoCloseable {
+public final class WindowContext {
   private static final Logger log = LoggerFactory.getLogger(WindowContext.class);
 
   private boolean created = false;
@@ -124,7 +125,7 @@ public final class WindowContext implements AutoCloseable {
         });
   }
 
-  @Override
+  @PreDestroy
   public void close() {
     if (!created) {
       return;

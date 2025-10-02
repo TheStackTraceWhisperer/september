@@ -1,0 +1,16 @@
+@startuml
+allowmixing
+
+component Service <<Service>>
+
+note left of Service : Services are initialized at startup\nand remain active until shutdown.
+
+component System <<System>>
+
+note left of System : Systems are part of the ECS\narchitecture and can be added\nor removed dynamically on state change
+
+component State <<State>>
+
+note left of State : States represent different\nmodes or screens in the\napplication, such as\nmenus or gameplay.
+
+@enduml

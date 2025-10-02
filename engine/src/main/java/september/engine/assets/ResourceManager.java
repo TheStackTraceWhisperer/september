@@ -1,5 +1,6 @@
 package september.engine.assets;
 
+import jakarta.annotation.PreDestroy;
 import jakarta.inject.Singleton;
 import september.engine.audio.AudioBuffer;
 import september.engine.rendering.Mesh;
@@ -19,7 +20,7 @@ import java.util.Objects;
  * are freed when the manager is closed.
  */
 @Singleton
-public final class ResourceManager implements AutoCloseable {
+public final class ResourceManager {
 
   private final Map<String, Mesh> meshCache = new HashMap<>();
   private final Map<String, Texture> textureCache = new HashMap<>();
@@ -106,7 +107,7 @@ public final class ResourceManager implements AutoCloseable {
    * Frees all managed resources. This iterates through all cached assets
    * and calls their respective close() methods to release native resources.
    */
-  @Override
+  @PreDestroy
   public void close() {
     meshCache.values().forEach(Mesh::close);
     meshCache.clear();
@@ -121,4 +122,3 @@ public final class ResourceManager implements AutoCloseable {
     audioBufferCache.clear();
   }
 }
-

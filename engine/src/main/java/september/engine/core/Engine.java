@@ -6,14 +6,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import september.engine.assets.ResourceManager;
 import september.engine.audio.AudioManager;
-import september.engine.core.input.GlfwInputService;
-import september.engine.di.EngineConfiguration;
 import september.engine.ecs.IWorld;
 import september.engine.ecs.SystemManager;
 import september.engine.rendering.Camera;
 import september.engine.rendering.Renderer;
 import september.engine.state.GameState;
-import september.engine.state.GameStateManager;
 
 public final class Engine implements Runnable {
   private static final Logger log = LoggerFactory.getLogger(Engine.class);
@@ -40,7 +37,7 @@ public final class Engine implements Runnable {
   public void init() {
     try {
       log.info("Initializing September Engine with DI container");
-      
+
       // Create the DI container with eager singleton initialization disabled
       applicationContext = ApplicationContext.builder()
           .eagerInitSingletons(false)
@@ -48,10 +45,10 @@ public final class Engine implements Runnable {
 
       // Get the main services aggregator
       services = applicationContext.getBean(EngineServices.class);
-      
+
       // Initialize the scene manager with the game's component registry
       services.sceneManager().initialize(game.getComponentRegistry());
-      
+
       // Set up test getters by delegating to the services
       world = services.world();
       resourceManager = services.resourceManager();
@@ -62,11 +59,10 @@ public final class Engine implements Runnable {
       systemManager = services.systemManager();
 
       // --- SET UP CALLBACKS ---
-      window.setResizeListener(
-          (width, height) -> {
-            camera.resize(width, height);
-            camera.setPerspective(45.0f, (float) width / height, 0.1f, 100.0f);
-          });
+      window.setResizeListener((width, height) -> {
+        camera.resize(width, height);
+        camera.setPerspective(45.0f, (float) width / height, 0.1f, 100.0f);
+      });
 
       services.inputService().installCallbacks(window);
 
@@ -88,6 +84,7 @@ public final class Engine implements Runnable {
 
   private void mainLoop() {
     int frames = 0;
+
     while (loopPolicy.continueRunning(frames, window.handle()) && !services.gameStateManager().isEmpty()) {
       window.pollEvents();
       services.timeService().update();
@@ -101,30 +98,8 @@ public final class Engine implements Runnable {
 
   public void shutdown() {
     log.info("Shutting down September Engine");
-    
-    // Game shutdown is now handled by the states' onExit methods.
-    // We just need to clean up engine resources.
-    
-    if (services != null) {
-      try {
-        if (services.audioManager() != null) {
-          services.audioManager().close();
-        }
-        if (services.window() != null) {
-          services.window().close();
-        }
-        if (services.resourceManager() != null) {
-          services.resourceManager().close();
-        }
-        if (services.preferencesService() != null) {
-          services.preferencesService().close();
-        }
-      } catch (Exception e) {
-        log.error("Error during engine shutdown", e);
-      }
-    }
 
-    // Close the DI container
+    // Close the DI container, which will trigger @PreDestroy methods
     if (applicationContext != null) {
       try {
         applicationContext.close();

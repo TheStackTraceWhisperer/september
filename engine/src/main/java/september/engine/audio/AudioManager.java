@@ -1,5 +1,6 @@
 package september.engine.audio;
 
+import jakarta.annotation.PreDestroy;
 import jakarta.inject.Singleton;
 import org.lwjgl.openal.AL;
 import org.lwjgl.openal.ALC;
@@ -29,7 +30,7 @@ import static org.lwjgl.openal.ALC10.alcOpenDevice;
  * - Providing factory methods for creating audio resources
  */
 @Singleton
-public final class AudioManager implements AutoCloseable {
+public final class AudioManager {
 
   private long device;
   private long context;
@@ -206,7 +207,7 @@ public final class AudioManager implements AutoCloseable {
     return initialized;
   }
 
-  @Override
+  @PreDestroy
   public void close() {
     if (initialized) {
       // Clean up OpenAL context
